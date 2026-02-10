@@ -1,0 +1,22 @@
+{
+  "name": "clarity-loop",
+  "owner": {
+    "name": "dev-eloper1"
+  },
+  "metadata": {
+    "description": "Spec-first documentation pipeline for Claude Code. AI does the work. Humans make the calls. Files hold the truth."
+  },
+  "plugins": [
+    {
+      "name": "clarity-loop",
+      "source": {
+        "source": "github",
+        "repo": "dev-eloper1/clarity-loop"
+      },
+      "description": "Spec-first documentation pipeline for Claude Code. Research, review, refine system docs, generate design systems, and produce implementation specs.",
+      "version": "0.1.0",
+      "category": "development-workflows",
+      "tags": ["documentation", "pipeline", "review", "specs", "design-system", "ui-design"]
+    }
+  ]
+}

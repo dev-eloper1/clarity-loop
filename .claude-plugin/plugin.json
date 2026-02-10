@@ -1,0 +1,20 @@
+{
+  "name": "clarity-loop",
+  "version": "0.1.0",
+  "description": "Spec-first documentation pipeline for Claude Code. Research, review, and refine system docs through structured gates until they're precise enough to generate implementation specs. AI does the work. Humans make the calls. Files hold the truth.",
+  "author": {
+    "name": "dev-eloper1"
+  },
+  "repository": "https://github.com/dev-eloper1/clarity-loop",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "pipeline",
+    "review",
+    "specs",
+    "design-system",
+    "ui-design",
+    "spec-first"
+  ],
+  "skills": "./skills/"
+}

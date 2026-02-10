@@ -1,0 +1,20 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (for init.js / hooks)
+node_modules/
+
+# Claude Code runtime
+.claude/
+
+# Pipeline runtime artifacts (generated per-project, not part of plugin)
+docs/system/.context/
+docs/system/.pipeline-authorized
