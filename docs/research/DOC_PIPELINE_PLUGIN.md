@@ -215,7 +215,7 @@ Persistent memory plugin for Claude Code (AGPL-3.0). Captures observations durin
 
 **Question**: How many skills? One monolith, or many small ones?
 
-**Decision**: Four skills — `doc-researcher` (triage + research + structure + proposals), `doc-reviewer` (review + merge + verify + audit + correct + fix + sync + design review), `doc-spec-gen` (spec generation + consistency review), `ui-designer` (design discovery + tokens + mockups + build plan).
+**Decision**: Five skills — `doc-researcher` (triage + research + structure + proposals), `doc-reviewer` (review + merge + verify + audit + correct + fix + sync + design review), `doc-spec-gen` (spec generation + consistency review), `ui-designer` (design discovery + tokens + mockups + build plan), `implementer` (task generation + implementation tracking + verification + spec sync).
 
 **Rationale**:
 - Triage is lightweight — lives inside doc-researcher as the entry point, not its own skill
@@ -326,6 +326,30 @@ input (screenshots, component library research) to short-circuit preference ques
 - Figma MCP support deferred to V2 (extract from existing Figma designs)
 
 **Principles**: React, don't originate (screenshots and visual references before abstract questions; user evaluates generated designs, never creates from scratch) + Tools enhance, never gate (Pencil adds visual feedback, markdown fallback is fully functional) + Structured iteration (generate → screenshot → feedback → refine loop) + Judgment is the bottleneck (user sees one section at a time with explanations, makes approval decisions).
+
+### 12. Post-Spec Implementation Tracking with Queue Semantics
+
+**Question**: What happens after specs are generated? Should the pipeline end at specs, or extend through implementation?
+
+**Decision**: A new `implementer` skill that extends the pipeline from specs to working code. The skill generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md), organized by implementation area with a cross-area Mermaid dependency graph. It tracks progress via `IMPLEMENTATION_PROGRESS.md`, handles spec changes mid-implementation via queue semantics (process front-to-back, validity-check before each task, pop/replace if superseded), and feeds gaps back into the pipeline through the existing triage mechanism (L0-L2).
+
+Three mechanisms handle real-world development messiness:
+- **Fix tasks (F-NNN)**: Runtime failures and regressions are distinct from spec gaps ("spec is right, code is wrong"). Fix tasks are created, prioritized, and trigger cascading re-verification of transitive dependents.
+- **Reconciliation on resume**: Git-diff-based detection of external changes (user edits, other tools, manual work). The skill maps changed files to tracked tasks and presents a reconciliation summary. User decides: re-verify, skip, or mark as `externally-managed`.
+- **Tangent tolerance**: The queue is the plan, not the process. The skill is stateless about HOW code was written, only cares WHETHER acceptance criteria are met. Supports off-script work, manual edits, and multi-day absences through full reconciliation.
+
+The skill uses dual-write tracking: TASKS.md is the persistent source of truth (survives sessions), Claude Code's `TaskCreate`/`TaskUpdate` is the active session view.
+
+**Rationale**:
+- The pipeline's value proposition was incomplete — structured process from idea to spec, then unstructured implementation
+- Implementation is a distinct activity requiring main context (interactive), not fork (heavy subagent)
+- Queue semantics are simpler than impact analysis — same process handles all spec change scenarios (additive, modificatory, superseding)
+- Reuses existing pipeline concepts: pipeline depth for gap triage, emerged concepts for discoveries, sync mode for code-doc alignment
+- Fix tasks distinguish "spec is wrong" (gap triage) from "code is wrong" (fix task) — different resolution paths
+- Reconciliation respects the user's autonomy — external changes are legitimate, the skill adapts rather than gates
+- Two dry runs (20 scenarios, 15 edge cases found and resolved) validated the design
+
+**Principles**: Structured iteration (implement → verify → feedback → continue loop) + The system remembers (TASKS.md + IMPLEMENTATION_PROGRESS.md persist across sessions) + Judgment is the bottleneck (user approves task order, parallel groups, reconciliation decisions) + React, don't originate (AI generates task plan, user reacts and adjusts).
 
 ---
 

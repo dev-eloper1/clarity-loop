@@ -244,5 +244,6 @@ Output: written inline (no separate review file for spec reviews — the output 
   structured output. Use `context: fork` to run in a subagent with fresh context. Don't
   try to do this in a session that's already loaded with other work.
 
-- **Specs end the pipeline.** After specs are generated and reviewed, the documentation
-  pipeline's job is done. Implementation is a separate concern.
+- **Specs bridge to implementation.** After specs are generated and reviewed, the
+  `implementer` skill takes over — generating a unified task list, tracking progress,
+  and feeding gaps back into the pipeline. Run `/implementer start` to begin.

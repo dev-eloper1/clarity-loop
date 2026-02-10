@@ -189,6 +189,13 @@ Apply adjustments and regenerate DESIGN_TASKS.md if needed.
 2. Update `{docsRoot}/STATUS.md` if it tracks design state
 
 Tell the user: "Build plan complete. DESIGN_TASKS.md generated at
-`{docsRoot}/specs/DESIGN_TASKS.md` with [N] tasks across [M] phases. You can start
-implementation from Phase 1 (tokens), or run `/doc-reviewer design-review` first to
-validate the designs against the PRD."
+`{docsRoot}/specs/DESIGN_TASKS.md` with [N] tasks across [M] phases. Run
+`/doc-reviewer design-review` to validate designs against the PRD, then
+`/implementer start` to generate a unified implementation plan that merges these
+design tasks with tasks from tech specs."
+
+**Note**: DESIGN_TASKS.md is a design artifact — the output of this build-plan mode.
+The `implementer` skill's `start` mode reads it as one of its inputs and merges the
+tasks into a unified `TASKS.md` alongside tasks derived from tech specs. DESIGN_TASKS.md
+remains as the build-plan source reference; TASKS.md becomes the working implementation
+copy.
