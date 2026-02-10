@@ -1,6 +1,6 @@
 # Clarity Loop
 
-A spec-first documentation pipeline plugin for [Claude Code](https://claude.ai/code). Iteratively research, review, and refine system documentation through structured gates until docs are precise enough to generate implementation specs.
+A spec-first documentation and design pipeline plugin for [Claude Code](https://claude.ai/code). Research, review, and refine system documentation through structured gates — then generate design systems, screen mockups, and implementation specs. From vague idea to buildable artifact, with a human in the loop at every step.
 
 ## Philosophy
 
@@ -31,7 +31,9 @@ Clarity Loop manages the lifecycle of system documentation through four skills:
 | **doc-researcher** | `/doc-researcher` | Bootstrap initial docs, triage complexity, research topics, plan document structure, generate proposals |
 | **doc-reviewer** | `/doc-reviewer` | Review proposals, fix issues, re-review, merge to system docs, verify merges, audit doc sets, apply corrections, check code-doc sync, review designs |
 | **doc-spec-gen** | `/doc-spec-gen` | Generate structured specs from verified system docs, cross-spec consistency checks |
-| **ui-designer** | `/ui-designer` | Design discovery, design tokens and component library, screen mockups, implementation task breakdown |
+| **ui-designer** | `/ui-designer` | Design discovery conversation, design token generation, reusable component library, screen mockups with visual feedback loops, implementation task breakdown |
+
+The design pipeline bridges the gap between written requirements and visual output. Through a conversational discovery process ("What's the mood? What colors? What apps do you admire?"), it generates a complete design system — tokens, components, and screen mockups — then breaks it into phased implementation tasks. With [Pencil MCP](https://www.tldraw.com/), you get live visual artifacts with a generate-screenshot-feedback-refine loop. Without it, you get equivalent structured markdown specs.
 
 ---
 
@@ -344,6 +346,32 @@ clarity-loop/
 - No other dependencies
 
 Optional: [Pencil MCP](https://www.tldraw.com/) for visual design generation in the ui-designer skill. Without it, the skill produces equivalent markdown specs.
+
+---
+
+## Troubleshooting
+
+**Skills don't show up after install**
+
+Restart your Claude Code session. The plugin system loads skills at session start — a fresh install mid-session won't be picked up until you restart.
+
+**SSH authentication error during install**
+
+```
+git@github.com: Permission denied (publickey).
+```
+
+Claude Code clones plugins via git. If your machine doesn't have SSH keys configured for GitHub, the clone fails. Fix by telling git to use HTTPS:
+
+```bash
+git config --global url."https://github.com/".insteadOf "git@github.com:"
+```
+
+Then retry the install.
+
+**Install shows "(no content)" with no confirmation**
+
+This is a known feedback gap in the CLI — the plugin likely installed successfully. Verify by restarting your session and checking if the slash commands appear (type `/doc-` to see autocomplete).
 
 ---
 
