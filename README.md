@@ -28,10 +28,10 @@ Clarity Loop manages the lifecycle of system documentation through four skills:
 
 | Skill | Command | Purpose |
 |-------|---------|---------|
-| **doc-researcher** | `/doc-researcher` | Bootstrap initial docs, triage complexity, research topics, plan document structure, generate proposals |
-| **doc-reviewer** | `/doc-reviewer` | Review proposals, fix issues, re-review, merge to system docs, verify merges, audit doc sets, apply corrections, check code-doc sync, review designs |
-| **doc-spec-gen** | `/doc-spec-gen` | Generate structured specs from verified system docs, cross-spec consistency checks |
-| **ui-designer** | `/ui-designer` | Design discovery conversation, design token generation, reusable component library, screen mockups with visual feedback loops, implementation task breakdown |
+| **[doc-researcher](docs/doc-researcher.md)** | `/doc-researcher` | Bootstrap initial docs, triage complexity, research topics, plan document structure, generate proposals |
+| **[doc-reviewer](docs/doc-reviewer.md)** | `/doc-reviewer` | Review proposals, fix issues, re-review, merge to system docs, verify merges, audit doc sets, apply corrections, check code-doc sync, review designs |
+| **[doc-spec-gen](docs/doc-spec-gen.md)** | `/doc-spec-gen` | Generate structured specs from verified system docs, cross-spec consistency checks |
+| **[ui-designer](docs/ui-designer.md)** | `/ui-designer` | Design discovery conversation, design token generation, reusable component library, screen mockups with visual feedback loops, implementation task breakdown |
 
 The design pipeline bridges the gap between written requirements and visual output. Through a conversational discovery process ("What's the mood? What colors? What apps do you admire?"), it generates a complete design system — tokens, components, and screen mockups — then breaks it into phased implementation tasks. With [Pencil MCP](https://www.tldraw.com/), you get live visual artifacts with a generate-screenshot-feedback-refine loop. Without it, you get equivalent structured markdown specs.
 
@@ -234,7 +234,7 @@ flowchart LR
     M --> V["Verify"]:::gate
 ```
 
-Every proposal includes a **Change Manifest** — a table mapping each change to its target doc, section, change type, and research finding. The reviewer verifies this contract. The verify step confirms the merge was complete.
+Every proposal includes a **[Change Manifest](docs/doc-researcher.md#change-manifest)** — a table mapping each change to its target doc, section, change type, and research finding. The [reviewer](docs/doc-reviewer.md#review) verifies this contract. The [verify step](docs/doc-reviewer.md#verify) confirms the merge was complete.
 
 ### Design Pipeline
 
@@ -249,11 +249,11 @@ flowchart LR
     M --> B["Build Plan"]:::human
 ```
 
-The design pipeline supports **Pencil MCP** (generates .pen files from scratch with visual feedback loops) and a **markdown fallback** (same documentation, no visual artifacts). Both produce DESIGN_SYSTEM.md, UI_SCREENS.md, and DESIGN_TASKS.md.
+The design pipeline supports **Pencil MCP** (generates .pen files from scratch with visual feedback loops) and a **markdown fallback** (same documentation, no visual artifacts). Both produce DESIGN_SYSTEM.md, UI_SCREENS.md, and DESIGN_TASKS.md. See [ui-designer docs](docs/ui-designer.md) for full details.
 
 ### System Doc Protection
 
-A `PreToolUse` hook blocks all direct writes to `{docsRoot}/system/`. Three operations can temporarily authorize edits via a `.pipeline-authorized` marker:
+A [`PreToolUse` hook](docs/hooks.md#protect-system-docs) blocks all direct writes to `{docsRoot}/system/`. Three operations can temporarily authorize edits via a `.pipeline-authorized` marker:
 
 | Operation | When | Purpose |
 |-----------|------|---------|
@@ -261,25 +261,40 @@ A `PreToolUse` hook blocks all direct writes to `{docsRoot}/system/`. Three oper
 | `merge` | Applying approved proposals | Pipeline-reviewed changes |
 | `correct` | Targeted fixes from audit/review | Diagnosis already clear |
 
-The marker is created before edits and removed immediately after. If a skill finds a stale marker on startup, it helps clean up the interrupted operation.
+The marker is created before edits and removed immediately after. If a skill finds a stale marker on startup, it helps clean up the interrupted operation. See [pipeline concepts](docs/pipeline-concepts.md#system-doc-protection) for details.
 
 ### Manifest-Based Context Loading
 
-Instead of reading every system doc to orient, skills read `{docsRoot}/system/.manifest.md` — a lightweight auto-generated index with file metadata, section headings with line ranges, and cross-references. Skills then do targeted reads of only the sections they need. The manifest auto-regenerates via a `PostToolUse` hook whenever system docs change.
+Instead of reading every system doc to orient, skills read `{docsRoot}/system/.manifest.md` — a lightweight auto-generated index with file metadata, section headings with line ranges, and cross-references. Skills then do targeted reads of only the sections they need. The manifest auto-regenerates via a [`PostToolUse` hook](docs/hooks.md#generate-manifest) whenever system docs change.
 
 ### Emerged Concepts
 
-During any pipeline phase, if a new idea surfaces that isn't tracked, it gets captured in STATUS.md. The emerged concepts table is a parking lot — concepts can be scoped into the research queue, deferred, or discarded.
+During any pipeline phase, if a new idea surfaces that isn't tracked, it gets captured in STATUS.md. The [emerged concepts](docs/pipeline-concepts.md#emerged-concepts) table is a parking lot — concepts can be scoped into the research queue, deferred, or discarded.
 
 ---
 
-## Tracking Files
+## Documentation
+
+Detailed documentation for every feature:
+
+| Document | Covers |
+|----------|--------|
+| [doc-researcher](docs/doc-researcher.md) | Bootstrap, triage, research, structure, proposal modes |
+| [doc-reviewer](docs/doc-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
+| [doc-spec-gen](docs/doc-spec-gen.md) | Spec generation, waterfall gate, cross-spec consistency review |
+| [ui-designer](docs/ui-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
+| [Pipeline Concepts](docs/pipeline-concepts.md) | System doc protection, manifest, tracking files, pipeline depth, configuration, emerged concepts |
+| [Hooks](docs/hooks.md) | PreToolUse protection, PostToolUse manifest generation, init script |
+
+### Tracking Files
 
 | File | Purpose |
 |------|---------|
 | `RESEARCH_LEDGER.md` | All research cycles — ID, topic, type, status, open questions |
 | `PROPOSAL_TRACKER.md` | All proposals — ID, title, research ref, status, review round, conflicts |
 | `STATUS.md` | High-level dashboard — pipeline state, emerged concepts, research queue |
+
+See [Pipeline Concepts: Tracking Files](docs/pipeline-concepts.md#tracking-files) for field definitions and lifecycle details.
 
 ---
 
@@ -334,6 +349,12 @@ clarity-loop/
     proposal-tracker.md
     status.md
   docs/
+    doc-researcher.md               doc-researcher skill documentation
+    doc-reviewer.md                 doc-reviewer skill documentation
+    doc-spec-gen.md                 doc-spec-gen skill documentation
+    ui-designer.md                  ui-designer skill documentation
+    pipeline-concepts.md            Core pipeline concepts
+    hooks.md                        Hook system documentation
     DOC_PIPELINE_PLUGIN.md          Design lineage and decision log
 ```
 
