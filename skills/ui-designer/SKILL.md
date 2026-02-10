@@ -61,8 +61,7 @@ project/
 │   ├── system/                  # Source of truth (PRD lives here)
 │   ├── designs/                 # Design files
 │   │   ├── DESIGN_PROGRESS.md   # Session state + decisions
-│   │   ├── design-system.pen    # Pencil: tokens + components
-│   │   └── mockups.pen          # Pencil: screen mockups
+│   │   └── {project-name}.pen   # Pencil: tokens, components, and mockups
 │   ├── specs/
 │   │   ├── DESIGN_SYSTEM.md     # Token + component catalog
 │   │   ├── UI_SCREENS.md        # Screen-to-feature mapping

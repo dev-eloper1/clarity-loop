@@ -39,33 +39,54 @@ Clarity Loop manages the lifecycle of system documentation through four skills:
 
 ```mermaid
 flowchart TD
-    START["Idea or problem"] --> RESEARCH["/doc-researcher research"]
-    RESEARCH -->|"human discussion loop"| STRUCTURE["/doc-researcher structure"]
-    STRUCTURE --> PROPOSAL["/doc-researcher proposal"]
-    PROPOSAL --> REVIEW["/doc-reviewer review"]
-    REVIEW -->|"issues found"| FIX["/doc-reviewer fix"]
+    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
+    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+
+    START["Idea or problem"] --> RESEARCH["/doc-researcher research"]:::human
+    RESEARCH -->|"human discussion"| STRUCTURE["/doc-researcher structure"]:::ai
+    STRUCTURE --> PROPOSAL["/doc-researcher proposal"]:::ai
+    PROPOSAL -->|"human reads & refines"| REVIEW["/doc-reviewer review"]:::gate
+    REVIEW -->|"issues found"| FIX["/doc-reviewer fix"]:::ai
     FIX -->|"auto re-review"| REVIEW
-    REVIEW -->|"APPROVE"| MERGE["/doc-reviewer merge"]
-    MERGE -->|"auto-triggered"| VERIFY["/doc-reviewer verify"]
+    REVIEW -->|"APPROVE"| MERGE["/doc-reviewer merge"]:::gate
+    MERGE -->|"auto-triggered"| VERIFY["/doc-reviewer verify"]:::gate
     VERIFY -->|"repeat for all topics"| START
 
-    VERIFY -->|"UI features in docs?"| DESIGN_SETUP["/ui-designer setup"]
-    DESIGN_SETUP --> TOKENS["/ui-designer tokens"]
-    TOKENS --> MOCKUPS["/ui-designer mockups"]
-    MOCKUPS --> BUILD["/ui-designer build-plan"]
-    BUILD --> DESIGN_REVIEW["/doc-reviewer design-review"]
+    VERIFY -->|"UI features?"| SETUP["/ui-designer setup"]:::human
+    SETUP -->|"discovery conversation"| TOKENS["/ui-designer tokens"]:::human
+    TOKENS -->|"visual feedback loop"| MOCKUPS["/ui-designer mockups"]:::human
+    MOCKUPS -->|"visual feedback loop"| BUILD["/ui-designer build-plan"]:::human
+    BUILD -->|"human review"| DREVIEW["/doc-reviewer design-review"]:::gate
 
-    DESIGN_REVIEW --> SPECS["/doc-spec-gen generate"]
+    DREVIEW --> SPECS["/doc-spec-gen generate"]:::ai
     VERIFY -->|"no UI"| SPECS
-    SPECS --> SPEC_REVIEW["/doc-spec-gen review"]
+    SPECS --> SPEC_REVIEW["/doc-spec-gen review"]:::gate
 ```
+
+Every amber node follows this pattern before advancing to the next step:
+
+```mermaid
+flowchart LR
+    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+
+    G["AI generates"]:::human --> H["Human reviews"]:::human
+    H -->|"feedback"| G
+    H -->|"approve"| N(("next")):::gate
+```
+
+> Amber = human-in-the-loop. Blue = AI-driven. Green = approval gate.
 
 **Correction shortcut** — when audit or review finds fixable issues, skip the full pipeline:
 
 ```mermaid
 flowchart LR
-    AUDIT["/doc-reviewer audit"] --> CORRECT["/doc-reviewer correct"]
-    SYNC["/doc-reviewer sync"] --> CORRECT
+    classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
+    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+
+    AUDIT["/doc-reviewer audit"]:::gate --> CORRECT["/doc-reviewer correct"]:::ai
+    SYNC["/doc-reviewer sync"]:::gate --> CORRECT
 ```
 
 The audit report IS the research — no separate research cycle needed. The sync check compares doc claims against actual code and produces an advisory report.
@@ -200,11 +221,15 @@ Commit `.clarity-loop.json` to git so all team members use the same docs root. I
 
 ```mermaid
 flowchart LR
-    R["Research"] --> P["Proposal"]
-    P --> REV["Review"]
+    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
+    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+
+    R["Research"]:::human -->|"discuss"| P["Proposal"]:::ai
+    P -->|"human refines"| REV["Review"]:::gate
     REV -->|"fix loop"| REV
-    REV -->|"APPROVE"| M["Merge"]
-    M --> V["Verify"]
+    REV -->|"APPROVE"| M["Merge"]:::gate
+    M --> V["Verify"]:::gate
 ```
 
 Every proposal includes a **Change Manifest** — a table mapping each change to its target doc, section, change type, and research finding. The reviewer verifies this contract. The verify step confirms the merge was complete.
@@ -213,10 +238,13 @@ Every proposal includes a **Change Manifest** — a table mapping each change to
 
 ```mermaid
 flowchart LR
-    S["Setup"] --> T["Tokens"]
-    T -->|"generate / screenshot / feedback / refine"| C["Components"]
-    C --> M["Mockups"]
-    M --> B["Build Plan"]
+    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+
+    S["Setup"]:::human -->|"discovery"| T["Tokens"]:::human
+    T --> C["Components"]:::human
+    C --> M["Mockups"]:::human
+    M --> B["Build Plan"]:::human
 ```
 
 The design pipeline supports **Pencil MCP** (generates .pen files from scratch with visual feedback loops) and a **markdown fallback** (same documentation, no visual artifacts). Both produce DESIGN_SYSTEM.md, UI_SCREENS.md, and DESIGN_TASKS.md.

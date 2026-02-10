@@ -41,15 +41,16 @@ Wait for user confirmation.
 
 #### Step 2: Generate Mockups
 
-**File setup** (same pattern as design-system.pen):
+**File setup** — reuse the existing .pen file (one canvas, everything together):
 
-1. If `{docsRoot}/designs/mockups.pen` does not exist, create it on disk using the `Write`
-   tool (empty content), then call `open_document("{docsRoot}/designs/mockups.pen")`.
-   If it already exists, just `open_document` with the path.
-   For large projects (10+ screens), ask user: single file or per-screen files?
+1. Read `DESIGN_PROGRESS.md` for the .pen filename chosen during tokens mode (e.g.,
+   `todo-app.pen`). Call `open_document("{docsRoot}/designs/{project-name}.pen")` — the
+   tokens and components are already here. Mockups go on the same infinite canvas so `ref`
+   nodes can reference components directly. Do NOT create a separate .pen file.
+   For large projects (10+ screens), ask user if they want per-screen overflow files.
 
 2. **Create separate top-level frames per screen group in a grid layout.** Same principle
-   as the design system file: a single container frame forces constant zooming. Instead:
+   as the token/component frames: a single container frame forces constant zooming. Instead:
    - Create one top-level frame per feature area or user flow (e.g., "Auth Flow",
      "Dashboard", "Settings", "Task Management")
    - Size each group frame to fit its screens side-by-side (not oversized)
@@ -110,8 +111,8 @@ can parallelize screen generation — but carefully:
 
 1. **Split into separate .pen files** for true parallelism. Ask the user: "You have [N]
    screens. I can generate them faster by working on multiple screens in parallel using
-   separate .pen files (one per screen group). This is safer than concurrent writes to a
-   single file. Proceed?"
+   separate overflow .pen files (one per screen group). This is safer than concurrent
+   writes to a single file. Proceed?" The main {project-name}.pen remains the primary file.
 
 2. **Dispatch subagents for planning, not MCP writes.** The safest parallelization pattern:
    - Dispatch subagents to plan each screen's layout (which components, where placed, what

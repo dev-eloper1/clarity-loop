@@ -59,9 +59,12 @@ Wait for user confirmation or adjustments.
 **Important**: Pencil MCP's `open_document("new")` creates a file in memory only — it does
 NOT write to disk. You must create the file on the filesystem first, then open it.
 
-1. If `{docsRoot}/designs/design-system.pen` does not exist, create it on disk using the
-   `Write` tool (empty content is fine — Pencil will populate it)
-2. Call `open_document("{docsRoot}/designs/design-system.pen")` to open it in Pencil
+1. Derive the .pen filename from the project name (e.g., `hermit.pen`, `todo-app.pen`).
+   Use the PRD title or project directory name, lowercased and hyphenated.
+   If `{docsRoot}/designs/{project-name}.pen` does not exist, create it on disk using the
+   `Write` tool (empty content is fine — Pencil will populate it).
+   Record the chosen filename in DESIGN_PROGRESS.md so mockups mode knows which file to open.
+2. Call `open_document("{docsRoot}/designs/{project-name}.pen")` to open it in Pencil
 3. **Create separate top-level frames — not one giant wrapper.** A fresh .pen file is a
    blank canvas. The instinct is to create a single large frame that holds everything, but
    this forces the user to constantly zoom in and out of a massive container. Instead,
