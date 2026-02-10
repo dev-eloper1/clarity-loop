@@ -37,6 +37,43 @@ The design pipeline bridges the gap between written requirements and visual outp
 
 ---
 
+## Not Vibe Coding
+
+Clarity Loop is not a tool for generating code from loose descriptions. It is an AI-assisted engineering and product development tool — the kind of process you'd run at a well-managed team, compressed into a human-AI collaboration.
+
+This means it will consume more tokens than a "describe it and ship it" workflow. Every document goes through research, proposal drafting, structured review, fix cycles, verification, and audit. That's intentional. The pipeline exists because single-pass AI generation produces plausible-looking output that drifts from reality as complexity grows. Structured iteration with human gates at every step is how you get documentation precise enough to generate reliable implementation specs.
+
+The tradeoff is deliberate: more rigorous process upfront, significantly more consistent and trustworthy output at the end.
+
+### How It Compares
+
+Clarity Loop was designed after studying two established frameworks in this space:
+
+**[BMAD](https://docs.bmad-method.org/)** (Breakthrough Method of Agile AI-Driven Development) structures the full software development lifecycle with 21 specialized AI agent personas — PM, Architect, Developer, QA, and more. It excels at scale-adaptive document generation and enterprise-grade phased pipelines. Clarity Loop borrows BMAD's complexity routing (not everything needs the full pipeline) and implementation readiness gates, but takes a different position on human involvement: where BMAD's review is validate-or-edit, Clarity Loop's is a multi-round conversation.
+
+**[GSD](https://github.com/glittercowboy/get-shit-done)** (Get Shit Done) is an anti-bureaucracy spec-driven framework focused on shipping speed. It solves context rot through fresh subagent contexts per task and keeps ceremony minimal with four core commands. Clarity Loop borrows GSD's human discussion phase before planning and its subagent context isolation strategy, but diverges on scope — GSD optimizes for velocity to working code, Clarity Loop optimizes for documentation quality before any code is written.
+
+| Capability | BMAD | GSD | Clarity Loop |
+|-----------|------|-----|-------------|
+| Scope | Full SDLC (idea to code) | Spec to code (shipping focus) | Idea to spec (documentation focus) |
+| Human role | Validate/edit at gates | Discuss before planning | Conversational loop at every step |
+| Review model | Tri-modal (create/validate/edit) | Plan verification | Multi-round review with cumulative issue tracking |
+| Cross-doc consistency | Per-document validation | None | System-wide audit, drift detection, code-doc sync |
+| Design generation | None | None | Visual design system + screen mockups (Pencil MCP) |
+| Emerged concepts | None | None | Tracked and queued for future research |
+| Token cost | Moderate | Low (optimized for speed) | Higher (optimized for thoroughness) |
+
+What none of the existing frameworks do — and what Clarity Loop was built for:
+- Iterative human discussion loops with persistent state tracking across sessions
+- Cross-document consistency verification (docs reviewed as a system, not individually)
+- Visual design generation from written requirements
+- Audit and drift detection (periodic health checks + code-doc alignment)
+- Pipeline-protected system docs with authorization markers
+
+For the full prior art analysis and design decisions, see [DOC_PIPELINE_PLUGIN.md](docs/DOC_PIPELINE_PLUGIN.md).
+
+---
+
 ## Lifecycle
 
 ```mermaid
