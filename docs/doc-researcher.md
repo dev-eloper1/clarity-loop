@@ -29,10 +29,17 @@ Creates the initial system doc set. Detects your starting point and adapts.
 2. Suggests initial doc set based on project type
 3. Generates starting system docs with `[TBD]` markers for areas needing more detail
 
-**Brownfield with existing docs**:
+**Brownfield with existing docs** (project docs, wiki exports, AI-generated research from ChatGPT/Claude):
 1. Discovers existing documentation files
-2. Suggests reorganization into the Clarity Loop structure
-3. Migrates content, preserving what's valuable
+2. Assesses quality and freshness
+3. You choose the import path:
+
+| Path | Best When | What Happens |
+|------|-----------|-------------|
+| **Import + Audit** | You trust the docs (recent AI research, fresh project docs) | Migrates into system docs, immediately suggests [audit](doc-reviewer.md#audit) to verify quality |
+| **Research Context + Regenerate** | Docs might be stale or uncertain quality | Copies into `docs/research/` as reference, runs fresh discovery conversation informed by old docs, generates new system docs |
+
+The import path is fast — your existing work becomes the system docs and an audit catches any issues. The regeneration path is thorough — no stale claims sneak through, but the old docs still accelerate the conversation.
 
 **Brownfield with code, no docs**:
 1. Analyzes codebase structure (directories, dependencies, patterns)

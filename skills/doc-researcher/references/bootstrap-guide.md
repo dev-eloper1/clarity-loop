@@ -111,8 +111,8 @@ review to refine."
 
 ### Brownfield Bootstrap — Existing Docs
 
-For projects that already have documentation, but it's not organized in the Clarity Loop
-structure (e.g., scattered markdown files, a wiki export, README-driven docs).
+For projects that already have documentation — whether organized project docs, scattered
+markdown files, a wiki export, README-driven docs, or research generated in ChatGPT/Claude.
 
 #### Step 1: Discover Existing Docs
 
@@ -120,6 +120,7 @@ Ask the user where their existing docs are, or detect them:
 - Markdown files in the project root or a `docs/` directory (outside `system/`)
 - README.md with substantial content
 - Wiki pages exported as markdown
+- AI-generated research or specs (from ChatGPT, Claude, other tools)
 - Any other documentation artifacts
 
 Read and analyze the existing docs:
@@ -127,10 +128,33 @@ Read and analyze the existing docs:
 - What's the quality level? (rough notes vs. polished docs)
 - Are there gaps?
 - Is there redundancy or contradiction?
+- How fresh are they? (recent AI conversation vs. months-old wiki)
 
-#### Step 2: Suggest Reorganization
+#### Step 2: Choose Import Path
 
-Map the existing content to a proposed `docs/system/` structure:
+Present both options and let the user decide:
+
+"I found existing documentation. How would you like to use it?"
+
+**Path A — Import as system docs (fast, with audit)**:
+Best when the user trusts the docs — recent AI-generated research, fresh project docs,
+or content they've already vetted. The existing docs become the starting system docs, and
+an immediate audit verifies quality.
+
+**Path B — Import as research context (thorough, with regeneration)**:
+Best when docs might be stale, incomplete, or of uncertain quality — old wikis, inherited
+documentation, or rough notes. The existing docs go into `docs/research/` as reference
+material, and bootstrap runs a conversation-driven regeneration that uses the old docs as
+input but produces fresh system docs.
+
+The user chooses which path based on their confidence in the existing material. If unsure,
+Path B is safer — no stale claims sneak through.
+
+#### Step 3A: Import Path — Migrate and Audit
+
+For docs the user trusts:
+
+1. Map the existing content to a proposed `docs/system/` structure:
 
 ```
 Existing docs → Proposed system docs
@@ -142,25 +166,48 @@ docs/deployment.md → docs/system/OPERATIONS.md
 [no existing content] → docs/system/DATA_MODEL.md (gap — to be researched)
 ```
 
-Present this to the user: "Here's how I'd reorganize your existing docs into the system doc
-structure. [N] docs can be adapted directly, [M] have gaps that need research. Does this
-mapping look right?"
+2. Present the mapping: "Here's how I'd reorganize your existing docs into the system doc
+   structure. [N] docs can be adapted directly, [M] have gaps that need research. Does this
+   mapping look right?"
 
-The user confirms, modifies, or rejects.
-
-#### Step 3: Create Authorization and Migrate
-
-1. Create `docs/system/.pipeline-authorized` with `operation: bootstrap, source: import`
-2. For each mapping:
+3. Create `docs/system/.pipeline-authorized` with `operation: bootstrap, source: import`
+4. For each mapping:
    - **Direct adaptation**: Copy content, clean up formatting, add cross-references
    - **Merge**: Combine multiple source docs into one system doc
    - **Gap**: Create a stub with `[To be researched]` markers
-3. Remove the marker
-4. Update tracking
+5. Remove the marker
+6. Update tracking
+
+7. **Immediately suggest an audit**: "System docs imported from existing documentation. I
+   recommend running `/doc-reviewer audit` to verify quality — this catches AI
+   hallucinations, stale claims, internal contradictions, and gaps. Want to run it now?"
 
 Tell the user about gaps: "These areas have no existing documentation and will need
 research cycles: [list]. You can start with `/doc-researcher research 'topic'` for any
 of these."
+
+#### Step 3B: Research Context Path — Ingest and Regenerate
+
+For docs the user doesn't fully trust:
+
+1. Copy existing docs into `docs/research/` with a clear prefix:
+   - `docs/research/IMPORTED-original-name.md`
+   - Add a header to each: "Imported from [source] on [date]. Used as research context
+     for bootstrap — not a pipeline research doc."
+
+2. Read all imported docs to build understanding of the project.
+
+3. Run the standard discovery conversation (same as greenfield Step 2), but informed by
+   the imported material. Reference what the old docs say:
+   "Your existing docs describe [X] as using [Y]. Is that still accurate, or has this
+   changed?"
+
+4. Generate fresh system docs following greenfield Steps 3-6. The imported docs accelerate
+   the conversation (you already know the domain) but the system docs are generated from
+   the live conversation, not copy-pasted from potentially stale sources.
+
+5. After generation, the imported docs in `docs/research/` remain as historical reference.
+   They are NOT tracked in RESEARCH_LEDGER (they're not pipeline research docs).
 
 ---
 
