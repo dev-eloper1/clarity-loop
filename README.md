@@ -339,13 +339,40 @@ clarity-loop/
 
 ---
 
+## Pencil MCP Setup
+
+The ui-designer skill works in two modes: **visual** (with Pencil MCP) and **markdown fallback** (without it). Both produce the same documentation artifacts, but Pencil gives you live visual design on an infinite canvas with a generate-screenshot-feedback-refine loop.
+
+**What is Pencil?** A design-as-code tool that runs as a VS Code/Cursor extension or standalone desktop app. It uses `.pen` files (JSON-based, git-friendly) and exposes an MCP server locally — no cloud dependency. AI assistants can read, create, and modify designs programmatically through MCP tools like `batch_design`, `get_screenshot`, `set_variables`, and `snapshot_layout`.
+
+### Install Pencil
+
+| Platform | How |
+|----------|-----|
+| **VS Code / Cursor** | Search "Pencil" in Extensions, click Install |
+| **macOS** | Download `.dmg` from [pencil.dev](https://www.pencil.dev/) |
+| **Linux** | `.deb` package or `.AppImage` from [pencil.dev](https://www.pencil.dev/) |
+
+### Verify MCP Connection
+
+1. Open Pencil (extension or desktop app)
+2. Open or create a `.pen` file
+3. The MCP server starts automatically — no manual configuration needed
+4. In Claude Code, the ui-designer skill auto-detects Pencil via `ToolSearch` at startup
+
+If Pencil isn't detected, the skill falls back to structured markdown specs. You can install Pencil later and re-run `/ui-designer setup` to switch to visual mode.
+
+For full documentation: [docs.pencil.dev](https://docs.pencil.dev/) | [AI Integration Guide](https://docs.pencil.dev/getting-started/ai-integration) | [.pen File Format](https://docs.pencil.dev/core-concepts/pen-files)
+
+---
+
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) v1.0.33 or later
 - Node.js v18+ (for init script and hooks)
 - No other dependencies
 
-Optional: [Pencil MCP](https://www.tldraw.com/) for visual design generation in the ui-designer skill. Without it, the skill produces equivalent markdown specs.
+Optional: [Pencil](https://www.pencil.dev/) for visual design generation in the ui-designer skill (see setup above).
 
 ---
 
