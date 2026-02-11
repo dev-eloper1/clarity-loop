@@ -1,390 +1,223 @@
 # Clarity Loop
 
-A spec-first documentation, design, and implementation pipeline plugin for [Claude Code](https://claude.ai/code). Research, review, and refine system documentation through structured gates — then generate design systems, screen mockups, implementation specs, and tracked task queues. From vague idea to working code, with a human in the loop at every step.
+![Clarity Loop — A human-in-the-loop process for getting from vibes to working code](docs/clarity_loop.png)
 
-## Philosophy
+**Stop generating code from vibes.** Clarity Loop is a [Claude Code](https://claude.ai/code) plugin that takes you from a vague idea to working code through structured research, reviewed documentation, visual design, and tracked implementation — with a human making every decision.
 
-> **AI does the work. Humans make the calls. Files hold the truth.**
+---
 
-Six principles that shape every design decision in this plugin:
+## The Problem
 
-1. **React, don't originate.** The human never faces a blank page. The AI generates first — a token table, a screen mockup, a proposal draft, a task queue — and the human reacts: "warmer blues", "too much spacing", "merge these sections", "reorder these tasks." It's easier for humans to evaluate and refine than to create from scratch.
+AI coding tools are great at writing code. They're terrible at knowing *what* to write.
 
-2. **Judgment is the bottleneck, not effort.** The pipeline minimizes human effort (the AI writes, researches, cross-references, tracks state) but maximizes human judgment (every gate is an approval, every artifact is reviewed). The human is the quality mechanism — the system does the work to make that judgment effective.
+Ask an LLM to "build me a todo app with auth" and you'll get plausible-looking code that falls apart as complexity grows: inconsistent data models across files, API contracts that contradict each other, Tailwind v3 patterns when you're using v4, stale imports from a library version that doesn't exist anymore. The bigger the project, the worse the drift.
 
-3. **The system remembers so the human doesn't have to.** Every decision is recorded with rationale in persistent files — DESIGN_PROGRESS.md, PROPOSAL_TRACKER.md, STATUS.md, IMPLEMENTATION_PROGRESS.md. Conversations are ephemeral; artifacts are permanent. If a session crashes or context compresses, the pipeline picks up from the last recorded state.
+The root cause isn't code generation — it's everything that happens *before* code generation. When your docs are vague, your specs are inconsistent, and your LLM thinks `better-sqlite3` is still on version 9, no amount of prompting fixes the output.
 
-4. **Structured iteration beats one-shot generation.** No artifact is generated once and trusted. Everything loops: generate, present, feedback, refine. This is the antidote to AI slop — any single generation might be wrong, but structured iteration with human gates converges on quality.
-
-5. **Process protects the product — proportionally.** System docs are pipeline-protected. You can't just edit them. But not everything needs the full pipeline — triage determines depth, corrections bypass research, trivial changes skip gates entirely. The ceremony matches the risk.
-
-6. **Tools enhance, never gate.** Pencil MCP or markdown fallback, the documentation output is identical. The pipeline works with no specialized tools. Better tools add visual feedback loops, but the core value — vague idea to working code — is always available.
+**Clarity Loop fixes the inputs so the outputs are correct.**
 
 ---
 
 ## What It Does
 
-Clarity Loop manages the full lifecycle from idea to working code through five skills:
+Clarity Loop manages five stages between "I have an idea" and "I have working code":
 
-| Skill | Command | Purpose |
-|-------|---------|---------|
-| **[doc-researcher](docs/doc-researcher.md)** | `/doc-researcher` | Bootstrap initial docs, triage complexity, research topics, plan document structure, generate proposals |
-| **[doc-reviewer](docs/doc-reviewer.md)** | `/doc-reviewer` | Review proposals, fix issues, re-review, merge to system docs, verify merges, audit doc sets, apply corrections, check code-doc sync, review designs |
-| **[doc-spec-gen](docs/doc-spec-gen.md)** | `/doc-spec-gen` | Generate structured specs from verified system docs, cross-spec consistency checks |
-| **[ui-designer](docs/ui-designer.md)** | `/ui-designer` | Design discovery conversation, design token generation, reusable component library, screen mockups with visual feedback loops, implementation task breakdown |
-| **[implementer](docs/implementer.md)** | `/implementer` | Generate unified task list from specs, track implementation progress, handle runtime failures, reconcile external changes, feed spec gaps back into the pipeline |
+**1. Research and document.** You describe what you want to build. The plugin researches the problem, drafts system documentation (PRD, Architecture, TDD), and iterates with you through multi-round conversations. Every document is reviewed, cross-referenced against all other documents, and verified before moving forward.
 
-Three pipelines work in sequence:
+**2. Build accurate library knowledge.** Before generating any code, the plugin researches the *actual current state* of every library in your tech stack — correct imports, breaking changes, working patterns, common gotchas. This knowledge is distilled into curated context files that get loaded during implementation. No more debugging stale API calls.
 
-- **Documentation pipeline** — Research topics, generate proposals, review through structured gates, merge to protected system docs. Every document is cross-referenced and verified against the full documentation set.
-- **Design pipeline** — Conversational discovery ("What's the mood? What colors?"), then generate tokens, components, and screen mockups. With [Pencil MCP](https://www.tldraw.com/), you get live visual artifacts with a generate-screenshot-feedback-refine loop. Without it, you get equivalent structured markdown specs.
-- **Implementation pipeline** — Generate a unified task queue from all specs, process tasks front-to-back with acceptance criteria verification, handle runtime failures with fix tasks, reconcile external code changes on resume, and feed spec gaps back into the documentation pipeline.
+**3. Design the UI.** If your project has a user interface, the plugin runs a design discovery conversation, generates a design token system and reusable component library, then creates screen mockups. With [Pencil MCP](https://www.pencil.dev/), you get live visual artifacts. Without it, you get equivalent structured specs.
+
+**4. Generate implementation specs.** Once all documentation is stable and verified, the plugin generates structured, implementation-ready specs — concrete types, enumerated edge cases, acceptance criteria. These are the bridge between "what to build" and "how to build it."
+
+**5. Implement with tracking.** The plugin generates a unified task queue from specs, processes tasks front-to-back with acceptance criteria verification, handles runtime failures, reconciles external code changes on resume, and feeds spec gaps back into the documentation pipeline.
+
+At every stage, the pattern is the same: **AI generates, human reviews, feedback refines, human approves.** Nothing advances without your judgment. And when implementation reveals that something upstream was wrong — a spec gap, a stale library pattern, an incomplete design — the pipeline loops back to fix the source, not paper over the symptom.
 
 ---
 
-## Not Vibe Coding
+## What It Looks Like
 
-Clarity Loop is not a tool for generating code from loose descriptions. It is an AI-assisted engineering and product development tool — the kind of process you'd run at a well-managed team, compressed into a human-AI collaboration.
+```bash
+# Start a new project
+/doc-researcher bootstrap
+# -> Auto-scaffolds docs directory structure
+# -> Discovery conversation about your project
+# -> Initial system docs generated (PRD, Architecture, TDD)
+# -> "Your Architecture doc references 4 libraries. Create context files? [Y/n]"
 
-This means it will consume more tokens than a "describe it and ship it" workflow. Every document goes through research, proposal drafting, structured review, fix cycles, verification, and audit. Every implementation task is verified against acceptance criteria derived from specs. That's intentional. The pipeline exists because single-pass AI generation produces plausible-looking output that drifts from reality as complexity grows. Structured iteration with human gates at every step is how you get documentation precise enough to generate reliable specs — and specs precise enough to produce correct code.
+# Research a feature
+/doc-researcher research "user authentication"
+# -> Multi-turn conversation grounded in your existing docs
+# -> Research doc generated with findings and recommendations
 
-The tradeoff is deliberate: more rigorous process upfront, significantly more consistent and trustworthy output at the end.
+# Generate a proposal
+/doc-researcher proposal
+# -> Concrete change manifest: what changes, where, why
+# -> "Proposal generated. Read it over and let me know when you'd like to review."
 
-### How It Compares
+# Review and merge
+/doc-reviewer review
+# -> Six-dimension review against all system docs
+# -> Fix cycle until approved, then merge to protected system docs
 
-Clarity Loop was designed after studying two established frameworks in this space:
-
-**[BMAD](https://docs.bmad-method.org/)** (Breakthrough Method of Agile AI-Driven Development) structures the full software development lifecycle with 21 specialized AI agent personas — PM, Architect, Developer, QA, and more. It excels at scale-adaptive document generation and enterprise-grade phased pipelines. Clarity Loop borrows BMAD's complexity routing (not everything needs the full pipeline) and implementation readiness gates, but takes a different position on human involvement: where BMAD's review is validate-or-edit, Clarity Loop's is a multi-round conversation.
-
-**[GSD](https://github.com/glittercowboy/get-shit-done)** (Get Shit Done) is an anti-bureaucracy spec-driven framework focused on shipping speed. It solves context rot through fresh subagent contexts per task and keeps ceremony minimal with four core commands. Clarity Loop borrows GSD's human discussion phase before planning and its subagent context isolation strategy, but diverges on scope — GSD optimizes for velocity to working code, Clarity Loop optimizes for documentation and spec quality before any code is written.
-
-| Capability | BMAD | GSD | Clarity Loop |
-|-----------|------|-----|-------------|
-| Scope | Full SDLC (idea to code) | Spec to code (shipping focus) | Idea to implementation (documentation + design + code) |
-| Human role | Validate/edit at gates | Discuss before planning | Conversational loop at every step |
-| Review model | Tri-modal (create/validate/edit) | Plan verification | Multi-round review with cumulative issue tracking |
-| Cross-doc consistency | Per-document validation | None | System-wide audit, drift detection, code-doc sync |
-| Design generation | None | None | Visual design system + screen mockups (Pencil MCP) |
-| Implementation tracking | Task lists | Subagent per task | Queue semantics with reconciliation, fix tasks, spec gap feedback |
-| Emerged concepts | None | None | Tracked and queued for future research |
-| Token cost | Moderate | Low (optimized for speed) | Higher (optimized for thoroughness) |
-
-What none of the existing frameworks do — and what Clarity Loop was built for:
-- Iterative human discussion loops with persistent state tracking across sessions
-- Cross-document consistency verification (docs reviewed as a system, not individually)
-- Visual design generation from written requirements
-- Audit and drift detection (periodic health checks + code-doc alignment)
-- Pipeline-protected system docs with authorization markers
-- Spec gap feedback loops (implementation discoveries feed back into the documentation pipeline)
-
-For the full prior art analysis and design decisions, see [DOC_PIPELINE_PLUGIN.md](docs/research/DOC_PIPELINE_PLUGIN.md).
+# Generate specs and implement
+/doc-spec-gen generate
+/implementer start
+/implementer run
+# -> Task queue with acceptance criteria, context-aware implementation,
+#    fix tasks for regressions, spec gap feedback to the pipeline
+```
 
 ---
 
-## Lifecycle
+## Why Not Just Prompt and Ship?
 
-```mermaid
-flowchart TD
-    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
-    classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
-    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+For small projects, you should. Clarity Loop is for when "describe it and ship it" starts breaking:
 
-    START["Idea or problem"] --> RESEARCH["/doc-researcher research"]:::human
-    RESEARCH -->|"human discussion"| STRUCTURE["/doc-researcher structure"]:::ai
-    STRUCTURE --> PROPOSAL["/doc-researcher proposal"]:::ai
-    PROPOSAL -->|"human reads & refines"| REVIEW["/doc-reviewer review"]:::gate
-    REVIEW -->|"issues found"| FIX["/doc-reviewer fix"]:::ai
-    FIX -->|"auto re-review"| REVIEW
-    REVIEW -->|"APPROVE"| MERGE["/doc-reviewer merge"]:::gate
-    MERGE -->|"auto-triggered"| VERIFY["/doc-reviewer verify"]:::gate
-    VERIFY -->|"repeat for all topics"| START
+- **5+ interconnected documents** that drift from each other without structured review
+- **Complex tech stacks** where the LLM's training data doesn't match your library versions
+- **Multi-day projects** where context compression loses decisions you made yesterday
+- **Systems where correctness matters** — your auth flow can't just "look right," it has to *be* right
 
-    VERIFY -->|"UI features?"| SETUP["/ui-designer setup"]:::human
-    SETUP -->|"discovery conversation"| TOKENS["/ui-designer tokens"]:::human
-    TOKENS -->|"visual feedback loop"| MOCKUPS["/ui-designer mockups"]:::human
-    MOCKUPS -->|"visual feedback loop"| BUILD["/ui-designer build-plan"]:::human
-    BUILD -->|"human review"| DREVIEW["/doc-reviewer design-review"]:::gate
-
-    DREVIEW --> SPECS["/doc-spec-gen generate"]:::ai
-    VERIFY -->|"no UI"| SPECS
-    SPECS --> SPEC_REVIEW["/doc-spec-gen review"]:::gate
-
-    SPEC_REVIEW --> IMPL_START["/implementer start"]:::human
-    IMPL_START -->|"task plan approved"| IMPL_RUN["/implementer run"]:::human
-    IMPL_RUN -->|"spec gap (L2)"| START
-    IMPL_RUN -->|"all tasks done"| IMPL_VERIFY["/implementer verify"]:::gate
-    IMPL_RUN -->|"specs changed"| IMPL_SYNC["/implementer sync"]:::ai
-    IMPL_SYNC --> IMPL_RUN
-```
-
-Every amber node follows this pattern before advancing to the next step:
-
-```mermaid
-flowchart LR
-    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
-    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
-
-    G["AI generates"]:::human --> H["Human reviews"]:::human
-    H -->|"feedback"| G
-    H -->|"approve"| N(("next")):::gate
-```
-
-> Amber = human-in-the-loop. Blue = AI-driven. Green = approval gate.
-
-**Correction shortcut** — when audit or review finds fixable issues, skip the full pipeline:
-
-```mermaid
-flowchart LR
-    classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
-    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
-
-    AUDIT["/doc-reviewer audit"]:::gate --> CORRECT["/doc-reviewer correct"]:::ai
-    SYNC["/doc-reviewer sync"]:::gate --> CORRECT
-```
-
-The audit report IS the research — no separate research cycle needed. The sync check compares doc claims against actual code and produces an advisory report.
+The tradeoff is deliberate: more process upfront, significantly more consistent output at the end. The pipeline catches cross-document contradictions, stale library patterns, incomplete specs, and implementation regressions — problems that compound silently in single-pass generation.
 
 ---
 
 ## Installation
 
-### From marketplace
-
 ```bash
-# Add the Clarity Loop marketplace
+# Marketplace
 /plugin marketplace add dev-eloper1/clarity-loop
-
-# Install the plugin
 /plugin install clarity-loop@clarity-loop
-```
 
-After installation, all five skills are available as slash commands in any Claude Code session.
-
-### From source
-
-Clone the repository and point Claude Code at it directly:
-
-```bash
+# Or from source
 git clone https://github.com/dev-eloper1/clarity-loop.git
 claude --plugin-dir ./clarity-loop
 ```
 
-This is useful for development, customization, or contributing changes back.
+Then start your project — bootstrap handles everything:
+
+```bash
+/doc-researcher bootstrap
+```
+
+This auto-scaffolds the directory structure, runs a discovery conversation about your project, and generates initial system docs. If collisions are detected with existing directories, you'll be prompted to choose an alternative docs root.
 
 ### Updating
 
-**Marketplace install:**
-
 ```bash
+# Marketplace
 /plugin update clarity-loop
+
+# Source
+cd path/to/clarity-loop && git pull origin main
 ```
 
-**Source install:**
-
-```bash
-cd path/to/clarity-loop
-git pull origin main
-```
-
-Then restart your Claude Code session. New skills and modes are picked up on session start.
-
-Updates never modify your project's docs directory. Your research docs, proposals, system docs, and design artifacts are untouched — only the plugin's skills, hooks, and scripts are updated.
+Updates never touch your project's docs — only the plugin's skills, hooks, and scripts.
 
 ---
 
-## Setup
+## The Five Skills
 
-After installing, initialize your project's doc structure:
-
-```bash
-node clarity-loop/scripts/init.js
-```
-
-The init script checks for existing directories that might collide with Clarity Loop's default `docs/` structure. If collisions are found, you'll be prompted to choose an alternative docs root (e.g., `clarity-docs`). The choice is saved to `.clarity-loop.json`.
-
-This creates:
-
-```
-.clarity-loop.json              Config file (commit to git)
-docs/
-  system/                       Protected system docs (pipeline-managed only)
-  research/                     Research docs (R-NNN-slug.md)
-  proposals/                    Proposals (P-NNN-slug.md)
-  reviews/
-    proposals/                  Review artifacts (auto-generated)
-    audit/                      System audit reports + sync reports
-    design/                     Design review artifacts
-  specs/                        Generated specs (waterfall output)
-  designs/                      Design files (.pen, DESIGN_PROGRESS.md)
-  RESEARCH_LEDGER.md
-  PROPOSAL_TRACKER.md
-  STATUS.md
-```
-
----
-
-## Quick Start
-
-### New project (no existing docs)
-
-```bash
-node clarity-loop/scripts/init.js       # Scaffold directory structure
-/doc-researcher bootstrap               # Conversation -> initial system docs
-```
-
-### Existing project with docs
-
-```bash
-node clarity-loop/scripts/init.js       # Scaffold (collision detection runs)
-/doc-researcher bootstrap               # Detects existing docs, offers to import
-```
-
-### Existing code, no docs
-
-```bash
-node clarity-loop/scripts/init.js       # Scaffold directory structure
-/doc-researcher bootstrap               # Analyzes codebase, generates docs from conversation
-```
-
-After bootstrap, use the normal pipeline: `/doc-researcher research "topic"` to start a research cycle, then proposal, review, merge, verify.
-
----
-
-## Pipeline Depth
-
-Not every change needs the full pipeline. Triage determines the right level:
-
-| Level | When | Pipeline |
-|-------|------|----------|
-| **0 — Trivial** | Typo, config tweak | Direct edit (no pipeline) |
-| **1 — Contained** | Single feature, clear scope | Research note, then system doc update |
-| **2 — Complex** | Cross-cutting, multi-doc impact | Full: research, proposal, review, merge, specs |
-| **3 — Exploratory** | Unclear idea, needs discovery | Extended research, then full pipeline |
-
----
-
-## Configuration
-
-Clarity Loop stores its configuration in `.clarity-loop.json` at the project root:
-
-```json
-{
-  "version": 1,
-  "docsRoot": "docs"
-}
-```
-
-| Field | Default | Description |
+| Skill | Command | What It Does |
 |-------|---------|-------------|
-| `version` | `1` | Config format version |
-| `docsRoot` | `"docs"` | Base path for all documentation directories |
-
-All paths derive from `docsRoot`: `{docsRoot}/system/`, `{docsRoot}/research/`, `{docsRoot}/proposals/`, etc.
-
-**When to change `docsRoot`**: If your project already uses `docs/system/` for other purposes. The init script detects collisions and prompts you automatically.
-
-Commit `.clarity-loop.json` to git so all team members use the same docs root. If the file is missing, all tools fall back to `docs/`.
+| **doc-researcher** | `/doc-researcher` | Bootstraps initial docs, triages complexity, runs multi-turn research conversations, plans document structure, generates proposals, creates per-library context files |
+| **doc-reviewer** | `/doc-reviewer` | Reviews proposals against all system docs, manages fix cycles, merges to protected system docs, verifies merges, runs system-wide audits, checks code-doc alignment, reviews designs |
+| **doc-spec-gen** | `/doc-spec-gen` | Generates implementation-ready specs from verified system docs, runs cross-spec consistency checks |
+| **ui-designer** | `/ui-designer` | Runs design discovery conversations, generates design tokens and component libraries, creates screen mockups with visual feedback loops, produces implementation task breakdowns |
+| **implementer** | `/implementer` | Generates unified task queues from specs, tracks implementation progress, handles runtime failures and regressions, reconciles external changes, feeds spec gaps back into the pipeline |
 
 ---
 
-## How It Works
-
-### Document Pipeline
+## How the Pipeline Works
 
 ```mermaid
 flowchart LR
     classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
     classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
-    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
 
-    R["Research"]:::human -->|"discuss"| P["Proposal"]:::ai
-    P -->|"human refines"| REV["Review"]:::gate
-    REV -->|"fix loop"| REV
-    REV -->|"APPROVE"| M["Merge"]:::gate
-    M --> V["Verify"]:::gate
+    I["Idea"]:::human --> R["Research &\nDocument"]:::human
+    R --> C["Library\nContext"]:::ai
+    C --> D["Design"]:::human
+    D --> S["Specs"]:::ai
+    S --> B["Build"]:::human
+    B -.->|"spec gaps"| R
+    B -.->|"context gaps"| C
 ```
 
-Every proposal includes a **[Change Manifest](docs/doc-researcher.md#change-manifest)** — a table mapping each change to its target doc, section, change type, and research finding. The [reviewer](docs/doc-reviewer.md#review) verifies this contract. The [verify step](docs/doc-reviewer.md#verify) confirms the merge was complete.
+> Amber = human-in-the-loop. Blue = AI-driven. Dotted = feedback loops.
 
-### Design Pipeline
+It's called Clarity **Loop** because problems flow backward, not just forward.
 
-```mermaid
-flowchart LR
-    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
-    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+**Every stage loops internally.** AI generates a draft, you review it, give feedback, it refines, you approve. This micro-loop runs at every stage — research docs, proposals, design mockups, specs. Nothing advances until you're satisfied.
 
-    S["Setup"]:::human -->|"discovery"| T["Tokens"]:::human
-    T --> C["Components"]:::human
-    C --> M["Mockups"]:::human
-    M --> B["Build Plan"]:::human
-```
+**Implementation loops back to the source.** When a build error traces to a wrong API call, that's a *context gap* — the pipeline routes it back to library context, not a code-level hack. When a spec is missing an edge case, that's a *spec gap* — it feeds back to research, gets documented, and flows forward again through review and specs. The fix happens where the mistake originated.
 
-The design pipeline supports **Pencil MCP** (generates .pen files from scratch with visual feedback loops) and a **markdown fallback** (same documentation, no visual artifacts). Both produce DESIGN_SYSTEM.md, UI_SCREENS.md, and DESIGN_TASKS.md. See [ui-designer docs](docs/ui-designer.md) for full details.
+**Audits catch what individual changes miss.** Each proposal might be fine in isolation, but cumulative drift across 10 proposals can silently move the system away from its goals. Periodic audits compare the full documentation set against itself, flagging contradictions, stale claims, and goal drift — then feeding findings back into targeted research cycles.
 
-### Implementation Pipeline
+### Key Mechanisms
 
-```mermaid
-flowchart LR
-    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
-    classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
-    classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
+**Protected system docs** — A `PreToolUse` hook blocks all direct writes to `{docsRoot}/system/`. Changes go through the pipeline: research, proposal, review, merge, verify.
 
-    S["/implementer start"]:::human -->|"task queue"| R["/implementer run"]:::human
-    R -->|"fix tasks"| R
-    R -->|"all done"| V["/implementer verify"]:::gate
-    R -.->|"spec gap"| FB["Pipeline feedback"]:::ai
-```
+**Library context files** — Per-library curated knowledge with three-layer progressive disclosure. The researcher creates them from official docs and context7.com. The implementer loads only what's relevant per task (~50-2000 tokens). Context is version-pinned — it matches the library version in use, not a calendar date.
 
-The implementer generates a unified TASKS.md from all spec artifacts (tech specs + design tasks), processes them as a queue with acceptance criteria verification, and handles three classes of disruption: **runtime failures** (fix tasks with cascade re-verification), **external code changes** (reconciliation on resume via git diff), and **spec gaps** (triaged by severity — trivial patches inline, significant gaps pause and feed back into the documentation pipeline). See [implementer docs](docs/implementer.md) for full details.
+**Manifest-based orientation** — Skills read a lightweight auto-generated index instead of every system doc. Targeted reads keep token costs low.
 
-### System Doc Protection
+**Persistent state** — Every decision, task status, spec gap, and fix task is recorded in markdown files. Sessions crash, context compresses, models change — the pipeline picks up where it left off.
 
-A [`PreToolUse` hook](docs/hooks.md#protect-system-docs) blocks all direct writes to `{docsRoot}/system/`. Three operations can temporarily authorize edits via a `.pipeline-authorized` marker:
+**Audit and drift detection** — Periodic health checks across all system docs. Drift analysis compares audit trends over time. Code-doc sync checks claims in docs against the actual codebase.
 
-| Operation | When | Purpose |
-|-----------|------|---------|
-| `bootstrap` | Initial doc creation | First-time setup |
-| `merge` | Applying approved proposals | Pipeline-reviewed changes |
-| `correct` | Targeted fixes from audit/review | Diagnosis already clear |
+---
 
-The marker is created before edits and removed immediately after. If a skill finds a stale marker on startup, it helps clean up the interrupted operation. See [pipeline concepts](docs/pipeline-concepts.md#system-doc-protection) for details.
+## Design Principles
 
-### Manifest-Based Context Loading
+> **AI does the work. Humans make the calls. Files hold the truth.**
 
-Instead of reading every system doc to orient, skills read `{docsRoot}/system/.manifest.md` — a lightweight auto-generated index with file metadata, section headings with line ranges, and cross-references. Skills then do targeted reads of only the sections they need. The manifest auto-regenerates via a [`PostToolUse` hook](docs/hooks.md#generate-manifest) whenever system docs change.
+1. **React, don't originate.** The human never faces a blank page. The AI generates first — a draft, a mockup, a task queue — and the human reacts.
 
-### Emerged Concepts
+2. **Judgment is the bottleneck, not effort.** The pipeline minimizes human effort but maximizes human judgment. Every gate is an approval.
 
-During any pipeline phase, if a new idea surfaces that isn't tracked, it gets captured in STATUS.md. The [emerged concepts](docs/pipeline-concepts.md#emerged-concepts) table is a parking lot — concepts can be scoped into the research queue, deferred, or discarded.
+3. **The system remembers.** Decisions are recorded with rationale in persistent files. Conversations are ephemeral; artifacts are permanent.
+
+4. **Structured iteration beats one-shot generation.** Everything loops: generate, present, feedback, refine. The antidote to AI slop.
+
+5. **Process protects the product — proportionally.** Triage determines depth. Trivial changes skip gates; complex changes get the full pipeline.
+
+6. **Tools enhance, never gate.** The pipeline works with zero external tools. Pencil MCP and library context add richness, but the core is always available.
+
+---
+
+## Prior Art
+
+Clarity Loop was designed after studying [BMAD](https://docs.bmad-method.org/) (enterprise-grade AI SDLC with 21 agent personas) and [GSD](https://github.com/glittercowboy/get-shit-done) (anti-bureaucracy spec-driven framework). It borrows BMAD's complexity routing and GSD's human discussion phase, but adds what neither has:
+
+- Multi-round human discussion loops with persistent state across sessions
+- Cross-document consistency verification (docs reviewed as a system, not individually)
+- Visual design generation from written requirements
+- Per-library context files with progressive disclosure for accurate implementation
+- Audit and drift detection with trend analysis
+- Implementation tracking with reconciliation, fix tasks, and spec gap feedback
+
+For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md)
 
 ---
 
 ## Documentation
 
-Detailed documentation for every feature:
-
 | Document | Covers |
 |----------|--------|
-| [doc-researcher](docs/doc-researcher.md) | Bootstrap, triage, research, structure, proposal modes |
+| [doc-researcher](docs/doc-researcher.md) | Bootstrap, triage, research, structure, proposal, context modes |
 | [doc-reviewer](docs/doc-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
 | [doc-spec-gen](docs/doc-spec-gen.md) | Spec generation, waterfall gate, cross-spec consistency review |
-| [implementer](docs/implementer.md) | Start, run, verify, status, sync modes, unified TASKS.md, queue semantics, fix tasks, reconciliation |
 | [ui-designer](docs/ui-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
-| [Pipeline Concepts](docs/pipeline-concepts.md) | System doc protection, manifest, tracking files, pipeline depth, configuration, emerged concepts |
-| [Hooks](docs/hooks.md) | PreToolUse protection, PostToolUse manifest generation, init script |
-| [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md) | Prior art analysis, design lineage, decision log |
+| [implementer](docs/implementer.md) | Start, run, verify, status, sync modes, task queue, fix tasks, reconciliation |
+| [Pipeline Concepts](docs/pipeline-concepts.md) | System doc protection, manifest, tracking files, context files, configuration |
+| [Hooks](docs/hooks.md) | PreToolUse protection, PostToolUse manifest generation |
 
-### Tracking Files
+### Pencil MCP (Optional)
 
-| File | Purpose |
-|------|---------|
-| `RESEARCH_LEDGER.md` | All research cycles — ID, topic, type, status, open questions |
-| `PROPOSAL_TRACKER.md` | All proposals — ID, title, research ref, status, review round, conflicts |
-| `STATUS.md` | High-level dashboard — pipeline state, emerged concepts, research queue |
-| `TASKS.md` | Unified implementation task queue — status, dependencies, acceptance criteria |
-| `IMPLEMENTATION_PROGRESS.md` | Session persistence — task status, spec gaps, fix tasks, external changes |
-
-See [Pipeline Concepts: Tracking Files](docs/pipeline-concepts.md#tracking-files) for field definitions and lifecycle details.
+The ui-designer works with or without [Pencil](https://www.pencil.dev/) — a design-as-code tool with an MCP server. With Pencil, you get live visual design on an infinite canvas. Without it, you get equivalent structured markdown specs. See [Pencil setup](docs/ui-designer.md#pencil-setup) for installation.
 
 ---
 
@@ -396,14 +229,15 @@ clarity-loop/
     plugin.json                     Plugin manifest
     marketplace.json                Marketplace catalog
   skills/
-    doc-researcher/
+    doc-researcher/                 Research, proposals, library context
       SKILL.md
       references/
+        bootstrap-guide.md
         research-template.md
         proposal-template.md
         document-plan-template.md
-        bootstrap-guide.md
-    doc-reviewer/
+        context-mode.md
+    doc-reviewer/                   Review, merge, verify, audit
       SKILL.md
       references/
         re-review-mode.md
@@ -414,18 +248,18 @@ clarity-loop/
         fix-mode.md
         sync-mode.md
         design-review-mode.md
-    doc-spec-gen/
+    doc-spec-gen/                   Spec generation
       SKILL.md
       references/
         spec-consistency-check.md
-    implementer/
+    implementer/                    Task queue, implementation tracking
       SKILL.md
       references/
         start-mode.md
         run-mode.md
         verify-mode.md
         sync-mode.md
-    ui-designer/
+    ui-designer/                    Design system, mockups
       SKILL.md
       references/
         setup-mode.md
@@ -435,90 +269,41 @@ clarity-loop/
         design-checklist.md
   hooks/
     hooks.json
-    config.js                       Shared config loader
-    protect-system-docs.js          PreToolUse: blocks direct system doc edits
-    generate-manifest.js            PostToolUse: auto-regenerates manifest
+    config.js
+    protect-system-docs.js
+    generate-manifest.js
   scripts/
-    init.js                         Init script (Node.js, cross-platform)
-    init.sh                         Thin wrapper
+    init.js
+    init.sh
   templates/
     research-ledger.md
     proposal-tracker.md
     status.md
-  docs/
-    doc-researcher.md               doc-researcher skill documentation
-    doc-reviewer.md                 doc-reviewer skill documentation
-    doc-spec-gen.md                 doc-spec-gen skill documentation
-    implementer.md                  implementer skill documentation
-    ui-designer.md                  ui-designer skill documentation
-    pipeline-concepts.md            Core pipeline concepts
-    hooks.md                        Hook system documentation
-    research/
-      DOC_PIPELINE_PLUGIN.md        Design lineage and decision log
+  docs/                             Detailed documentation
 ```
-
----
-
-## Pencil MCP Setup
-
-The ui-designer skill works in two modes: **visual** (with Pencil MCP) and **markdown fallback** (without it). Both produce the same documentation artifacts, but Pencil gives you live visual design on an infinite canvas with a generate-screenshot-feedback-refine loop.
-
-**What is Pencil?** A design-as-code tool that runs as a VS Code/Cursor extension or standalone desktop app. It uses `.pen` files (JSON-based, git-friendly) and exposes an MCP server locally — no cloud dependency. AI assistants can read, create, and modify designs programmatically through MCP tools like `batch_design`, `get_screenshot`, `set_variables`, and `snapshot_layout`.
-
-### Install Pencil
-
-| Platform | How |
-|----------|-----|
-| **VS Code / Cursor** | Search "Pencil" in Extensions, click Install |
-| **macOS** | Download `.dmg` from [pencil.dev](https://www.pencil.dev/) |
-| **Linux** | `.deb` package or `.AppImage` from [pencil.dev](https://www.pencil.dev/) |
-
-### Verify MCP Connection
-
-1. Open Pencil (extension or desktop app)
-2. Open or create a `.pen` file
-3. The MCP server starts automatically — no manual configuration needed
-4. In Claude Code, the ui-designer skill auto-detects Pencil via `ToolSearch` at startup
-
-If Pencil isn't detected, the skill falls back to structured markdown specs. You can install Pencil later and re-run `/ui-designer setup` to switch to visual mode.
-
-For full documentation: [docs.pencil.dev](https://docs.pencil.dev/) | [AI Integration Guide](https://docs.pencil.dev/getting-started/ai-integration) | [.pen File Format](https://docs.pencil.dev/core-concepts/pen-files)
 
 ---
 
 ## Requirements
 
-- [Claude Code](https://claude.ai/code) v1.0.33 or later
-- Node.js v18+ (for init script and hooks)
+- [Claude Code](https://claude.ai/code) v1.0.33+
+- Node.js v18+ (init script and hooks)
 - No other dependencies
 
-Optional: [Pencil](https://www.pencil.dev/) for visual design generation in the ui-designer skill (see setup above).
+Optional: [Pencil](https://www.pencil.dev/) for visual design generation.
 
 ---
 
 ## Troubleshooting
 
-**Skills don't show up after install**
+**Skills don't show up** — Restart your Claude Code session. Skills load at session start.
 
-Restart your Claude Code session. The plugin system loads skills at session start — a fresh install mid-session won't be picked up until you restart.
-
-**SSH authentication error during install**
-
-```
-git@github.com: Permission denied (publickey).
-```
-
-Claude Code clones plugins via git. If your machine doesn't have SSH keys configured for GitHub, the clone fails. Fix by telling git to use HTTPS:
-
+**SSH auth error during install** — Claude Code clones via git. If SSH isn't configured for GitHub:
 ```bash
 git config --global url."https://github.com/".insteadOf "git@github.com:"
 ```
 
-Then retry the install.
-
-**Install shows "(no content)" with no confirmation**
-
-This is a known feedback gap in the CLI — the plugin likely installed successfully. Verify by restarting your session and checking if the slash commands appear (type `/doc-` to see autocomplete).
+**Install shows "(no content)"** — Known CLI feedback gap. Restart and check if `/doc-` autocomplete works.
 
 ---
 

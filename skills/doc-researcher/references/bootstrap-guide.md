@@ -18,8 +18,8 @@ Check `docs/system/` for existing `.md` files (excluding `.manifest.md`):
 - **Docs found** → the project already has system docs, bootstrap isn't needed. Suggest
   the normal pipeline (research → proposal → review → merge) instead.
 
-If `docs/system/` doesn't exist at all, run `node init.js` first to scaffold the directory
-structure and tracking files.
+If `docs/system/` doesn't exist at all, auto-scaffold by running init.js (see Step 1 below).
+Do NOT ask the user to run it manually — just run it.
 
 ---
 
@@ -29,8 +29,21 @@ For a brand-new project where nothing exists yet.
 
 #### Step 1: Scaffold
 
-Check if tracking files exist (`docs/RESEARCH_LEDGER.md`, `docs/PROPOSAL_TRACKER.md`,
-`docs/STATUS.md`). If not, tell the user to run `node init.js` first, or offer to run it.
+Check if the docs directory structure exists (tracking files like `docs/RESEARCH_LEDGER.md`,
+`docs/PROPOSAL_TRACKER.md`, `docs/STATUS.md`, and subdirectories like `docs/system/`).
+
+If anything is missing, run init.js automatically:
+
+```bash
+node <plugin-root>/scripts/init.js
+```
+
+Where `<plugin-root>` is the Clarity Loop plugin directory. The init script is idempotent —
+safe to run even if some directories already exist. It handles collision detection, creates
+all directories, copies tracking file templates, and sets up .gitignore entries.
+
+Tell the user: "Setting up the documentation structure..." and then run it. Do NOT ask the
+user to run it manually — this is a transparent setup step, not a user action.
 
 #### Step 2: Discovery Conversation
 
