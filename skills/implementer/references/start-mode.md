@@ -41,6 +41,21 @@ Run these checks before generating anything:
      b) Run `/doc-researcher research 'testing strategy'` to create proper specs first
      c) Skip — implement features first, address testing later
 
+5. **Context freshness** — If `{docsRoot}/context/.context-manifest.md` exists:
+   - Read the manifest, get all library entries
+   - For each library: compare version in `_meta.md` against `package.json` (or equivalent
+     dependency file). Flag mismatches:
+     "Context for [library] covers version [X] but package.json has [Y]. Context may be
+     stale. Options:
+     a) Run `/doc-researcher context [library]` to update
+     b) Continue with current context (your call — may cause build issues)
+     c) Skip context for this library"
+   - Check `Last verified` dates against freshness thresholds (default: 7 days). Warn on
+     stale context but don't block.
+   - If no context manifest exists: "No context files found. Context files help avoid stale
+     library knowledge during implementation. Run `/doc-researcher context` to create them,
+     or continue without. [Continue/Create context]"
+
 ---
 
 ### Step 2: Read All Spec Artifacts

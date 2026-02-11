@@ -124,6 +124,15 @@ Before generating anything, verify the pipeline is clear:
    `verified`? If so, warn: "Proposal P-NNN was approved but not yet verified. Run
    `/doc-reviewer verify` first to ensure system docs are consistent."
 
+4. **Check context freshness** — If `{docsRoot}/context/.context-manifest.md` exists,
+   check version alignment and freshness dates for all libraries. If any context is stale
+   (version mismatch with `package.json` or past freshness threshold), warn: "Context for
+   [library] may be stale. Specs generated with stale context may produce implementation
+   issues. Run `/doc-researcher context [library]` to update, or continue anyway?"
+   If no context exists but system docs reference a tech stack, note (advisory only):
+   "No context files found. Context files improve implementation accuracy. Consider
+   running `/doc-researcher context` before or after spec generation."
+
 If all clear, proceed. If warnings were issued and the user confirms, proceed with a note
 in the spec manifest about the caveat.
 

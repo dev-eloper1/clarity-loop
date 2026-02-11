@@ -107,9 +107,19 @@ Implement the task. This is where Claude Code writes code:
 
 1. Read the task's spec reference in full
 2. Read any dependency tasks' files (for context on what already exists)
-3. Implement the code to meet the acceptance criteria
-4. Test/verify the implementation against each criterion
-5. Record files modified
+3. **Load relevant context** — if `{docsRoot}/context/.context-manifest.md` exists:
+   a. Read the manifest to identify libraries relevant to this task (match spec references,
+      file types, and task description against library names and tags)
+   b. For each relevant library: read `_meta.md`, match task category against file tags
+      in the inventory, load matching detail files
+   c. Inject loaded context after spec reference, before implementation
+   d. Record which context files were loaded in IMPLEMENTATION_PROGRESS.md
+   (See `skills/doc-researcher/references/context-mode.md` → "Standard Loading Protocol"
+   for the full protocol.)
+4. Implement the code to meet the acceptance criteria
+5. Test/verify the implementation against each criterion
+6. Record files modified and update `_meta.md` "Tasks Implemented With This Context" for
+   each library whose context was loaded
 
 For parallel groups (if user approved in start mode):
 - Fork subagents for each independent group
@@ -153,9 +163,23 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
    - `runtime-error`: Code throws an error during execution
    - `regression`: Previously-passing acceptance criteria now fail
    - `integration-failure`: Two modules don't work together as specs described
+   - `context-gap`: Error traced to stale or missing library knowledge (wrong import path,
+     deprecated API, incorrect method signature). Distinguished from `runtime-error` by
+     checking whether the error matches a known library API mismatch pattern.
+
+   For `context-gap` issues:
+   - Check if context files exist for the library in question
+   - If no context: "Build error caused by stale [library] knowledge. No context file
+     exists. Run `/doc-researcher context [library]` to create one? [Y/n]"
+   - If context exists but may be wrong: "Context for [library] may be inaccurate (version
+     [X]). Update context? Note: [N] tasks were implemented with current context — updating
+     will version the context, not replace it. [Y/n]"
+   - If user approves: researcher updates/versions context, implementer retries the task
 
 2. **Distinguish from spec gaps**: A fix task means "the spec is right, the code is wrong."
    If the issue is that the spec is incomplete or wrong, use gap triage (Step 5) instead.
+   A `context-gap` means "the spec is right, but the library knowledge used to implement
+   it is wrong or missing."
 
 3. **Create the fix task**:
    ```

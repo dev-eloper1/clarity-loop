@@ -117,6 +117,36 @@ High-level pipeline dashboard.
 
 ---
 
+## Context Files
+
+Context files capture the delta between the LLM's training data and current library reality. They are NOT full API references, tutorials, or architectural decisions — those belong in official docs and system docs respectively. Context files contain: version pinning, breaking changes, correct imports, working patterns, common errors, and gotchas.
+
+### Three-Layer Progressive Disclosure
+
+| Layer | File | Loads When | Token Cost |
+|-------|------|-----------|-----------|
+| 1 — Index | `.context-manifest.md` | Always (task start) | ~50/library |
+| 2 — Overview | `{library}/_meta.md` | Working with that library | ~500-2000 |
+| 3 — Detail | `{library}/{topic}.md` | On demand during implementation | Variable |
+
+### Storage
+
+- **Project-local**: `{docsRoot}/context/` — committed to git, reviewed by user
+- **Global**: `~/.claude/context/` — personal, cross-project, promoted from local
+- **Precedence**: Project-local > Global
+
+### Lifecycle
+
+Created by doc-researcher (context mode) → consumed by all skills via standard loading protocol → staleness detected by version pinning → updated/versioned by researcher → optionally promoted to global after validation.
+
+### Version Pinning
+
+Context is stale when the library version changes, not when time passes. Each `_meta.md` tracks which implementation tasks depend on it. Context is versioned (not replaced) when a library upgrade occurs mid-implementation.
+
+For the full context creation process, loading protocol, and staleness model, see the [context mode reference](../skills/doc-researcher/references/context-mode.md).
+
+---
+
 ## Emerged Concepts
 
 During any pipeline phase — research, review, implementation, or casual conversation — new ideas surface that aren't currently tracked. These get captured immediately in the STATUS.md Emerged Concepts table.
@@ -165,6 +195,7 @@ All paths derive from `docsRoot`:
 - `{docsRoot}/reviews/` — review artifacts
 - `{docsRoot}/specs/` — generated specs
 - `{docsRoot}/designs/` — design files
+- `{docsRoot}/context/` — per-library knowledge files (progressive disclosure)
 
 ### When to Change docsRoot
 
@@ -190,6 +221,11 @@ After initialization, your project has this structure:
     design/                     Design review artifacts
   specs/                        Generated specs + design specs
   designs/                      Design files (.pen, DESIGN_PROGRESS.md)
+  context/                      Per-library knowledge files (progressive disclosure)
+    .context-manifest.md        Layer 1: library index
+    {library}/                  One folder per library
+      _meta.md                  Layer 2: overview + file inventory
+      {topic}.md                Layer 3: detail files
   RESEARCH_LEDGER.md
   PROPOSAL_TRACKER.md
   STATUS.md
@@ -199,7 +235,7 @@ After initialization, your project has this structure:
 
 ## Related
 
-- [doc-researcher](doc-researcher.md) — Uses manifest, tracking files, and protection model
+- [doc-researcher](doc-researcher.md) — Uses manifest, tracking files, protection model, and context mode
 - [doc-reviewer](doc-reviewer.md) — Manages protection markers during merge and correct
 - [doc-spec-gen](doc-spec-gen.md) — Checks tracking files for waterfall gate
 - [ui-designer](ui-designer.md) — Uses designs/ directory, DESIGN_PROGRESS.md

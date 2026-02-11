@@ -15,6 +15,7 @@ The research and proposal generation skill. Takes ideas from vague problem state
 | `research` | "research [topic]", "explore", "investigate" | Multi-turn research cycle with system doc context |
 | `structure` | "structure", "plan the docs" | Plan document structure after research approval |
 | `proposal` | "generate proposal", "proposal from R-NNN.md" | Convert approved research into a reviewable proposal |
+| `context` | "create context", "context [library]" | Create/update per-library knowledge files for accurate implementation |
 
 ---
 
@@ -208,6 +209,45 @@ This manifest is the contract that the [reviewer](doc-reviewer.md) verifies and 
 The proposal is added to [PROPOSAL_TRACKER.md](pipeline-concepts.md#tracking-files) with status `draft`. The skill tells you: "Proposals generated. Read them over and let me know when you'd like to run them through the review gate."
 
 Review is NOT auto-triggered — you read and refine at your own pace, then explicitly request review. See [doc-reviewer](doc-reviewer.md) for the review process.
+
+---
+
+## Context Mode
+
+Creates and maintains per-library context files that bridge the gap between LLM training data and current library reality. Context files use a three-layer progressive disclosure model and are consumed by all skills.
+
+### Entry Points
+
+- **Auto-offer**: After bootstrap generates an Architecture doc, the skill offers to create context for the declared tech stack
+- **Manual**: `/doc-researcher context [library]` — create or refresh for a specific library or all libraries
+- **Feedback loop**: The implementer's `context-gap` classification routes library knowledge errors back here
+
+### What Context Files Contain
+
+The delta between what the LLM knows and what's actually true for the library version in use:
+
+| Content | Example |
+|---------|---------|
+| Version pinning | "This covers Drizzle ORM 0.38.x on better-sqlite3 11.x" |
+| Breaking changes | "In v4, Tailwind replaced tailwind.config.js with CSS-based @theme" |
+| Correct imports | "Use `import { sqliteTable } from 'drizzle-orm/sqlite-core'`" |
+| Working patterns | Tested code snippets for common operations |
+| Common errors | Error messages and their fixes |
+| Gotchas | Non-obvious behavior the LLM would miss |
+
+### Three-Layer Disclosure
+
+| Layer | File | When Loaded | Cost |
+|-------|------|-------------|------|
+| 1 — Index | `.context-manifest.md` | Always (task start) | ~50 tokens/library |
+| 2 — Overview | `{library}/_meta.md` | Working with that library | ~500-2000 tokens |
+| 3 — Detail | `{library}/{topic}.md` | On demand | Variable |
+
+### Staleness Model
+
+Context staleness is **version-pinned**, not time-based. A context file is valid as long as the project uses the version it covers. Version changes trigger update/versioning decisions. A 1-week soft check catches errata within the current version range.
+
+For the full process, loading protocol, and versioning rules, see the [context mode reference](../skills/doc-researcher/references/context-mode.md).
 
 ---
 

@@ -351,6 +351,21 @@ The skill uses dual-write tracking: TASKS.md is the persistent source of truth (
 
 **Principles**: Structured iteration (implement → verify → feedback → continue loop) + The system remembers (TASKS.md + IMPLEMENTATION_PROGRESS.md persist across sessions) + Judgment is the bottleneck (user approves task order, parallel groups, reconciliation decisions) + React, don't originate (AI generates task plan, user reacts and adjusts).
 
+### 13. Implementation Context as Progressive Knowledge Files
+
+**Question**: How should the plugin provide accurate, current library knowledge to skills?
+
+**Decision**: Per-library context files using three-layer progressive disclosure (manifest index → library overview → detail files). Created by the doc-researcher through web research against official docs and context7.com (website, not MCP). Consumed by all skills via a standard loading protocol. Staleness is version-pinned, not time-based — context matches the library version in use, and is versioned (not replaced) when the project upgrades. Stored locally in `{docsRoot}/context/`, optionally promoted to global `~/.claude/context/`.
+
+**Rationale**:
+- Context7 MCP was rejected because it bloats the session context with raw API dumps (~9.7k tokens per query). Context files are fetched once during research, distilled into curated files, and loaded selectively (~50-2000 tokens per task).
+- The researcher already does web research and produces structured output — context creation is a natural extension, not a new skill.
+- Version-pinned staleness prevents mid-implementation context churn that would make existing code inconsistent with updated context.
+- Three-layer disclosure is a proven pattern (Claude Code skills, Cursor rules, MCP meta-tools) with minimal overhead (1-2 extra file reads) and significant context savings.
+- Local-first storage means context is a project artifact (committed, reviewed), while global promotion enables cross-project reuse of validated knowledge.
+
+**Principles**: The system remembers (context files persist library knowledge across sessions) + Tools enhance, never gate (context files are optional — pipeline works without them) + Judgment is the bottleneck (user reviews all context before it's written, decides on version updates and global promotion) + React, don't originate (researcher generates context, user evaluates and approves).
+
 ---
 
 ## What We Took from Each Framework

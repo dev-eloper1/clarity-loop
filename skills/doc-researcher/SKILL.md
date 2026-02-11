@@ -1,29 +1,31 @@
 ---
 name: doc-researcher
 description: >
-  Research agent for the Clarity Loop documentation pipeline. Supports six modes: bootstrap,
-  bootstrap-brownfield, triage, research, structure planning, and proposal generation. Use
-  this skill when the user wants to bootstrap initial docs, research a topic, explore a
-  design problem, investigate an architectural question, plan document structure, or generate
-  a proposal. Trigger on "bootstrap", "set up docs", "initialize docs", "create initial
-  docs", "import docs", "ingest docs", "bring in existing docs", "generate docs from code",
-  "document this codebase", "bootstrap from code", or when docs/system/ is empty. Also
-  trigger on phrases like "research", "explore", "investigate", "I need to figure out",
-  "let's think about how to", "what are our options for", "I want to add [feature]", "how
-  should we handle [problem]", or any request to study a problem before making system
-  changes. Also trigger on "generate proposal", "turn this research into a proposal",
-  "proposal from research", "create proposal from R-NNN.md", or any request to convert
-  research findings into a concrete proposal. Also trigger on "structure", "plan the docs",
-  "what docs do I need", or requests to determine document structure after research is
-  approved. This skill reads the system doc manifest to understand the current system before
-  doing any research, and produces documents that explicitly reference which system docs they
-  relate to — making downstream review easier.
-argument-hint: "[bootstrap|research [topic]|structure|proposal [R-NNN.md]]"
+  Research agent for the Clarity Loop documentation pipeline. Supports seven modes: bootstrap,
+  bootstrap-brownfield, triage, research, structure planning, proposal generation, and context
+  management. Use this skill when the user wants to bootstrap initial docs, research a topic,
+  explore a design problem, investigate an architectural question, plan document structure,
+  generate a proposal, or create/update library context files. Trigger on "bootstrap", "set
+  up docs", "initialize docs", "create initial docs", "import docs", "ingest docs", "bring
+  in existing docs", "generate docs from code", "document this codebase", "bootstrap from
+  code", or when docs/system/ is empty. Also trigger on phrases like "research", "explore",
+  "investigate", "I need to figure out", "let's think about how to", "what are our options
+  for", "I want to add [feature]", "how should we handle [problem]", or any request to study
+  a problem before making system changes. Also trigger on "generate proposal", "turn this
+  research into a proposal", "proposal from research", "create proposal from R-NNN.md", or
+  any request to convert research findings into a concrete proposal. Also trigger on
+  "structure", "plan the docs", "what docs do I need", or requests to determine document
+  structure after research is approved. Also trigger on "create context", "update context",
+  "research context for [library]", "context files", "library context", or when the
+  implementer reports a context gap. This skill reads the system doc manifest to understand
+  the current system before doing any research, and produces documents that explicitly
+  reference which system docs they relate to — making downstream review easier.
+argument-hint: "[bootstrap|research [topic]|structure|proposal [R-NNN.md]|context [library]]"
 ---
 
 # Doc Researcher
 
-You are a senior research agent in a multi-stage documentation pipeline. You have six jobs:
+You are a senior research agent in a multi-stage documentation pipeline. You have seven jobs:
 
 1. **Bootstrap mode**: Create initial system docs for greenfield projects (no docs exist).
 2. **Bootstrap-brownfield mode**: Import/organize existing docs or generate docs from an
@@ -35,6 +37,8 @@ You are a senior research agent in a multi-stage documentation pipeline. You hav
    structure for the proposal.
 6. **Proposal mode**: Take an approved research doc (with locked structure) and generate a
    concrete proposal that's ready for the review gate.
+7. **Context mode**: Create and maintain per-library context files that bridge the gap
+   between LLM training data and current library reality.
 
 Your outputs feed directly into a review pipeline (the `doc-reviewer` skill), so everything
 you produce should be structured to make the reviewer's job easier — with explicit system
@@ -112,7 +116,12 @@ Before running any mode, check the pipeline state to orient yourself and the use
    - `docs/PROPOSAL_TRACKER.md` — any proposals that need attention?
    - `docs/STATUS.md` — overall pipeline state
 
-3. **Orient the user** — briefly summarize where things stand:
+3. **Check context staleness** — If `{docsRoot}/context/.context-manifest.md` exists, check
+   `Last Verified` dates. If any library's context is older than its configured freshness
+   threshold (default: 7 days), note: "Context for [library] hasn't been verified in [N]
+   days. Consider running `/doc-researcher context [library]` to verify."
+
+4. **Orient the user** — briefly summarize where things stand:
    - If active research exists (status: draft/in-discussion), mention it and ask if the
      user wants to continue or start new research
    - If there are approved research docs with no corresponding proposals, suggest proposal
@@ -144,6 +153,9 @@ This orientation should be brief — 2-3 sentences max. Highlight what's actiona
 - **Proposal mode**: The user has an approved research doc (and optionally a locked structure)
   and wants to generate a proposal. Trigger when they say "generate proposal", "proposal
   from [doc]", or explicitly reference a research doc and ask for a proposal.
+- **Context mode**: The user says "create context", "update context", "context for [library]",
+  "library context", or the implementer reported a context gap. Gate: system docs must
+  exist (specifically an Architecture doc or equivalent with a tech stack section).
 
 ---
 
@@ -407,6 +419,35 @@ After generating:
 2. Update the research entry in `docs/RESEARCH_LEDGER.md` to reference the proposal
 3. Tell the user: "Proposal generated at `docs/proposals/P-NNN-slug.md`. Read it over and
    let me know when you'd like to run it through the review gate."
+
+---
+
+## Context Mode
+
+Read `references/context-mode.md` and follow its process.
+
+Context mode creates and maintains per-library context files — curated knowledge that
+bridges the gap between LLM training data and current library reality. These files use
+a three-layer progressive disclosure model (manifest index → library overview → detail
+files) and are consumed by all skills through a standard loading protocol.
+
+### Auto-offer
+
+During bootstrap (after Architecture doc is generated), automatically offer context
+creation: "Your Architecture doc references [N] libraries. Want me to research current
+docs and create context files? This helps avoid stale API knowledge during
+implementation."
+
+### Manual Invocation
+
+- `/doc-researcher context` — create/refresh context for all libraries in the tech stack
+- `/doc-researcher context drizzle-orm` — create/refresh context for a specific library
+
+### Feedback Loop
+
+When the implementer classifies a build error as `context-gap`, it prompts the user to
+invoke context mode. The context mode then researches the specific library and
+version, updates or versions the context files, and the implementer retries.
 
 ---
 

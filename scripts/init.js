@@ -206,6 +206,7 @@ async function main() {
     'reviews/design',
     'specs',
     'designs',
+    'context',
   ];
 
   for (const dir of dirs) {
