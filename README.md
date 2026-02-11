@@ -38,6 +38,8 @@ Clarity Loop manages five stages between "I have an idea" and "I have working co
 
 At every stage, the pattern is the same: **AI generates, human reviews, feedback refines, human approves.** Nothing advances without your judgment. And when implementation reveals that something upstream was wrong — a spec gap, a stale library pattern, an incomplete design — the pipeline loops back to fix the source, not paper over the symptom.
 
+Cutting across all stages, a **system-wide decision journal** (DECISIONS.md) captures every technology choice, architecture decision, conflict resolution, and "do not proceed" conclusion — with full rationale. Every skill reads it at session start, so decisions made on day 1 still constrain work on day 30.
+
 ---
 
 ## What It Looks Like
@@ -152,6 +154,7 @@ It's called Clarity **Loop** because problems flow backward, not just forward:
 | **Fixes breaking other things** | Fix tasks trigger automatic re-verification of all downstream completed tasks. |
 | **Docs drifting from code** | Code-doc sync extracts claims from docs and checks them against the actual codebase. |
 | **Full ceremony for trivial changes** | Triage routes typos to direct fixes. Correction mode handles audit findings without research cycles. |
+| **Decisions evaporating** | Every decision is logged to a system-wide journal (DECISIONS.md) with rationale. Every skill reads it at session start. Prior decisions constrain future work — no contradicting what was already settled. |
 | **Half-stale specs** | Waterfall gate blocks spec generation until all system docs are verified. |
 
 ---
@@ -183,6 +186,7 @@ Clarity Loop was designed after studying [BMAD](https://docs.bmad-method.org/) (
 - Visual design generation from written requirements
 - Per-library context files with progressive disclosure for accurate implementation
 - Audit and drift detection with trend analysis
+- System-wide decision journal that prevents re-discussion of settled questions
 - Implementation tracking with reconciliation, fix tasks, and spec gap feedback
 
 For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md)
