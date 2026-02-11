@@ -69,14 +69,19 @@ Before running any mode, check the pipeline state:
    authorization marker. A merge, bootstrap, or correction may have been interrupted. Resolve
    this before generating specs — use `/doc-reviewer` to clean up."
 
-2. **Check spec staleness** — If `docs/specs/.spec-manifest.md` exists:
+2. **Read decisions** — If `docs/DECISIONS.md` exists, scan the Decision Log for
+   technology stack choices and design pattern decisions that specs should reflect.
+   Specs must be consistent with recorded decisions — if a decision says "use PostgreSQL",
+   specs should not generate SQLite schemas.
+
+3. **Check spec staleness** — If `docs/specs/.spec-manifest.md` exists:
    - Read the `Generated` date and `Source docs` list from the manifest
    - Check each source doc's last-modified date (via file system or git)
    - If any system doc has been modified since the spec generation date, warn:
      "Specs were generated on [date] but these system docs have changed since:
      [list]. Consider regenerating specs to reflect the latest system docs."
 
-3. **Orient the user** — briefly note any issues found.
+4. **Orient the user** — briefly note any issues found.
 
 ---
 

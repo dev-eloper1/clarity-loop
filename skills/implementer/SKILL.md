@@ -73,7 +73,13 @@ All paths (`docs/system/`, `docs/specs/`, etc.) resolve relative to the configur
    exists, a previous session was interrupted. Tell the user and suggest cleanup before
    proceeding.
 
-2. **Implementation state check** — If `{docsRoot}/specs/IMPLEMENTATION_PROGRESS.md` exists:
+2. **Read decisions** — If `{docsRoot}/DECISIONS.md` exists, scan the Decision Log for
+   decisions with Pipeline Phase `implementation`, `spec-gen`, or `design`. These capture
+   prior spec gap resolutions, technology constraints, and design choices that affect how
+   tasks should be implemented. Surface relevant decisions when implementing tasks in
+   the same area.
+
+3. **Implementation state check** — If `{docsRoot}/specs/IMPLEMENTATION_PROGRESS.md` exists:
    - Read it. Resume from the last recorded state.
    - Tell the user: "Found existing implementation progress. [Summary of status — N tasks
      done, M remaining, any gaps or fix tasks]. Continuing from where we left off."
@@ -81,7 +87,7 @@ All paths (`docs/system/`, `docs/specs/`, etc.) resolve relative to the configur
      progress tracking (shouldn't happen, but handle gracefully). If neither exists, this is
      a fresh start — suggest `start` mode.
 
-3. **Orient the user** — briefly note any issues found.
+4. **Orient the user** — briefly note any issues found.
 
 ---
 

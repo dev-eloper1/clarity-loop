@@ -84,6 +84,7 @@ project/
 │   │   ├── proposals/       # Proposal reviews (REVIEW_*, VERIFY_*)
 │   │   └── audit/           # System audits (AUDIT_*)
 │   ├── specs/               # Generated specs (by doc-spec-gen skill)
+│   ├── DECISIONS.md          # Architectural decisions + conflict resolutions
 │   ├── RESEARCH_LEDGER.md   # Tracks all research cycles
 │   ├── PROPOSAL_TRACKER.md  # Tracks all proposals
 │   └── STATUS.md            # High-level dashboard
@@ -115,6 +116,11 @@ Before running any mode, check the pipeline state to orient yourself and the use
    - `docs/RESEARCH_LEDGER.md` — any research with status `draft` or `in-discussion`?
    - `docs/PROPOSAL_TRACKER.md` — any proposals that need attention?
    - `docs/STATUS.md` — overall pipeline state
+   - `docs/DECISIONS.md` — scan the Decision Log for prior decisions related to the
+     current topic. Before researching anything, check if the same question was already
+     decided (even if the decision was "do not proceed"). If a relevant decision exists,
+     surface it to the user: "Note: D-NNN decided [X] on [date]. Should we revisit, or
+     does this still hold?"
 
 3. **Check context staleness** — If `{docsRoot}/context/.context-manifest.md` exists, check
    `Last Verified` dates. If any library's context is older than its configured freshness

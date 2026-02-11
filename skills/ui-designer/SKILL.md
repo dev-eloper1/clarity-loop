@@ -94,6 +94,9 @@ Before running any mode, check the pipeline state:
 2. **Read tracking files** to understand current state:
    - `docs/STATUS.md` — overall pipeline state
    - `docs/PROPOSAL_TRACKER.md` — any unresolved proposals?
+   - `docs/DECISIONS.md` — scan for prior design decisions (Pipeline Phase `design`) and
+     technology constraints that affect the design (stack choices, component pattern
+     decisions). Apply these as constraints during setup and tokens modes.
 
 3. **Design state check** — Read `{docsRoot}/designs/DESIGN_PROGRESS.md` if it exists.
    If the file exists but cannot be parsed (missing expected sections, garbled content),

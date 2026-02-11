@@ -1,12 +1,17 @@
 # Decisions
 
-Tracks all architectural and conflict-resolution decisions in this project. The Project Context section captures the current understanding of the project. The Decision Log records every significant choice — including decisions **not** to proceed — with full rationale.
+The system-wide decision journal for this project. Every skill reads this file at session start and writes to it when decisions are made.
 
-Updated by all pipeline skills whenever a decision is made during research, review, merge, verification, correction, or implementation.
+**Two sections:**
+- **Project Context** — living summary of the project (kept current after merges that change architecture)
+- **Decision Log** — chronological entries for every decision that shapes the system
+
+**How this relates to other decision surfaces:**
+Research docs have a lightweight Decision Log table. Proposals have a Design Decisions table. Those capture decisions *in context* — useful while working on that research or proposal. This file is the *system-wide index* — decisions are extracted here so that every skill can check prior decisions before making new ones. If a decision only matters within a single research cycle and doesn't constrain future work, it stays local. If it could affect other skills, future research, or implementation, it propagates here.
 
 ## Project Context
 
-> This section is a living summary of everything known about the project. Update it as understanding evolves, but never delete history — when context changes, add a Decision Log entry explaining what changed and why, then update this section to reflect the new state.
+> Living summary of the project. Updated during bootstrap and after any merge that changes the architecture, constraints, or technology stack. When Project Context changes, add a Decision Log entry explaining what changed and why, then update this section.
 
 ### Purpose
 
@@ -36,48 +41,68 @@ Updated by all pipeline skills whenever a decision is made during research, revi
 
 ## Decision Log
 
-Each entry captures a decision, its full context, what was considered, and why the choice was made. Entries are added chronologically — newest at the bottom.
+Entries are added chronologically — newest at the bottom. Every skill reads this log at session start to avoid contradicting prior decisions.
 
-**Every conflict resolution, rejection, no-go conclusion, and design choice gets an entry.** This includes:
-- Research concluding "do not proceed" with a topic
-- Review fixes where you disagreed with the reviewer and kept the original
-- Merge conflicts where existing text was kept over proposed text (or vice versa)
-- Verification findings where the system doc version was preferred over the proposal
-- Spec conflicts resolved in favor of one interpretation
-- Implementation discoveries that changed a prior design choice
+### What Gets Logged
+
+Not every choice is a decision entry. The threshold is: **would a future skill or session need to know this to avoid contradicting it?**
+
+**Log it:**
 - Technology or library choices, additions, and removals
+- Architecture pattern decisions (monolith vs. microservices, auth strategy, data model choices)
+- Research concluding "do not proceed" — future research on the same topic needs to know
+- Proposal rejections with rationale — so the same approach isn't re-proposed
+- Merge conflict resolutions where the choice wasn't obvious
+- Implementation discoveries that changed a prior design assumption
+- Triage decisions for L2+ topics — why this complexity level was chosen
+- Spec gap resolutions where the user made a design call
 
-### Entry Format
+**Don't log it:**
+- Routine triage at L0/L1 — unless the user overrode the assessment
+- Mechanical corrections (typo fixes, broken references, formatting)
+- Proposal approvals without conflict — the approval itself is tracked in PROPOSAL_TRACKER.md
+- Implementation tasks completing normally — tracked in IMPLEMENTATION_PROGRESS.md
+- L1 spec gaps where the user accepted the default assumption unchanged
 
-> Copy this block for each new entry. Every field is required — if a field doesn't apply, write "N/A" rather than omitting it. The goal is that someone reading this entry in six months has enough context to understand the decision without reading any other document.
+### Entry Formats
+
+**Full entry** — for architectural decisions, technology choices, conflict resolutions, and anything where the reasoning is complex or the decision is likely to be revisited:
 
 ```markdown
 #### D-NNN — [Short descriptive title]
 
 **Date**: YYYY-MM-DD
-**Source**: [What triggered this decision — e.g., "R-001 §Findings", "P-003 review v2 blocking issue #2", "Merge conflict in ARCHITECTURE.md §Auth", "Implementation discovery during T-012", "User decision during discussion"]
-**Pipeline Phase**: [research | proposal | review | merge | verify | correct | spec-gen | implementation | ad-hoc]
-**Participants**: [Who was involved — e.g., "user + doc-reviewer", "user decision", "doc-researcher recommendation accepted by user"]
+**Source**: [What triggered this — e.g., "R-001 §Findings", "P-003 review v2", "Merge conflict in ARCHITECTURE.md §Auth", "Implementation gap G-003 during T-012"]
+**Pipeline Phase**: [research | proposal | review | merge | verify | correct | audit | sync | spec-gen | implementation | design | bootstrap | ad-hoc]
 
 **Context**:
-[What was the situation? What problem or question triggered this decision? Include enough background that a reader who hasn't seen the source documents can follow along. Reference specific documents and sections where relevant.]
+[What was the situation? What problem or question triggered this decision? Include enough background that a reader in six months can follow along.]
 
 **Options Considered**:
 1. **[Option A]** — [Description. Pros: ... Cons: ...]
 2. **[Option B]** — [Description. Pros: ... Cons: ...]
-3. **[Option C / Do nothing / Do not proceed]** — [Description. Pros: ... Cons: ...]
 
-**Decision**: [What was decided. Be explicit — "We will use X" or "We will NOT adopt Y" or "We will keep the existing Z unchanged".]
+**Decision**: [What was decided — "We will use X" or "We will NOT adopt Y".]
 
-**Rationale**: [Why this option over the others. What was the deciding factor? What tradeoff was accepted? If this reverses or supersedes a prior decision, explain what changed.]
+**Rationale**: [Why this option. What tradeoff was accepted? If this reverses a prior decision, explain what changed.]
 
-**Impact**:
-- Documents affected: [List specific docs and sections that were or will be modified]
-- Downstream effects: [Specs, tasks, or code that need to change as a result]
-- Risks accepted: [Any known downsides of this choice]
+**Impact**: [Docs affected, downstream effects, risks accepted.]
 
 **Status**: `active` | `superseded by D-NNN` | `revisited in D-NNN`
 ```
+
+**Compact entry** — for triage assessments, straightforward conflict resolutions, and decisions where the context is already documented elsewhere:
+
+```markdown
+#### D-NNN — [Short descriptive title]
+
+**Date**: YYYY-MM-DD | **Phase**: [phase] | **Source**: [ref]
+**Decision**: [What was decided.]
+**Rationale**: [One to two sentences — why.]
+**Status**: `active`
+```
+
+Use full entries by default. Use compact entries only when the source document (research doc, audit report, sync report) already contains the full context and options analysis — the compact entry just records which option was chosen and why.
 
 ---
 

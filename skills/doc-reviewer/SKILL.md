@@ -101,6 +101,7 @@ project/
 │   │       └── DESIGN_REVIEW_2026-02-09.md
 │   ├── designs/             # Design files (.pen, DESIGN_PROGRESS.md)
 │   ├── specs/               # Generated specs (by doc-spec-gen)
+│   ├── DECISIONS.md          # Architectural decisions + conflict resolutions
 │   ├── RESEARCH_LEDGER.md   # Research cycle tracking
 │   ├── PROPOSAL_TRACKER.md  # Proposal tracking
 │   └── STATUS.md            # High-level dashboard
@@ -139,6 +140,11 @@ Before running any mode, check the pipeline state to orient yourself and the use
      not `merged`), or `merging`?
    - `docs/RESEARCH_LEDGER.md` — any active research that might produce proposals?
    - `docs/STATUS.md` — overall pipeline state
+   - `docs/DECISIONS.md` — scan the Decision Log for prior decisions related to the
+     proposal or system docs under review. During review, check new proposals against
+     existing decisions — if a proposal contradicts or revisits a prior decision, flag it:
+     "This proposal conflicts with D-NNN which decided [X]. Is this an intentional
+     reversal?"
 
 3. **Orient the user** — briefly summarize where the pipeline stands:
    - If proposals have `in-review` status, mention them

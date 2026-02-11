@@ -76,21 +76,18 @@ Four files in `{docsRoot}/` track pipeline state. They're the dashboard for unde
 
 ### DECISIONS.md
 
-Tracks all architectural and conflict-resolution decisions with full context and rationale.
+The system-wide decision journal. Every skill reads this at session start and writes to it when decisions are made.
 
 | Section | Content |
 |---------|---------|
-| **Project Context** | Living summary of the project: purpose, architecture, constraints, technology stack, design principles. Updated as understanding evolves. |
-| **Decision Log** | Chronological entries (D-001, D-002, ...) for every significant choice — including no-go decisions, conflict resolutions, and rejections |
+| **Project Context** | Living summary of the project: purpose, architecture, constraints, technology stack, design principles. Updated during bootstrap and after merges that change architecture. |
+| **Decision Log** | Chronological entries (D-001, D-002, ...) for decisions that shape the system |
 
-Each Decision Log entry captures: what triggered the decision, options considered with pros/cons, the decision itself, rationale, and downstream impact. This includes:
-- Research concluding "do not proceed"
-- Review fixes where the reviewer was overruled
-- Merge conflicts resolved in favor of existing or proposed text
-- Verification findings, spec conflicts, implementation discoveries
-- Technology and design pattern choices
+The logging threshold is: **would a future skill or session need to know this to avoid contradicting it?** Technology choices, architecture patterns, "do not proceed" conclusions, conflict resolutions, and implementation discoveries get logged. Routine approvals, mechanical corrections, and normal task completions don't.
 
-The Project Context section at the top ensures any reader (human or AI) can understand the full landscape before reading individual entries.
+Two entry formats: **full** (for complex decisions with options analysis) and **compact** (for decisions where the source document already has the full context).
+
+**Relationship to other decision surfaces**: Research docs and proposals have lightweight local decision tables. Those capture decisions in context. DECISIONS.md is the system-wide index — decisions propagate here when they could affect other skills, future research, or implementation.
 
 ### RESEARCH_LEDGER.md
 
