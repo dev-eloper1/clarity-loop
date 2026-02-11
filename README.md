@@ -8,11 +8,15 @@
 
 ## The Problem
 
-AI coding tools are great at writing code. They're terrible at knowing *what* to write.
+AI coding tools are great at writing code. They're terrible at knowing *what* to write. The bigger the project, the worse this gets:
 
-Ask an LLM to "build me a todo app with auth" and you'll get plausible-looking code that falls apart as complexity grows: inconsistent data models across files, API contracts that contradict each other, Tailwind v3 patterns when you're using v4, stale imports from a library version that doesn't exist anymore. The bigger the project, the worse the drift.
+- **Your documents drift apart.** The PRD says one thing, the Architecture doc says another, the code matches neither. Each file was fine when written — nobody checked them as a system.
+- **Decisions evaporate.** You spent 20 minutes discussing auth strategy on day 1. By day 3, context compression ate it. By day 5, the LLM makes a contradictory decision with no memory of the first one.
+- **Good ideas get lost.** "We should add rate limiting" surfaces during implementation. Nobody writes it down. Three weeks later you remember the idea but not the reasoning.
+- **Library knowledge goes stale.** Tailwind v3 patterns when you're on v4. Imports from an API that was removed two versions ago. The LLM's training data doesn't match your `package.json`.
+- **Nothing gets verified.** Specs reference docs that changed last week. Implementation uses patterns the architecture explicitly rejected. Nobody catches it until something breaks.
 
-The root cause isn't code generation — it's everything that happens *before* code generation. When your docs are vague, your specs are inconsistent, and your LLM thinks `better-sqlite3` is still on version 9, no amount of prompting fixes the output.
+The root cause isn't code generation — it's everything that happens *before* code generation. Vague docs, drifting specs, lost decisions, stale knowledge, zero verification. The inputs are broken, so the outputs can't be correct.
 
 **Clarity Loop fixes the inputs so the outputs are correct.**
 
@@ -132,41 +136,23 @@ Updates never touch your project's docs — only the plugin's skills, hooks, and
 
 ## How the Pipeline Works
 
-```mermaid
-flowchart LR
-    classDef human fill:#fef3c7,stroke:#d97706,color:#92400e
-    classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
+It's called Clarity **Loop** because problems flow backward, not just forward:
 
-    I["Idea"]:::human --> R["Research &\nDocument"]:::human
-    R --> C["Library\nContext"]:::ai
-    C --> D["Design"]:::human
-    D --> S["Specs"]:::ai
-    S --> B["Build"]:::human
-    B -.->|"spec gaps"| R
-    B -.->|"context gaps"| C
-```
+- **Every stage loops internally.** Generate → review → feedback → refine → approve. Nothing advances until you're satisfied.
+- **Implementation loops back to the source.** Spec gaps route to research. Context gaps route to library knowledge. Fixes happen where the mistake originated, not in the code.
+- **Audits catch cumulative drift.** Each proposal is fine alone — but 10 proposals can silently move the system off course. Periodic audits check the full doc set and feed findings back into research.
 
-> Amber = human-in-the-loop. Blue = AI-driven. Dotted = feedback loops.
+### What else it handles
 
-It's called Clarity **Loop** because problems flow backward, not just forward.
-
-**Every stage loops internally.** AI generates a draft, you review it, give feedback, it refines, you approve. This micro-loop runs at every stage — research docs, proposals, design mockups, specs. Nothing advances until you're satisfied.
-
-**Implementation loops back to the source.** When a build error traces to a wrong API call, that's a *context gap* — the pipeline routes it back to library context, not a code-level hack. When a spec is missing an edge case, that's a *spec gap* — it feeds back to research, gets documented, and flows forward again through review and specs. The fix happens where the mistake originated.
-
-**Audits catch what individual changes miss.** Each proposal might be fine in isolation, but cumulative drift across 10 proposals can silently move the system away from its goals. Periodic audits compare the full documentation set against itself, flagging contradictions, stale claims, and goal drift — then feeding findings back into targeted research cycles.
-
-### Key Mechanisms
-
-**Protected system docs** — A `PreToolUse` hook blocks all direct writes to `{docsRoot}/system/`. Changes go through the pipeline: research, proposal, review, merge, verify.
-
-**Library context files** — Per-library curated knowledge with three-layer progressive disclosure. The researcher creates them from official docs and context7.com. The implementer loads only what's relevant per task (~50-2000 tokens). Context is version-pinned — it matches the library version in use, not a calendar date.
-
-**Manifest-based orientation** — Skills read a lightweight auto-generated index instead of every system doc. Targeted reads keep token costs low.
-
-**Persistent state** — Every decision, task status, spec gap, and fix task is recorded in markdown files. Sessions crash, context compresses, models change — the pipeline picks up where it left off.
-
-**Audit and drift detection** — Periodic health checks across all system docs. Drift analysis compares audit trends over time. Code-doc sync checks claims in docs against the actual codebase.
+| You worry about... | The pipeline handles it |
+|---|---|
+| **Ideas at the wrong time** | Every concept captured automatically in a parking lot. Scope it later, defer to V2, or discard. No FOMO. |
+| **Coming back after a break** | All state lives in markdown. On resume, the implementer diffs what changed, re-verifies affected tasks, picks up where it left off. |
+| **Editing code outside the pipeline** | External changes detected via git, mapped to tasks, manually-completed work marked as done. |
+| **Fixes breaking other things** | Fix tasks trigger automatic re-verification of all downstream completed tasks. |
+| **Docs drifting from code** | Code-doc sync extracts claims from docs and checks them against the actual codebase. |
+| **Full ceremony for trivial changes** | Triage routes typos to direct fixes. Correction mode handles audit findings without research cycles. |
+| **Half-stale specs** | Waterfall gate blocks spec generation until all system docs are verified. |
 
 ---
 
