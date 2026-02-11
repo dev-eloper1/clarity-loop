@@ -95,7 +95,7 @@ async function detectCollisions(defaultRoot) {
   }
 
   const dirsToCheck = ['system', 'research', 'proposals', 'specs'];
-  const trackingFiles = ['RESEARCH_LEDGER.md', 'PROPOSAL_TRACKER.md', 'STATUS.md'];
+  const trackingFiles = ['RESEARCH_LEDGER.md', 'PROPOSAL_TRACKER.md', 'STATUS.md', 'DECISIONS.md'];
 
   const collisions = [];
 
@@ -224,6 +224,7 @@ async function main() {
     { src: 'research-ledger.md', dest: 'RESEARCH_LEDGER.md' },
     { src: 'proposal-tracker.md', dest: 'PROPOSAL_TRACKER.md' },
     { src: 'status.md', dest: 'STATUS.md' },
+    { src: 'decisions.md', dest: 'DECISIONS.md' },
   ];
 
   for (const { src, dest } of templates) {

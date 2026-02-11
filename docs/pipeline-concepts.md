@@ -72,7 +72,25 @@ The manifest regenerates automatically via the [generate-manifest hook](hooks.md
 
 ## Tracking Files
 
-Three files in `{docsRoot}/` track pipeline state. They're the dashboard for understanding where everything stands.
+Four files in `{docsRoot}/` track pipeline state. They're the dashboard for understanding where everything stands.
+
+### DECISIONS.md
+
+Tracks all architectural and conflict-resolution decisions with full context and rationale.
+
+| Section | Content |
+|---------|---------|
+| **Project Context** | Living summary of the project: purpose, architecture, constraints, technology stack, design principles. Updated as understanding evolves. |
+| **Decision Log** | Chronological entries (D-001, D-002, ...) for every significant choice — including no-go decisions, conflict resolutions, and rejections |
+
+Each Decision Log entry captures: what triggered the decision, options considered with pros/cons, the decision itself, rationale, and downstream impact. This includes:
+- Research concluding "do not proceed"
+- Review fixes where the reviewer was overruled
+- Merge conflicts resolved in favor of existing or proposed text
+- Verification findings, spec conflicts, implementation discoveries
+- Technology and design pattern choices
+
+The Project Context section at the top ensures any reader (human or AI) can understand the full landscape before reading individual entries.
 
 ### RESEARCH_LEDGER.md
 
@@ -226,6 +244,7 @@ After initialization, your project has this structure:
     {library}/                  One folder per library
       _meta.md                  Layer 2: overview + file inventory
       {topic}.md                Layer 3: detail files
+  DECISIONS.md
   RESEARCH_LEDGER.md
   PROPOSAL_TRACKER.md
   STATUS.md
