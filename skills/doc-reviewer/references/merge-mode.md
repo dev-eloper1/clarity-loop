@@ -87,7 +87,17 @@ Delete `docs/system/.pipeline-authorized`. The window for system doc edits is cl
 #### Step 5: Update Tracking
 
 1. Update `docs/PROPOSAL_TRACKER.md` — set status to `merged`, record merge date
-2. Tell the user: "Proposal P-NNN merged into system docs. Running post-merge verification."
+2. **Propagate design decisions** — If the proposal's Design Decisions section includes
+   architectural choices (technology selections, pattern decisions, tradeoff resolutions),
+   log a Decision entry for each in `docs/DECISIONS.md` with Pipeline Phase `proposal`,
+   Source the proposal ID and section
+3. If any merge conflicts were resolved (existing text kept over proposed, or vice versa),
+   log a Decision entry in `docs/DECISIONS.md` with the conflict context, options, and
+   rationale for resolution
+4. **Refresh Project Context** — If this merge changed the architecture, constraints, or
+   technology stack, update the Project Context section in `docs/DECISIONS.md` to reflect
+   the new state. This keeps DECISIONS.md current so future skills orient correctly.
+5. Tell the user: "Proposal P-NNN merged into system docs. Running post-merge verification."
 
 #### Step 6: Auto-Trigger Verify
 

@@ -278,3 +278,9 @@ proposals modifying the same section without coordination will produce inconsist
 **Update tracking files.** After generating a proposal, always add it to PROPOSAL_TRACKER.md
 and update the research entry in RESEARCH_LEDGER.md. The pipeline relies on these for
 state management.
+
+**Design Decisions propagate at merge.** The Design Decisions table in the proposal will be
+extracted and logged to `docs/DECISIONS.md` during the merge step (see merge-mode.md).
+Make sure each row has enough context (rationale, alternatives) to stand on its own —
+the DECISIONS.md entry will reference this proposal but should be understandable without
+reading the full proposal.

@@ -189,6 +189,12 @@ The sync report feeds into the pipeline like other audit artifacts:
 - **Potentially stale items** → User reviews, then either ignores (docs are still correct),
   creates a correction, or starts research
 
+**Decision logging for confirmed drift**: When the user decides how to handle confirmed
+drift (correction vs. research vs. "docs are actually wrong, code is right"), log a
+Decision entry in `docs/DECISIONS.md` with Pipeline Phase `sync`, Source the sync report
+finding, and capture which direction was chosen and why. "Potentially stale" items don't
+need Decision entries — they're advisory until the user acts on them.
+
 The sync report is stored alongside audit reports because it serves a similar purpose —
 system health assessment — but focused on code-doc alignment rather than doc-doc consistency.
 

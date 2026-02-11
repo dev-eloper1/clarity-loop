@@ -161,7 +161,7 @@ node clarity-loop/scripts/init.js
 ```
 
 1. **Directories**: system, research, proposals, reviews/proposals, reviews/audit, reviews/design, specs, designs
-2. **Tracking files**: RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, STATUS.md (from templates)
+2. **Tracking files**: DECISIONS.md, RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, STATUS.md (from templates)
 3. **Config file**: `.clarity-loop.json` with chosen docsRoot
 4. **Gitignore entries**: `.manifest.md` and `.pipeline-authorized`
 5. **Initial manifest**: if system docs already exist

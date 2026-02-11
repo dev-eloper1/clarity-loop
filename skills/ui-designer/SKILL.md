@@ -94,6 +94,9 @@ Before running any mode, check the pipeline state:
 2. **Read tracking files** to understand current state:
    - `docs/STATUS.md` — overall pipeline state
    - `docs/PROPOSAL_TRACKER.md` — any unresolved proposals?
+   - `docs/DECISIONS.md` — scan for prior design decisions (Pipeline Phase `design`) and
+     technology constraints that affect the design (stack choices, component pattern
+     decisions). Apply these as constraints during setup and tokens modes.
 
 3. **Design state check** — Read `{docsRoot}/designs/DESIGN_PROGRESS.md` if it exists.
    If the file exists but cannot be parsed (missing expected sections, garbled content),
@@ -242,6 +245,13 @@ Produces DESIGN_TASKS.md.
   Every user decision, every component approval, every design direction choice goes here.
   If the conversation gets compressed or a new session starts, DESIGN_PROGRESS.md is how
   you pick up where you left off.
+
+- **Log design decisions with architectural impact to DECISIONS.md.** When a design choice
+  constrains or confirms system architecture — token values that other docs must respect,
+  component patterns that contradict existing docs, layout decisions tied to design
+  principles — log a Decision entry in `docs/DECISIONS.md` with Pipeline Phase `design`.
+  DESIGN_PROGRESS.md tracks session state; DECISIONS.md captures choices that affect the
+  system beyond the design artifact.
 
 - **Every design artifact traces to a PRD feature or user decision.** No orphan components.
   If a component exists, it's because a PRD feature needs it or the user explicitly requested

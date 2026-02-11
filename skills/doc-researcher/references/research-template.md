@@ -166,6 +166,11 @@ Running log of decisions made during the human discussion loop. Captures what wa
 considered and why it was accepted or rejected — invaluable for reconstructing
 reasoning later.
 
+> **Propagation**: When research is approved, review this log for significant entries —
+> scope-setting decisions, rejected approaches with rationale, assumptions that downstream
+> work depends on. Extract those to `docs/DECISIONS.md` with Pipeline Phase `research` and
+> Source pointing to this research doc and row number.
+
 | # | Topic | Considered | Decision | Rationale |
 |---|-------|-----------|----------|-----------|
 | 1 | | | | |

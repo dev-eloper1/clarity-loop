@@ -120,4 +120,10 @@ Implementation is done."
 If issues found: "Verification found [N] issues. [Summary]. Fix these before considering
 implementation complete." Create fix tasks for actionable issues.
 
+If Dimension 4 (spec-to-doc alignment) found misalignments where the implementation
+deviates from system docs, log Decision entries in `docs/DECISIONS.md` for each
+significant misalignment — documenting whether the code or the docs should be updated
+and why. Use Pipeline Phase `implementation`, Source the verification dimension and
+finding.
+
 After all verification passes, update IMPLEMENTATION_PROGRESS.md status to `Complete`.

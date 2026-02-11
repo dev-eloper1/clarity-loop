@@ -231,6 +231,16 @@ unblocked tasks can continue.
 Record all gaps in IMPLEMENTATION_PROGRESS.md with ID (G-NNN), task, description, level,
 status, and resolution.
 
+**Log L2 gaps and user decisions to DECISIONS.md**: When an L2 gap is identified or when
+the user decides how to resolve any gap (including L1 assumptions they override), log a
+Decision entry in `docs/DECISIONS.md`:
+- **Pipeline Phase**: `implementation`
+- **Source**: Task (T-NNN), Gap (G-NNN), spec file and section
+- **Context**: What the spec doesn't cover, why it blocks implementation
+- **Options Considered**: The resolution options presented to the user
+- **Decision**: What was chosen (including "research cycle needed")
+- **Status**: `active`
+
 ---
 
 ### Step 6: Tangent Handling

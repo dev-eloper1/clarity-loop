@@ -84,6 +84,7 @@ project/
 │   │   ├── proposals/       # Proposal reviews (REVIEW_*, VERIFY_*)
 │   │   └── audit/           # System audits (AUDIT_*)
 │   ├── specs/               # Generated specs (by doc-spec-gen skill)
+│   ├── DECISIONS.md          # Architectural decisions + conflict resolutions
 │   ├── RESEARCH_LEDGER.md   # Tracks all research cycles
 │   ├── PROPOSAL_TRACKER.md  # Tracks all proposals
 │   └── STATUS.md            # High-level dashboard
@@ -115,6 +116,11 @@ Before running any mode, check the pipeline state to orient yourself and the use
    - `docs/RESEARCH_LEDGER.md` — any research with status `draft` or `in-discussion`?
    - `docs/PROPOSAL_TRACKER.md` — any proposals that need attention?
    - `docs/STATUS.md` — overall pipeline state
+   - `docs/DECISIONS.md` — scan the Decision Log for prior decisions related to the
+     current topic. Before researching anything, check if the same question was already
+     decided (even if the decision was "do not proceed"). If a relevant decision exists,
+     surface it to the user: "Note: D-NNN decided [X] on [date]. Should we revisit, or
+     does this still hold?"
 
 3. **Check context staleness** — If `{docsRoot}/context/.context-manifest.md` exists, check
    `Last Verified` dates. If any library's context is older than its configured freshness
@@ -213,8 +219,12 @@ Evaluate these factors:
 4. Present your assessment: "This looks like a Level [N] topic because [reasons]. I recommend
    [pipeline depth]. Does that match your sense of it?"
 5. The user confirms or overrides
-6. If Level 0: advise direct edit, no pipeline needed
-7. If Level 1+: transition to Research mode
+6. **For L2+ topics**: Log a Decision entry in `docs/DECISIONS.md` with Pipeline Phase
+   `research`, Source the topic/user request, and rationale for the complexity assessment.
+   Record which factors led to the classification and what pipeline depth was chosen. If the
+   user overrode your assessment, log that too — both the original assessment and the override.
+7. If Level 0: advise direct edit, no pipeline needed
+8. If Level 1+: transition to Research mode
 
 ---
 
@@ -474,9 +484,11 @@ version, updates or versions the context files, and the implementer retries.
 - **Don't skip Phase 2.** It's tempting to jump straight to research when the user says
   "research caching." Resist. Spend the turns to understand what they actually need.
 
-- **Track everything.** Update RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, and STATUS.md as
-  you go. The pipeline relies on these for state management. Don't leave tracking as a
-  manual afterthought.
+- **Track everything.** Update RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, STATUS.md, and
+  DECISIONS.md as you go. The pipeline relies on these for state management. Don't leave
+  tracking as a manual afterthought. When research concludes with a "do not proceed"
+  recommendation, or when the user makes a significant design choice during discussion,
+  log a Decision entry with the full context and rationale.
 
 - **Capture emerged concepts immediately.** Ideas that surface during research but aren't
   the current topic should be captured in both the research doc and STATUS.md right away.
