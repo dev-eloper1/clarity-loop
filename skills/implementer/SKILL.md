@@ -198,6 +198,13 @@ user-added tasks and manual reorderings.
   surface it. Don't autonomously fix upstream docs — that's the pipeline's job.
   L0: patch inline. L1: log and ask user. L2: pause task and suggest research cycle.
 
+- **Log design-level decisions to DECISIONS.md.** When implementation reveals a spec gap
+  at L2 (design-level), when you discover code contradicts a system doc, or when the user
+  makes a call about how to resolve a conflict, log a Decision entry in `docs/DECISIONS.md`.
+  Use Pipeline Phase `implementation`, Source the task/spec reference, and capture what was
+  discovered and what was decided. Implementation is where design meets reality — those
+  insights are too valuable to lose in a progress file.
+
 - **Parallel execution is opt-in**: Suggest parallelizable groups but never fork without
   user approval. Some users prefer sequential for easier review and debugging.
 

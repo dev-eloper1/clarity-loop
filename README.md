@@ -262,6 +262,7 @@ clarity-loop/
     init.js
     init.sh
   templates/
+    decisions.md
     research-ledger.md
     proposal-tracker.md
     status.md

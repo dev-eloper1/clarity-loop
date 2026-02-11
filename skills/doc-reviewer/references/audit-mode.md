@@ -294,7 +294,14 @@ List any unresolved recommendations from the previous audit.
 After writing the audit report:
 1. Update `docs/STATUS.md` — set "Last audit" to today's date, note key findings
 2. If the audit reveals emerged concepts, add them to STATUS.md's emerged concepts table
-3. If the audit leads to decisions about fix-vs-research, severity assessments, or deprecation of existing content, log Decision entries in `docs/DECISIONS.md` with the finding context and chosen course of action
+3. **Log audit decisions to DECISIONS.md** — For each finding that required a judgment
+   call, log a Decision entry:
+   - Fix-vs-research: "This drift needs a correction" vs. "This needs a full research cycle"
+   - Severity assessment: "This is critical and blocks implementation" vs. "This is cosmetic"
+   - Deprecation: "This section is no longer accurate and should be removed or rewritten"
+   Use Pipeline Phase `audit`, Source the audit report finding number. Every "Confirmed
+   drift" and "Recommend action" that involves choosing a course of action should have a
+   corresponding entry
 
 ### Guidelines for Audit Mode
 

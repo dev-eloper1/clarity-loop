@@ -213,8 +213,12 @@ Evaluate these factors:
 4. Present your assessment: "This looks like a Level [N] topic because [reasons]. I recommend
    [pipeline depth]. Does that match your sense of it?"
 5. The user confirms or overrides
-6. If Level 0: advise direct edit, no pipeline needed
-7. If Level 1+: transition to Research mode
+6. **For L2+ topics**: Log a Decision entry in `docs/DECISIONS.md` with Pipeline Phase
+   `research`, Source the topic/user request, and rationale for the complexity assessment.
+   Record which factors led to the classification and what pipeline depth was chosen. If the
+   user overrode your assessment, log that too — both the original assessment and the override.
+7. If Level 0: advise direct edit, no pipeline needed
+8. If Level 1+: transition to Research mode
 
 ---
 

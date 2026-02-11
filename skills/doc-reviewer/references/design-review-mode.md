@@ -236,6 +236,9 @@ After writing the review:
 2. If the review reveals design gaps that trace to missing PRD content, flag it:
    "The design review found gaps that may need PRD updates. Consider a research cycle
    for: [list]."
+3. If the review resulted in design-to-PRD misalignment decisions, naming conflict
+   resolutions, or component pattern choices constrained by architecture, log Decision
+   entries in `docs/DECISIONS.md` with Pipeline Phase `design`
 
 Tell the user where the review file is and summarize the verdict. If issues were found,
 be specific about what needs fixing — the user will likely re-run the relevant ui-designer

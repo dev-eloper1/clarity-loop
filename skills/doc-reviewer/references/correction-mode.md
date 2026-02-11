@@ -143,9 +143,13 @@ After corrections are applied:
 
 2. **Update STATUS.md** — Note that corrections were applied, with date and source.
 
-3. **Update DECISIONS.md** — If corrections involved choosing between competing interpretations or rejecting an alternative fix, log a Decision entry with the rationale.
+3. **Update DECISIONS.md** — Log a Decision entry for corrections that involved judgment:
+   - Reconciling two conflicting doc sections (which version wins?)
+   - Choosing between multiple valid ways to fix an issue
+   - Deciding that code behavior is correct and docs should match it (or vice versa)
+   Skip for mechanical corrections: broken cross-references, typos, formatting, stale dates.
 
-3. **Tell the user**: "Corrections applied. [N] fixes across [M] files. Spot-check: [result].
+4. **Tell the user**: "Corrections applied. [N] fixes across [M] files. Spot-check: [result].
    Corrections log at `docs/reviews/proposals/CORRECTIONS_[DATE].md`."
 
 ### What Corrections Mode Does NOT Do
