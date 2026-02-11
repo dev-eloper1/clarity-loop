@@ -294,6 +294,7 @@ List any unresolved recommendations from the previous audit.
 After writing the audit report:
 1. Update `docs/STATUS.md` — set "Last audit" to today's date, note key findings
 2. If the audit reveals emerged concepts, add them to STATUS.md's emerged concepts table
+3. If the audit leads to decisions about fix-vs-research, severity assessments, or deprecation of existing content, log Decision entries in `docs/DECISIONS.md` with the finding context and chosen course of action
 
 ### Guidelines for Audit Mode
 

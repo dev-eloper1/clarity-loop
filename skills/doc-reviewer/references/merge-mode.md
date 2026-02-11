@@ -87,7 +87,8 @@ Delete `docs/system/.pipeline-authorized`. The window for system doc edits is cl
 #### Step 5: Update Tracking
 
 1. Update `docs/PROPOSAL_TRACKER.md` — set status to `merged`, record merge date
-2. Tell the user: "Proposal P-NNN merged into system docs. Running post-merge verification."
+2. If any merge conflicts were resolved (existing text kept over proposed, or vice versa), log a Decision entry in `docs/DECISIONS.md` with the conflict context, options, and rationale for resolution
+3. Tell the user: "Proposal P-NNN merged into system docs. Running post-merge verification."
 
 #### Step 6: Auto-Trigger Verify
 

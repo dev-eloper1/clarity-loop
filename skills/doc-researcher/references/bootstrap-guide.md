@@ -115,6 +115,7 @@ review → merge) handles subsequent changes.
 1. Remove `docs/system/.pipeline-authorized`
 2. The PostToolUse hook will auto-generate `.manifest.md`
 3. Update `docs/STATUS.md` — note that bootstrap was completed, list the initial docs
+4. Update `docs/DECISIONS.md` — populate the Project Context section (purpose, architecture, constraints, technology stack, design principles) based on everything learned during bootstrap. Log initial architectural decisions as Decision entries
 
 Tell the user: "Initial system docs created in `docs/system/`. You can now use the normal
 pipeline for changes — `/doc-researcher research 'topic'` to research, then proposal and

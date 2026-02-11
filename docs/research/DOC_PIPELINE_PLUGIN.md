@@ -229,7 +229,7 @@ Persistent memory plugin for Claude Code (AGPL-3.0). Captures observations durin
 
 **Question**: How to persist pipeline state across sessions?
 
-**Decision**: Three markdown tracking files — `RESEARCH_LEDGER.md`, `PROPOSAL_TRACKER.md`, `STATUS.md`. File-based state is simpler, git-friendly, and sufficient for the tracking needs. `STATUS.md` serves as the high-level dashboard referencing the other two.
+**Decision**: Four markdown tracking files — `DECISIONS.md`, `RESEARCH_LEDGER.md`, `PROPOSAL_TRACKER.md`, `STATUS.md`. File-based state is simpler, git-friendly, and sufficient for the tracking needs. `STATUS.md` serves as the high-level dashboard, `DECISIONS.md` captures architectural choices and conflict-resolution rationale with full project context.
 
 **Principles**: The system remembers (decisions persist in files, not memory) + Files hold the truth (git-friendly, survives session crashes).
 

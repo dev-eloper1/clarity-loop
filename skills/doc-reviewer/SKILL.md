@@ -543,4 +543,6 @@ Usage: `/doc-reviewer design-review`
   ones before they propagate into system docs. A clean APPROVE is a valid outcome.
 
 - **Track everything.** Update PROPOSAL_TRACKER.md after reviews and verifications.
-  Update STATUS.md after audits. The pipeline relies on accurate state.
+  Update STATUS.md after audits. Update DECISIONS.md whenever a conflict is resolved,
+  a proposal is rejected, a verification finding overrides proposal intent, or an audit
+  leads to a fix-vs-research decision. The pipeline relies on accurate state.

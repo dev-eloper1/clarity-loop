@@ -474,9 +474,11 @@ version, updates or versions the context files, and the implementer retries.
 - **Don't skip Phase 2.** It's tempting to jump straight to research when the user says
   "research caching." Resist. Spend the turns to understand what they actually need.
 
-- **Track everything.** Update RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, and STATUS.md as
-  you go. The pipeline relies on these for state management. Don't leave tracking as a
-  manual afterthought.
+- **Track everything.** Update RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, STATUS.md, and
+  DECISIONS.md as you go. The pipeline relies on these for state management. Don't leave
+  tracking as a manual afterthought. When research concludes with a "do not proceed"
+  recommendation, or when the user makes a significant design choice during discussion,
+  log a Decision entry with the full context and rationale.
 
 - **Capture emerged concepts immediately.** Ideas that surface during research but aren't
   the current topic should be captured in both the research doc and STATUS.md right away.

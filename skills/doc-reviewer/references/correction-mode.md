@@ -143,6 +143,8 @@ After corrections are applied:
 
 2. **Update STATUS.md** — Note that corrections were applied, with date and source.
 
+3. **Update DECISIONS.md** — If corrections involved choosing between competing interpretations or rejecting an alternative fix, log a Decision entry with the rationale.
+
 3. **Tell the user**: "Corrections applied. [N] fixes across [M] files. Spot-check: [result].
    Corrections log at `docs/reviews/proposals/CORRECTIONS_[DATE].md`."
 
