@@ -103,6 +103,7 @@ project/
 │   ├── specs/               # Where generated specs go
 │   │   ├── .spec-manifest.md  # Spec index + source doc mappings
 │   │   └── ...              # Format varies by project
+│   ├── DECISIONS.md          # Architectural decisions (read at session start)
 │   ├── RESEARCH_LEDGER.md
 │   ├── PROPOSAL_TRACKER.md
 │   └── STATUS.md
