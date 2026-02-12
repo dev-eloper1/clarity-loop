@@ -156,6 +156,8 @@ In addition to implementation specs, generates cross-cutting specifications:
 - **Shared types**: Cross-boundary type inventory, serialization contracts, sharing strategy
 - **Edge cases**: Standard edge case section per spec based on component types
 - **Accessibility**: ARIA, keyboard, focus management requirements per UI spec
+- **CONFIG_SPEC.md**: Environment variables, secrets, feature flags, deployment targets, config validation
+- **Operational specs**: Migration notes, observability sections, integration contracts, backend policies, data modeling, code conventions, performance criteria
 
 ---
 
@@ -214,10 +216,13 @@ start with frequent checkpoints and reduce oversight as confidence builds.
 
 Read `references/verify-mode.md` and follow its process.
 
-Post-implementation holistic verification across six dimensions: per-task acceptance
+Post-implementation holistic verification across seven dimensions: per-task acceptance
 criteria, per-spec contract compliance, cross-spec integration, spec-to-doc alignment
-(via cl-reviewer sync), test coverage against test spec (P2), and dependency audit
-(vulnerability scan, license compliance, unused dependency detection).
+(via cl-reviewer sync), test coverage against test spec, dependency audit (vulnerability
+scan, license compliance, unused dependency detection), and operational/governance checks
+(config completeness, observability, code organization, performance budgets, L1 assumption
+scan, backend policy adherence, data model consistency, architecture alignment, DECISIONS.md
+reconciliation).
 
 ---
 
@@ -332,3 +337,18 @@ user-added tasks and manual reorderings.
   first (catch hallucinated packages), audit after install (catch vulnerabilities), and check
   the license (catch copyleft surprises). Block on critical CVEs. Warn on medium/low. Log
   all dependency additions.
+
+- **Config is a specification concern.** If CONFIG_SPEC.md exists, reference it when
+  setting up environment variables, secrets, and feature flags. If no config spec exists
+  but the system has environment-dependent behavior, nudge the user: "No config spec
+  found. Consider running `/cl-implementer spec` to generate one."
+
+- **Review L1 assumptions periodically.** L1 assumptions are individually reasonable but
+  collectively create invisible drift. After every 5 tasks (configurable via
+  `implementer.l1ScanFrequency`), scan for accumulation patterns and suggest batch
+  promotion to DECISIONS.md. Categories with 5+ assumptions indicate systemic spec gaps.
+
+- **Backend policies are inherited, not per-endpoint.** If operational specs define
+  idempotency, transaction boundaries, caching, or validation authority policies, every
+  endpoint inherits them. Don't make per-endpoint decisions that contradict the system
+  policy — flag them as L1 spec gaps instead.

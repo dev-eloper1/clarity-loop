@@ -12,7 +12,7 @@ to verify — no tasks have been implemented yet."
 
 ---
 
-### Six Verification Dimensions
+### Seven Verification Dimensions
 
 #### Dimension 1: Per-Task Acceptance Criteria
 
@@ -135,6 +135,33 @@ acceptable per-task may compound across the full dependency tree.
 
 If no package manager or no SECURITY_SPEC.md: skip this dimension with a note.
 
+#### Dimension 7: Operational and Governance Checks
+
+Read `references/governance-checks.md` for the full sub-check process. This dimension
+groups infrastructure, quality, and governance verification into a single composite check
+with ten sub-checks:
+
+| Sub-Check | What It Verifies | Skip If |
+|-----------|-----------------|---------|
+| 7a: Config completeness | Env vars documented, no hardcoded secrets, startup validation | No CONFIG_SPEC.md |
+| 7b: Observability coverage | Health endpoint, structured logging, correlation IDs | No observability spec |
+| 7c: Dependency compatibility | Peer dep conflicts, version pin alignment | No context files |
+| 7d: Code organization consistency | Naming consistency, directory structure, import patterns | No code conventions spec |
+| 7e: Performance budget | Bundle size, query patterns, response time | No performance criteria |
+| 7f: L1 assumption scan | Assumption accumulation, systemic gap detection | No L1 assumptions logged |
+| 7g: Backend policy adherence | Idempotency, transactions, validation authority | No backend policies spec |
+| 7h: Data model consistency | Deletion strategy, cascade, temporal, indexes | No data modeling specs |
+| 7i: Architecture alignment | Dependency direction, layer boundaries, communication patterns | No architecture doc |
+| 7j: DECISIONS.md reconciliation | Active decisions reflected in code | No DECISIONS.md |
+
+Not every sub-check applies to every project. Skip sub-checks whose prerequisite specs
+don't exist, with a note in the output.
+
+Report findings as a grouped summary (see governance-checks.md for format). Sub-checks
+are advisory rather than blocking — Dimension 7 surfaces governance concerns but
+doesn't fail the verification unless a sub-check reveals a critical issue (hardcoded
+secrets, critical architectural drift).
+
 ---
 
 ### Output
@@ -176,6 +203,18 @@ Update IMPLEMENTATION_PROGRESS.md with verification results:
 - Licenses: all MIT/Apache-2.0 — compliant
 - Unused dependencies: `lodash` (installed but never imported) — suggest removal
 - Lockfile: verified
+
+### Operational and Governance Checks
+- Config: 12/12 vars documented, 0 hardcoded secrets ✓
+- Observability: 3/4 (distributed tracing not implemented — advisory)
+- Dependencies: No compatibility conflicts
+- Code organization: 2 naming violations / 147 files (minor)
+- Performance: 2/3 budgets met, 1 not measurable
+- L1 assumptions: 7 total, 1 systemic gap (pagination — 3 assumptions)
+- Backend policies: 4/5 implemented
+- Data model: COMPLIANT
+- Architecture alignment: 2 advisory findings
+- DECISIONS.md: 18/20 verified, 2 contradictions
 ```
 
 ### After Verification

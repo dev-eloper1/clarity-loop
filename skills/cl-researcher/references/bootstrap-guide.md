@@ -133,6 +133,15 @@ These questions inform the `security`, `auth`, and `authorization` category deci
 in the defaults sheet (Step 2c). For hobby/prototype projects, these can be brief —
 the Prototype preset already defaults to "Skip" for security depth.
 
+**Dig deeper — operational and quality (scale to project type):**
+
+For projects that will be deployed (not just prototypes or scripts), read
+`references/operational-bootstrap.md` for operational discovery questions covering
+deployment targets, observability needs, data lifecycle decisions, code organization
+preferences, and performance targets. These feed into DECISIONS.md with category tags
+`deployment`, `observability`, `data-lifecycle`, `code-conventions`, `performance`,
+and `data-modeling`. Skip for Prototype preset projects.
+
 Continue the conversation naturally. These questions establish the project's identity.
 Don't rush -- the quality of initial docs depends on getting the picture right.
 

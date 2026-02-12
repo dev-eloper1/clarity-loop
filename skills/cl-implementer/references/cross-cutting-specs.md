@@ -185,3 +185,21 @@ For non-trivial serialization (types that change shape across the boundary):
 | Enum | string union | string | string union (same) |
 | Binary | Buffer | base64 string | Blob/ArrayBuffer |
 ```
+
+---
+
+### Step 4e: Generate Operational and Backend Policy Specs
+
+If the system has deployment targets, external service integrations, data persistence, or
+backend API endpoints, generate operational specifications. Read
+`references/operational-specs.md` and follow its process. This generates:
+
+- CONFIG_SPEC.md (environment variables, secrets, feature flags, deployment targets)
+- Migration notes per data spec (ordering, rollback, seed data)
+- Observability section per service spec (logging, metrics, health checks)
+- Per-service integration specs (third-party endpoints, auth, payloads, rate limits)
+- Backend policies section (idempotency, transactions, caching, validation authority)
+- Data modeling section per entity spec (deletion, cascade, temporal, volume)
+- Code conventions section (file naming, directory structure, import patterns)
+- Performance acceptance criteria per spec
+- Dependency compatibility notes

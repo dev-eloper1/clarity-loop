@@ -268,6 +268,81 @@ flowchart TD
     - **Complexity**: Medium
     ```
 
+12. **Operational infrastructure tasks.** If operational specs exist (CONFIG_SPEC.md,
+    observability sections, code conventions, migration notes), generate early
+    infrastructure tasks in an "Infrastructure" area:
+
+    ```markdown
+    ## Area: Infrastructure
+
+    ### T-00X: Project Scaffolding
+    - **Spec reference**: CODE_CONVENTIONS section from operational specs
+    - **Spec hash**: [hash of the referenced spec section]
+    - **Dependencies**: None
+    - **Status**: pending
+    - **Source**: spec-derived
+    - **Acceptance criteria**:
+      - [ ] Directory structure created per code conventions spec
+      - [ ] Path aliases configured (if specified)
+      - [ ] Barrel exports set up (if specified)
+      - [ ] .env.example created with all CONFIG_SPEC.md variables
+    - **Complexity**: Simple
+
+    ### T-00X: Config & Environment Setup
+    - **Spec reference**: CONFIG_SPEC.md
+    - **Spec hash**: [hash of the referenced spec section]
+    - **Dependencies**: None
+    - **Status**: pending
+    - **Source**: spec-derived
+    - **Acceptance criteria**:
+      - [ ] Config validation runs at startup (crashes on missing required vars)
+      - [ ] .env.example documents all variables with descriptions
+      - [ ] Secrets are loaded from env vars (not hardcoded)
+      - [ ] Feature flag system in place (if CONFIG_SPEC.md specifies flags)
+    - **Complexity**: Simple
+
+    ### T-00X: Observability Setup
+    - **Spec reference**: Observability section from operational specs
+    - **Spec hash**: [hash of the referenced spec section]
+    - **Dependencies**: None
+    - **Status**: pending
+    - **Source**: spec-derived
+    - **Acceptance criteria**:
+      - [ ] Structured logger configured (JSON format in production)
+      - [ ] Request correlation ID middleware in place
+      - [ ] GET /health endpoint returns status with dependency checks
+      - [ ] Log levels configurable via environment
+    - **Complexity**: Simple
+    ```
+
+    These tasks have NO dependencies (or only depend on scaffolding) and can run in
+    parallel with the test infrastructure task and early implementation tasks. The
+    scaffolding task should be first — it creates the directory structure other tasks
+    build in.
+
+    **Conditional generation**: Only generate tasks for specs that exist. If no
+    CONFIG_SPEC.md, skip the config task. If no observability section, skip that task.
+    If no code conventions section, skip scaffolding.
+
+13. **Migration tasks.** If data specs include migration notes, generate migration tasks
+    that depend on the database schema implementation task:
+
+    ```markdown
+    ### T-00X: Database Migration Setup
+    - **Spec reference**: Migration notes from [data-spec.md]
+    - **Spec hash**: [hash of the referenced spec section]
+    - **Dependencies**: T-[schema-task] (schema implementation)
+    - **Status**: pending
+    - **Source**: spec-derived
+    - **Acceptance criteria**:
+      - [ ] Migration tool configured per spec
+      - [ ] Initial migration created and runs successfully
+      - [ ] Rollback tested (migration can be reversed)
+      - [ ] Seed data script creates required reference data
+      - [ ] Development data script creates realistic sample data
+    - **Complexity**: Medium
+    ```
+
 ---
 
 ### Step 4: Identify Parallelizable Groups

@@ -111,6 +111,13 @@ Standard categories:
 | `design-direction` | Aesthetic, colors, typography | designer (all modes) |
 | `spec-format` | Spec output format | spec-gen |
 | `checkpoint-level` | Autopilot oversight | implementer |
+| `deployment` | Deployment targets, environment strategy | spec-gen (CONFIG_SPEC.md), implementer |
+| `config` | Configuration approach, feature flags, secrets management | spec-gen (CONFIG_SPEC.md), implementer |
+| `observability` | Logging, metrics, health checks, tracing | spec-gen, implementer |
+| `data-lifecycle` | Deletion strategy, retention, archival | spec-gen (data modeling), implementer |
+| `data-modeling` | Temporal requirements, cascade, volume projections | spec-gen (data modeling), implementer |
+| `code-conventions` | File naming, directory structure, import patterns | spec-gen, implementer |
+| `performance` | Response time, bundle size, query budgets | spec-gen, implementer, verify |
 
 Skills read DECISIONS.md at session start. Before asking any question that maps to a
 category, check for an existing decision. If found, use it as the default. If the
@@ -281,7 +288,8 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
   "version": 1,
   "docsRoot": "docs",
   "implementer": {
-    "checkpoint": "every"
+    "checkpoint": "every",
+    "l1ScanFrequency": 5
   },
   "ux": {
     "reviewStyle": "batch",
@@ -301,6 +309,7 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
 | `version` | `1` | Config format version |
 | `docsRoot` | `"docs"` | Base path for all documentation directories |
 | `implementer.checkpoint` | `"every"` | Autopilot oversight level: `"none"`, `"phase"`, a number (every N tasks), or `"every"` (task-by-task) |
+| `implementer.l1ScanFrequency` | `5` | How many tasks between L1 assumption accumulation scans. Set to 0 to disable. |
 | `ux.reviewStyle` | `"batch"` | How artifacts are presented for review: `"batch"` (generate all, review set), `"serial"` (one at a time), `"minimal"` (auto-approve with summary) |
 | `ux.profileMode` | `"auto"` | Project profile detection mode: `"auto"` (auto-detect from code, research gaps, presets as fallback), `"preset"` (skip auto-detect, go straight to presets), `"off"` (skip profile system, go freeform) |
 | `ux.autoDefaults` | `"tier3"` | Which checkpoint tiers auto-proceed: `"none"` (most conservative), `"tier3"` (default), `"tier2-3"` (most aggressive) |
@@ -372,6 +381,8 @@ After initialization, your project has this structure:
     design/                     Design review artifacts
   specs/                        Generated specs + design specs
     SECURITY_SPEC.md            Per-endpoint auth, system security, dependency governance
+    CONFIG_SPEC.md            Environment variables, secrets, deployment targets
+    integrations/             Per-service integration specs
   designs/                      Design files (.pen, DESIGN_PROGRESS.md)
   context/                      Per-library knowledge files (progressive disclosure)
     .context-manifest.md        Layer 1: library index

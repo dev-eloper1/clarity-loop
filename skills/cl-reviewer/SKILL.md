@@ -345,6 +345,20 @@ Output: `{docsRoot}/reviews/audit/SYNC_[YYYY-MM-DD].md` — alongside audit repo
 
 Usage: `/cl-reviewer sync` or `/cl-reviewer sync --since <ref>`
 
+**DECISIONS.md Reconciliation**: When running sync (either full or git-diff scoped),
+include a DECISIONS.md reconciliation pass:
+
+1. Read all active decisions from DECISIONS.md
+2. For each decision with a verifiable implementation claim (technology choice, pattern,
+   configuration value, convention):
+   - Extract the claim
+   - Check it against the codebase (same claim extraction mechanism as doc-code sync)
+3. Report contradictions: "D-NNN says [X] but code does [Y]"
+4. Distinguish:
+   - **Intentional evolution**: The decision may need updating (code was changed deliberately)
+   - **Accidental drift**: The code may need fixing (decision was forgotten during implementation)
+5. Include reconciliation results in the sync report under a "Decision Reconciliation" section
+
 ---
 
 ## Design Review Mode

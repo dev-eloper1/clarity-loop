@@ -189,6 +189,36 @@ After marking a task done, do a lightweight regression check:
 This is configurable. Users who prefer speed over safety can disable it. When disabled,
 regressions are only caught during `verify` mode.
 
+#### 3f: L1 Assumption Check (Periodic)
+
+After completing every 5th task (configurable), scan IMPLEMENTATION_PROGRESS.md's Spec
+Gaps table for L1 assumptions:
+
+1. **Count L1 assumptions by category**: Group all gaps with level `L1` by their
+   implicit category (pagination, error handling, state management, caching, validation,
+   naming, etc.)
+
+2. **Threshold check**: If any category has 5+ L1 assumptions:
+   - "I've made [N] assumptions about [category] across [M] tasks. This suggests a
+     systemic spec gap. Options:
+     a) Batch-promote to DECISIONS.md (make these the official decisions)
+     b) Start a research cycle to properly resolve [category]
+     c) Continue accumulating (your call — but drift risk increases)"
+
+3. **If user chooses batch-promote**: For each L1 assumption in the category:
+   - Create a compact DECISIONS.md entry with category tag, source `implementation:T-NNN`,
+     and the assumption as the decision
+   - Update the Spec Gaps table: change status from `L1-logged` to `promoted-to-decision`
+
+4. **If user chooses research**: Log the gap as L2 and suggest
+   `/cl-researcher research '[category] policy'`
+
+5. **Log the check**: Record in IMPLEMENTATION_PROGRESS.md when the L1 scan ran, what
+   was found, and what action was taken.
+
+The scan frequency is configurable in `.clarity-loop.json` under
+`implementer.l1ScanFrequency` (default: 5 tasks). Set to 0 to disable.
+
 ---
 
 ### Step 4: Fix Tasks

@@ -15,7 +15,7 @@ The implementation orchestration skill. Owns the full build pipeline — from sp
 | `start` | "start implementation", "generate tasks" | Generate unified TASKS.md from all specs, set up progress tracking |
 | `run` | "run", "implement", "continue", "next task" | Process the task queue — reconcile, implement, verify, handle failures |
 | `autopilot` | "autopilot", "run on autopilot", "autonomous" | Autonomous implementation with self-testing and configurable checkpoints |
-| `verify` | "verify implementation", "are we done" | Post-implementation holistic check across six dimensions |
+| `verify` | "verify implementation", "are we done" | Post-implementation holistic check across seven dimensions |
 | `status` | "status", "what's left", "progress" | Progress report from TASKS.md and progress file |
 | `sync` | "sync", "specs changed" | Adjust task queue when specs change mid-implementation |
 
@@ -125,6 +125,8 @@ Alongside implementation specs, the spec generator produces:
 | **Shared types** | Cross-boundary type inventory, serialization contracts, type sharing strategy | All endpoint specs, Architecture |
 | **Edge cases** | Standard edge case section per spec based on component types (text input, numeric, list, file, date, API endpoint, auth) | Spec content analysis |
 | **Accessibility** | ARIA attributes, keyboard interaction, focus management, screen reader requirements per UI spec | Design system, bootstrap accessibility level |
+| **CONFIG_SPEC.md** | Environment variables, secrets, feature flags, deployment targets, config validation | Architecture, DECISIONS.md |
+| **Operational specs** | Migration notes, observability, integration contracts, backend policies (idempotency, transactions, caching, validation authority), data modeling (deletion, cascade, temporal, volume), code conventions, performance criteria | Architecture, DECISIONS.md, per-module specs |
 
 These are generated from the same system doc read as implementation specs — marginal additional cost.
 
@@ -206,6 +208,14 @@ If TEST_SPEC.md exists, start mode generates four types of test tasks:
 
 Test tasks are first-class in TASKS.md — acceptance criteria, spec references, dependencies,
 status tracking. They appear in the dependency graph and are processed by run/autopilot modes.
+
+### Operational Tasks
+
+If operational specs exist (CONFIG_SPEC.md, observability sections, code conventions),
+start mode generates infrastructure tasks: project scaffolding (directory structure),
+config and environment setup, observability setup, and migration setup. These are early
+tasks with no dependencies — they can run in parallel with test infrastructure and
+initial implementation.
 
 ### User Control
 
@@ -328,7 +338,7 @@ Autopilot always stops for L2 spec gaps, repeated failures, cascade regressions,
 
 ## Verify
 
-Post-implementation holistic check. Six dimensions:
+Post-implementation holistic check. Seven dimensions:
 
 | Dimension | What It Checks | Catches |
 |-----------|---------------|---------|
@@ -338,6 +348,7 @@ Post-implementation holistic check. Six dimensions:
 | **Spec-to-doc** | Code alignment with system docs (via cl-reviewer sync) | Architectural drift |
 | **Test coverage** | Test spec compliance (P2) | Untested behavior, missing test cases |
 | **Dependency audit** | Vulnerability scan, license compliance, unused deps, lockfile integrity | CVEs, copyleft surprises, bloat |
+| **Operational/governance** | Config, observability, code org, performance, L1 assumptions, backend policies, data model, architecture alignment, DECISIONS.md reconciliation | Infrastructure gaps, invisible drift, policy violations |
 
 Run verify after all tasks are complete, or after a significant batch.
 

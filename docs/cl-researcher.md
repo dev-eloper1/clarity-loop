@@ -28,7 +28,8 @@ Creates the initial system doc set. Detects your starting point and adapts.
 
 **Greenfield** (no code, no docs):
 1. Discovery conversation about your project — goals, users, tech stack, constraints,
-   security strategy, data sensitivity, compliance requirements
+   security strategy, data sensitivity, compliance requirements, deployment targets,
+   observability needs, data lifecycle decisions, code organization, performance targets
 2. Project profile detection (auto-detect, quick research, or presets) captures error
    handling, API conventions, dependency policy, and other cross-cutting decisions
 3. Suggests initial doc set based on project type

@@ -146,6 +146,34 @@ After completing a task, check if it triggers a milestone integration test:
 4. **Do not block**: If integration test dependencies are not yet satisfied, continue
    to the next implementation task. Integration tests run when ready, not when checked.
 
+#### 3d-ops: Operational Verification (After Infrastructure Tasks) — Tier 3
+
+This step auto-proceeds (Tier 3) and is logged for checkpoint summary.
+
+After completing an infrastructure or schema task, run relevant operational checks:
+
+1. **After schema/migration tasks**: Verify the migration ran successfully. If the spec
+   includes rollback notes, test the rollback (migrate down, migrate up). Verify seed
+   data was created if specified. Log results.
+
+2. **After config setup tasks**: Verify config validation works — temporarily remove a
+   required env var and confirm the app crashes with a clear error. Restore and continue.
+
+3. **After observability tasks**: Hit the health endpoint, verify it returns the expected
+   shape. Check that a test request generates a structured log entry with correlation ID.
+
+4. **Performance spot-check (when available)**: If the task involves an API endpoint and
+   a running server is available, measure response time for a basic request. If
+   performance budgets exist in specs, compare. Flag if over budget but don't block —
+   log for the checkpoint summary.
+
+These checks are lightweight and non-blocking. Results appear in the Tier 3 (auto-
+proceeded) section of checkpoint summaries.
+
+**Note**: Autopilot also inherits run mode's Step 3f (L1 assumption tracking) at the
+same `l1ScanFrequency` interval. L1 scans run silently in autopilot (Tier 3 auto-proceed)
+and surface in checkpoint summaries.
+
 #### 3e: UI Validation (for UI tasks only)
 
 If the task involves UI components or screens:

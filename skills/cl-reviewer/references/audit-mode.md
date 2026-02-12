@@ -101,6 +101,21 @@ document) and ask: do the system docs as a whole still serve these goals?
   the original goals?
 - **Principle violations**: Do the goals state design principles that the current system
   docs no longer reflect?
+- **L1 assumption trend**: If `{docsRoot}/specs/IMPLEMENTATION_PROGRESS.md` exists, read
+  the Spec Gaps table. Count L1 assumptions by category. Compare against previous audits:
+  - Are the same categories accumulating assumptions across audit periods?
+  - Are L1 assumptions being promoted to DECISIONS.md, or are they piling up?
+  - Categories with 10+ unresolved L1 assumptions indicate persistent spec gaps that
+    the system docs should address through research cycles.
+- **Structural drift**: Compare the architecture doc's module descriptions, communication
+  patterns (sync vs async, direct vs event-driven), and layer boundaries against the
+  actual codebase structure:
+  - Do imports follow the specified dependency direction?
+  - Are communication patterns as described? (e.g., architecture says event-driven but
+    implementation uses direct calls)
+  - Do module boundaries in code match the architecture's descriptions?
+  - This catches the most insidious form of drift — where individual tasks are correct
+    but collectively alter the architecture.
 
 If previous audit reports exist, compare: are the drift issues getting better or worse?
 Are the same concerns being flagged repeatedly without resolution?
@@ -113,6 +128,12 @@ Is anything obviously missing?
 - Integration points mentioned but not specified
 - Error handling and failure modes — are they addressed or hand-waved?
 - Migration and upgrade paths — are they specified for breaking changes?
+- Operational specifications — are deployment, configuration, observability, and
+  migration concerns addressed? (CONFIG_SPEC.md, observability sections, migration notes)
+- Backend policy specifications — are cross-cutting concerns like idempotency,
+  transactions, and caching specified system-wide rather than per-endpoint?
+- Data modeling behavioral decisions — are deletion strategy, cascade behavior, and
+  temporal requirements specified per entity rather than left to implementer judgment?
 
 #### 6. Coherence of Abstraction Level
 
