@@ -461,10 +461,23 @@ files) and are consumed by all skills through a standard loading protocol.
 
 ### Auto-offer
 
-During bootstrap (after Architecture doc is generated), automatically offer context
-creation: "Your Architecture doc references [N] libraries. Want me to research current
-docs and create context files? This helps avoid stale API knowledge during
-implementation."
+During bootstrap Step 2b, after profile detection produces a tech stack but before
+presenting it to the user:
+
+1. **Validate** — web search for latest stable versions and cross-compatibility. Don't
+   present stale or incompatible versions without flagging them.
+2. **Present transparently** — show the user what was detected vs what's latest, with
+   compatibility status. Always show this comparison, even if everything is current.
+3. **User decides** — update to latest, keep current, or mix.
+4. **Download context** — if updating, fetch detailed library context (API patterns, import
+   paths, breaking changes, gotchas) and present the updated validated tech list. If keeping
+   current versions, still offer context download for accurate docs.
+5. **Proceed** — the validated, context-backed tech stack feeds into the defaults sheet
+   (Step 2c) and all downstream doc generation.
+
+This ensures the user always sees an accurate tech stack, and system docs are never written
+with stale library knowledge. See `bootstrap-guide.md` Step 2b "Stack Validation and
+Context" for the full process.
 
 ### Manual Invocation
 

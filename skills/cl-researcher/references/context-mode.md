@@ -12,21 +12,31 @@ protocol.
 1. **Manual**: `/cl-researcher context [library]` — create or refresh context for a
    specific library, or all libraries if no argument given.
 
-2. **Auto-offer during bootstrap**: After generating the Architecture doc (or equivalent
-   with a tech stack section), automatically offer: "Your Architecture doc references [N]
-   libraries. Want me to research current docs and create context files? This helps avoid
-   stale API knowledge during implementation." User can accept all, select specific
-   libraries, or decline.
+2. **Auto-offer during bootstrap (Step 2b, before presenting profile)**: After profile
+   detection produces a tech stack but before presenting it to the user, the bootstrap
+   validates versions and compatibility via quick web searches. The user is then shown the
+   full picture — detected version vs latest stable, compatibility status — and asked
+   whether they want to update. If they choose to update (or even if they keep current
+   versions), they're offered a full context download for the selected libraries.
+
+   This happens within Step 2b "Stack Validation and Context" — see `bootstrap-guide.md`
+   for the full process. The key property: context is downloaded BEFORE the defaults sheet
+   (Step 2c), so the tech stack the user confirms is already validated and context-backed.
+   All downstream docs (generated in Step 5) are written with accurate library knowledge.
 
 3. **Feedback from cl-implementer**: When the cl-implementer classifies a build error as
    `context-gap`, it prompts the user to invoke context mode for the affected library.
 
 ### Gate
 
-System docs must exist — specifically an Architecture doc (or equivalent) with a tech stack
-section. Cannot create context without knowing what libraries the project uses. If no system
-docs exist: "No system docs found. Run `/cl-researcher bootstrap` first — context files
-are derived from the tech stack in your Architecture doc."
+The tech stack must be known. This can come from:
+- **During bootstrap (Step 2b)**: The detected/researched tech stack from profile
+  detection — system docs don't need to exist yet. The discovery conversation +
+  auto-detect/research provides enough to validate and download context.
+- **Post-bootstrap**: An Architecture doc (or equivalent) with a tech stack section.
+
+If neither exists: "No tech stack information found. Run `/cl-researcher bootstrap`
+first — context files are derived from the tech stack established during bootstrap discovery."
 
 ---
 

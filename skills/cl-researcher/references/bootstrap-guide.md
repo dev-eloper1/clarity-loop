@@ -171,9 +171,11 @@ questions needed for decisions already made in code:
 | CI/CD | `.github/workflows`, `Jenkinsfile`, `.gitlab-ci.yml` | GitHub Actions |
 | Containerization | `Dockerfile`, `docker-compose.yml` | Docker with compose |
 
-Present the detected profile as a **Project Profile** table:
+Prepare the detected profile as a **Project Profile** table. **Do not present it to the
+user yet** — the Stack Validation step below will validate library versions and
+compatibility first, then present the combined result (profile + version status) together.
 
-"I scanned your codebase and detected the following. Confirm or override:"
+The raw profile table looks like:
 
 | Detected | Value | Confidence | Override? |
 |----------|-------|------------|-----------|
@@ -201,10 +203,11 @@ Do not silently pick one. Surface the conflict in the defaults sheet so the user
 call. If confidence levels differ significantly (High vs Low), recommend the higher-confidence
 value but still show both.
 
-After showing the detected profile, check for **gaps** -- categories the pipeline needs
+After preparing the detected profile, check for **gaps** -- categories the pipeline needs
 that auto-detect couldn't determine (error handling strategy, security depth, content
 tone, accessibility level, etc.). If gaps exist, fill them via Level 2 (quick research)
-or ask the user directly.
+or ask the user directly. Resolve gaps before proceeding to Stack Validation — the
+validation step needs the full tech stack.
 
 ##### Level 2: Quick Research (new or complex projects)
 
@@ -256,6 +259,95 @@ At any point, the user can:
 
 If `ux.profileMode` is `"off"`, skip profile detection entirely and go straight to
 freeform. The user fills in decisions through conversation.
+
+##### Stack Validation and Context (runs before presenting profile)
+
+After any detection level produces a tech stack (auto-detect, quick research, or preset +
+user's stated preferences), **do NOT present it to the user yet**. First, validate the
+stack against current releases. Then present the full picture — what was detected, what's
+latest, and whether libraries are compatible — so the user can make an informed decision.
+
+**1. Version currency check:**
+
+For each library/framework in the detected stack, run a quick web search:
+- `WebSearch` for "[library] latest stable version [current year]"
+- Compare detected version against latest stable release
+- Note the delta: current, minor update, major update available
+
+**2. Cross-compatibility check:**
+
+Check that the detected libraries are compatible with each other:
+- Framework + runtime: Does Next.js 15 require React 19? Does Django 5 require Python 3.10+?
+- ORM + database: Does Drizzle's latest support the detected database driver?
+- Styling + framework: Does Tailwind v4 work differently with the detected framework?
+- Testing + framework: Is the test runner compatible with the framework version?
+
+`WebSearch` for "[library A] [version] compatibility with [library B] [version]" or
+"[library] [version] peer dependencies" for any uncertain pairings.
+
+**3. Present the tech stack with version status:**
+
+Always show the user what you know vs what's current. Be transparent — even if everything
+is up to date, show it:
+
+"Here's your tech stack with current version status:
+
+| Library | Your Version | Latest Stable | Compatible | Status |
+|---------|-------------|---------------|------------|--------|
+| Next.js | 14.2.0 | 15.1.0 | ⚠️ Requires React 19 | Major update available |
+| React | 18.3.0 | 19.0.0 | ✅ With Next.js 15 | Major update available |
+| Drizzle | 0.38.0 | 0.39.0 | ✅ | Minor update available |
+| Tailwind CSS | 4.0.0 | 4.0.0 | ✅ | Current |
+| Vitest | 2.1.0 | 2.1.0 | ✅ | Current |
+
+Would you like to:
+1. **Update to latest compatible set** — I'll research the latest versions and download
+   up-to-date context for each library (recommended)
+2. **Keep your current versions** — proceed as-is
+3. **Mix** — tell me which ones to update"
+
+**Never proceed silently.** The user should always see the detected-vs-latest comparison
+so they can make a conscious choice about which versions their project targets.
+
+**4. If user chooses to update — download context and present updated list:**
+
+When the user opts to update (all or specific libraries):
+
+a. Run the context mode process for each library being updated — follow Steps 2-5 of
+   `references/context-mode.md` (skip Step 1: Identify Libraries — you already have the
+   library list from the profile detection above). This fetches official docs, correct API
+   patterns, import paths, breaking changes, and gotchas. Creates `{docsRoot}/context/` files.
+
+b. After context is downloaded, present the **updated tech list** so the user sees the
+   final validated state:
+
+   "Updated tech stack with validated context:
+
+   | Library | Version | Context | Notes |
+   |---------|---------|---------|-------|
+   | Next.js | 15.1.0 | ✅ Downloaded | App Router stable, Turbopack default |
+   | React | 19.0.0 | ✅ Downloaded | use() hook, Server Components stable |
+   | Drizzle | 0.39.0 | ✅ Downloaded | New query builder API |
+   | Tailwind CSS | 4.0.0 | ✅ Downloaded | CSS-first config, no tailwind.config.js |
+   | Vitest | 2.1.0 | ✅ Current | No context needed — already up to date |
+
+   This is the tech stack I'll use for your system docs. Proceeding to project
+   configuration."
+
+c. This validated, context-backed tech list feeds directly into the defaults sheet
+   (Step 2c). The profile table shows the final versions, and the context files are
+   available for Step 5 (doc generation).
+
+**5. If user keeps current versions:**
+
+Still offer context download: "Want me to download detailed context for your current
+library versions? This ensures your system docs reference correct API patterns even if
+you're not on the latest." If accepted, run context mode and present the result. If
+declined, proceed — context can be created later via `/cl-researcher context`.
+
+**Skip conditions**: If no tech stack was detected (pure documentation project) or the user
+is in full freeform mode and hasn't named any libraries yet, skip validation. It will
+run when the user provides library choices.
 
 #### Step 2c: Defaults Sheet (Generate-Confirm Pattern)
 
@@ -358,6 +450,11 @@ For each doc in the approved set, generate it in `docs/system/`. Each doc should
 - Use `[TBD]` or `[To be researched]` for areas that need more investigation
 - Include cross-references to related docs in the initial set
 - Follow the project's conventions (Mermaid for diagrams, etc.)
+- **Reference library context files** (if created during Stack Validation in Step 2b) for
+  version-accurate details. The Architecture doc's tech stack section should use current API
+  patterns and import paths from the context files, not general LLM knowledge. If context
+  files exist, use the "pass by reference" pattern where appropriate — e.g., `"Drizzle ORM
+  (see context/drizzle-orm/ for version details and API patterns)"`.
 
 These are starting points, not final docs. The normal pipeline (research → proposal →
 review → merge) handles subsequent changes.
