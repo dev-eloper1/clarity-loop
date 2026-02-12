@@ -93,9 +93,9 @@ function main() {
   const denyMessage = [
     'Direct edits to ' + config.docsRoot + '/system/ are blocked by Clarity Loop.',
     'System docs are pipeline-managed. Authorized paths:',
-    '  - /doc-researcher bootstrap  (initial doc creation)',
-    '  - /doc-reviewer merge        (apply approved proposals)',
-    '  - /doc-reviewer correct       (targeted fixes from audit/review findings)',
+    '  - /cl-researcher bootstrap  (initial doc creation)',
+    '  - /cl-reviewer merge        (apply approved proposals)',
+    '  - /cl-reviewer correct       (targeted fixes from audit/review findings)',
     'All three create a temporary .pipeline-authorized marker that allows edits.'
   ].join('\n');
 

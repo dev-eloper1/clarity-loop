@@ -1,6 +1,6 @@
 # Proposal Tracker
 
-Tracks all proposals in this project. Updated by the `doc-researcher` and `doc-reviewer` skills.
+Tracks all proposals in this project. Updated by the `cl-researcher` and `cl-reviewer` skills.
 
 ## In-Flight
 

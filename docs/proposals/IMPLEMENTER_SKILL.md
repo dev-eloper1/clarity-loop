@@ -7,9 +7,9 @@
 
 ## Summary
 
-This proposal adds a fifth skill to Clarity Loop: the `implementer`. It bridges the gap between spec generation and working code — the pipeline currently drops users off a cliff after `/doc-spec-gen review`. Everything before that point is structured (research, review, merge, verify, design, specs). Everything after is "just start coding."
+This proposal adds a fifth skill to Clarity Loop: the `cl-implementer`. It bridges the gap between spec generation and working code — the pipeline currently drops users off a cliff after `/cl-implementer spec-review`. Everything before that point is structured (research, review, merge, verify, design, specs). Everything after is "just start coding."
 
-The implementer skill generates a unified `TASKS.md` from all spec artifacts, tracks implementation progress across sessions, handles runtime failures and regressions with fix tasks, reconciles external code changes on resume, and feeds spec gaps back into the pipeline. It treats the task list as a queue — process front-to-back, validity-check before each task, pop/replace if upstream spec changes supersede work. The design philosophy: **the queue is the plan, not the process** — the skill is stateless about how code was written, only caring whether acceptance criteria are met.
+The cl-implementer skill generates a unified `TASKS.md` from all spec artifacts, tracks implementation progress across sessions, handles runtime failures and regressions with fix tasks, reconciles external code changes on resume, and feeds spec gaps back into the pipeline. It treats the task list as a queue — process front-to-back, validity-check before each task, pop/replace if upstream spec changes supersede work. The design philosophy: **the queue is the plan, not the process** — the skill is stateless about how code was written, only caring whether acceptance criteria are met.
 
 The expected impact is completing the pipeline's value proposition: structured process from idea to working code. This also changes the plugin's positioning from "idea to spec" to "idea to implementation."
 
@@ -19,21 +19,21 @@ This proposal is based on the following research:
 
 | Research Doc | Key Findings Used | Recommendation Adopted |
 |-------------|-------------------|----------------------|
-| docs/research/POST_SPEC_IMPLEMENTATION_TRACKING.md | Finding 1 (Two Tracking Dimensions), Finding 2 (Queue Semantics), Finding 3 (Spec Gap Triage), Finding 4 (Session Persistence), Finding 5 (Unified TASKS.md), Finding 6 (Verification Mode), Finding 7 (Testing/CI-CD Spec-Driven), Finding 8 (Parallel Execution), Finding 9 (User Task Ordering), Finding 10 (Fix Tasks), Finding 11 (Reconciliation on Resume), Finding 12 (Tangent Tolerance) | Option 3: Hybrid — new `implementer` skill with pipeline integration |
+| docs/research/POST_SPEC_IMPLEMENTATION_TRACKING.md | Finding 1 (Two Tracking Dimensions), Finding 2 (Queue Semantics), Finding 3 (Spec Gap Triage), Finding 4 (Session Persistence), Finding 5 (Unified TASKS.md), Finding 6 (Verification Mode), Finding 7 (Testing/CI-CD Spec-Driven), Finding 8 (Parallel Execution), Finding 9 (User Task Ordering), Finding 10 (Fix Tasks), Finding 11 (Reconciliation on Resume), Finding 12 (Tangent Tolerance) | Option 3: Hybrid — new `cl-implementer` skill with pipeline integration |
 
 ## System Context
 
 ### Research Type: Net New (with modifications to existing)
 
-The implementer skill is an entirely new capability. No implementation tracking exists in the current pipeline. However, adding it requires modifications to three existing plugin artifacts to establish handoff points and update the plugin's self-description.
+The cl-implementer skill is an entirely new capability. No implementation tracking exists in the current pipeline. However, adding it requires modifications to three existing plugin artifacts to establish handoff points and update the plugin's self-description.
 
 ### Current State
 
 | Plugin Artifact | Current State Summary | Sections Referenced |
 |----------------|----------------------|-------------------|
-| `skills/doc-spec-gen/SKILL.md` | Declares itself as the pipeline's terminal stage. Line 247: "Specs end the pipeline. After specs are generated and reviewed, the documentation pipeline's job is done. Implementation is a separate concern." | Guidelines section (last bullet) |
-| `skills/ui-designer/references/build-plan-mode.md` | Generates `DESIGN_TASKS.md` with phased tasks (1-5), dependency graph, acceptance criteria. Currently the closest thing to implementation tracking but only covers UI. Last line suggests starting implementation or running design review — no mention of a downstream skill. | Step 4: User Review, Update Tracking |
-| `README.md` | Skills table lists 4 skills. Lifecycle diagram ends at `/doc-spec-gen review`. "What It Does" section says "four skills." | Skills table (line 28-34), Lifecycle diagram (lines 79-104), What It Does (line 27), Project Structure (lines 340-396) |
+| `skills/cl-implementer/SKILL.md` | Declares itself as the pipeline's terminal stage. Line 247: "Specs end the pipeline. After specs are generated and reviewed, the documentation pipeline's job is done. Implementation is a separate concern." | Guidelines section (last bullet) |
+| `skills/cl-designer/references/build-plan-mode.md` | Generates `DESIGN_TASKS.md` with phased tasks (1-5), dependency graph, acceptance criteria. Currently the closest thing to implementation tracking but only covers UI. Last line suggests starting implementation or running design review — no mention of a downstream skill. | Step 4: User Review, Update Tracking |
+| `README.md` | Skills table lists 4 skills. Lifecycle diagram ends at `/cl-implementer spec-review`. "What It Does" section says "four skills." | Skills table (line 28-34), Lifecycle diagram (lines 79-104), What It Does (line 27), Project Structure (lines 340-396) |
 | `docs/research/DOC_PIPELINE_PLUGIN.md` | 11 design decisions. Decision 2 lists "Four skills." Decision 5 says "Waterfall. All system docs must be complete and verified before specs are generated." No mention of post-spec workflow. | Design Decisions section, Decision 2, Decision 5 |
 | `scripts/init.js` | Creates 8 directories including `specs/`. No implementation-specific directories needed since TASKS.md and IMPLEMENTATION_PROGRESS.md live in `specs/`. | dirs array (lines 200-209) |
 
@@ -41,12 +41,12 @@ The implementer skill is an entirely new capability. No implementation tracking 
 
 After this proposal is applied:
 
-1. **New `implementer` skill** with 5 modes: `start`, `run`, `verify`, `status`, `sync`
-2. **doc-spec-gen** hands off to the implementer instead of declaring the pipeline done
-3. **ui-designer build-plan** notes that DESIGN_TASKS.md is consumed by the implementer
+1. **New `cl-implementer` skill** with 5 modes: `start`, `run`, `verify`, `status`, `sync`
+2. **cl-implementer** hands off to the cl-implementer instead of declaring the pipeline done
+3. **cl-designer build-plan** notes that DESIGN_TASKS.md is consumed by the cl-implementer
 4. **README** reflects 5 skills, lifecycle extends through implementation, directory structure shows TASKS.md and IMPLEMENTATION_PROGRESS.md
 5. **DOC_PIPELINE_PLUGIN** gains Design Decision #12 explaining the implementation tracking approach
-6. **New docs/implementer.md** provides detailed skill documentation
+6. **New docs/cl-implementer.md** provides detailed skill documentation
 
 The lifecycle becomes:
 
@@ -56,22 +56,22 @@ Idea → Research → Proposal → Review → Merge → Verify → Design (optio
 
 ## Change Manifest
 
-> This is the contract between the proposal and the plugin files. The doc-reviewer will
+> This is the contract between the proposal and the plugin files. The cl-reviewer will
 > use this table to verify every change was applied correctly during the verify step.
 
 | # | Change Description | Target Doc | Target Section | Type | Research Ref |
 |---|-------------------|-----------|----------------|------|-------------|
-| 1 | Create implementer skill definition with 5 modes, session start protocol, mode detection, guidelines | `skills/implementer/SKILL.md` | (new doc) | Add Doc | Findings 1-12, Recommendation |
-| 2 | Create start mode reference: unified TASKS.md generation, pre-checks, Claude Code task population, parallelizable group identification, user reordering | `skills/implementer/references/start-mode.md` | (new doc) | Add Doc | Findings 5, 7, 8, 9 |
-| 3 | Create run mode reference: reconciliation on resume, queue processing, implementation loop, fix tasks, post-task regression spot-check, gap triage, dual tracking | `skills/implementer/references/run-mode.md` | (new doc) | Add Doc | Findings 2, 3, 10, 11, 12 |
-| 4 | Create verify mode reference: per-task, per-spec, cross-spec, spec-to-doc verification dimensions, doc-reviewer sync integration | `skills/implementer/references/verify-mode.md` | (new doc) | Add Doc | Finding 6 |
-| 5 | Create sync mode reference: spec hash comparison, task queue adjustment, re-verification of completed tasks, merge mechanics | `skills/implementer/references/sync-mode.md` | (new doc) | Add Doc | Finding 2 |
-| 6 | Create detailed skill documentation | `docs/implementer.md` | (new doc) | Add Doc | All findings |
-| 7 | Replace "Specs end the pipeline" terminal statement with handoff to implementer | `skills/doc-spec-gen/SKILL.md` | Guidelines (last bullet, line 247) | Modify | Finding 1, Recommendation |
-| 8 | Add note that DESIGN_TASKS.md is consumed by implementer's start mode and merged into unified TASKS.md | `skills/ui-designer/references/build-plan-mode.md` | Update Tracking (end of file) | Add | Finding 5 |
-| 9 | Add implementer to skills table, update "What It Does" count to five, extend lifecycle diagram through implementation | `README.md` | Skills table, What It Does, Lifecycle diagram | Modify | Recommendation |
-| 10 | Add implementer to project structure tree | `README.md` | Project Structure | Add | Recommendation |
-| 11 | Add documentation table entry for implementer | `README.md` | Documentation table | Add | Recommendation |
+| 1 | Create cl-implementer skill definition with 5 modes, session start protocol, mode detection, guidelines | `skills/cl-implementer/SKILL.md` | (new doc) | Add Doc | Findings 1-12, Recommendation |
+| 2 | Create start mode reference: unified TASKS.md generation, pre-checks, Claude Code task population, parallelizable group identification, user reordering | `skills/cl-implementer/references/start-mode.md` | (new doc) | Add Doc | Findings 5, 7, 8, 9 |
+| 3 | Create run mode reference: reconciliation on resume, queue processing, implementation loop, fix tasks, post-task regression spot-check, gap triage, dual tracking | `skills/cl-implementer/references/run-mode.md` | (new doc) | Add Doc | Findings 2, 3, 10, 11, 12 |
+| 4 | Create verify mode reference: per-task, per-spec, cross-spec, spec-to-doc verification dimensions, cl-reviewer sync integration | `skills/cl-implementer/references/verify-mode.md` | (new doc) | Add Doc | Finding 6 |
+| 5 | Create sync mode reference: spec hash comparison, task queue adjustment, re-verification of completed tasks, merge mechanics | `skills/cl-implementer/references/sync-mode.md` | (new doc) | Add Doc | Finding 2 |
+| 6 | Create detailed skill documentation | `docs/cl-implementer.md` | (new doc) | Add Doc | All findings |
+| 7 | Replace "Specs end the pipeline" terminal statement with handoff to cl-implementer | `skills/cl-implementer/SKILL.md` | Guidelines (last bullet, line 247) | Modify | Finding 1, Recommendation |
+| 8 | Add note that DESIGN_TASKS.md is consumed by cl-implementer's start mode and merged into unified TASKS.md | `skills/cl-designer/references/build-plan-mode.md` | Update Tracking (end of file) | Add | Finding 5 |
+| 9 | Add cl-implementer to skills table, update "What It Does" count to five, extend lifecycle diagram through implementation | `README.md` | Skills table, What It Does, Lifecycle diagram | Modify | Recommendation |
+| 10 | Add cl-implementer to project structure tree | `README.md` | Project Structure | Add | Recommendation |
+| 11 | Add documentation table entry for cl-implementer | `README.md` | Documentation table | Add | Recommendation |
 | 12 | Add Design Decision #12: Implementation Tracking with Queue Semantics | `docs/research/DOC_PIPELINE_PLUGIN.md` | Design Decisions (after #11) | Add Section | Findings 2, 5, 10, 11, 12 |
 
 **Scope boundary**: This proposal ONLY modifies the files listed above. It does not modify hooks, init.js (no new directories needed — TASKS.md and IMPLEMENTATION_PROGRESS.md live in `specs/`), pipeline-concepts.md, or any other plugin artifact not listed.
@@ -86,12 +86,12 @@ Idea → Research → Proposal → Review → Merge → Verify → Design (optio
 
 #### SKILL.md (Change 1)
 
-The skill definition follows the established pattern (doc-researcher, doc-reviewer, etc.):
+The skill definition follows the established pattern (cl-researcher, cl-reviewer, etc.):
 
 **Frontmatter:**
 ```yaml
 ---
-name: implementer
+name: cl-implementer
 description: >
   Implementation orchestration skill for the Clarity Loop documentation pipeline.
   Generates a unified TASKS.md from all spec artifacts, tracks implementation progress
@@ -105,11 +105,11 @@ argument-hint: "[start|run|verify|status|sync]"
 ---
 ```
 
-No `context: fork` — the interactive nature (implement → verify → feedback → continue) requires main context. This is a key differentiator from doc-spec-gen which runs as fork.
+No `context: fork` — the interactive nature (implement → verify → feedback → continue) requires main context. This is a key differentiator from cl-implementer which runs as fork.
 
 **Body structure:**
 1. Role definition: "You are an implementation orchestration agent. You bridge the gap between specs and working code."
-2. Pipeline position diagram showing implementer after spec-gen
+2. Pipeline position diagram showing cl-implementer after spec-gen
 3. Session start: configuration, pipeline state check, implementation state check (read IMPLEMENTATION_PROGRESS.md if exists, resume from last state)
 4. Mode detection with gates (start requires specs, run requires TASKS.md, verify requires completed tasks, sync requires TASKS.md + spec changes)
 5. Each mode section says "Read `references/[mode].md` and follow its process"
@@ -120,7 +120,7 @@ No `context: fork` — the interactive nature (implement → verify → feedback
 The entry point. Generates the unified TASKS.md from all spec artifacts.
 
 **Process:**
-1. **Pre-checks**: Verify specs exist (`.spec-manifest.md`). Warn if `/doc-spec-gen review` was never run. Check for git repository — if not initialized, offer: "This project isn't a git repository. Git enables implementation tracking (change detection, reconciliation on resume, regression identification). Initialize now? [Y/n]" If yes, run `git init` and optionally create an initial commit. If no, warn about reduced reconciliation accuracy and fall back to timestamp-based tracking. Cross-reference system doc areas vs spec coverage — warn on gaps (e.g., "PRD mentions testing but no testing spec exists").
+1. **Pre-checks**: Verify specs exist (`.spec-manifest.md`). Warn if `/cl-implementer spec-review` was never run. Check for git repository — if not initialized, offer: "This project isn't a git repository. Git enables implementation tracking (change detection, reconciliation on resume, regression identification). Initialize now? [Y/n]" If yes, run `git init` and optionally create an initial commit. If no, warn about reduced reconciliation accuracy and fall back to timestamp-based tracking. Cross-reference system doc areas vs spec coverage — warn on gaps (e.g., "PRD mentions testing but no testing spec exists").
 2. **Read all specs**: Parse `.spec-manifest.md`, read each spec file, read DESIGN_TASKS.md if it exists.
 3. **Generate unified TASKS.md** in `{docsRoot}/specs/TASKS.md`:
    - Header with generation date, spec version hash, source specs list
@@ -171,7 +171,7 @@ Post-implementation verification. Four dimensions:
 1. **Per-task**: Does each completed task meet its acceptance criteria? (Quick re-check)
 2. **Per-spec**: Does the full implementation honor spec contracts? (Types, interfaces, constraints)
 3. **Cross-spec**: Do implemented modules work together as specs described? (Integration check)
-4. **Spec-to-doc**: Does implemented code align with system docs? (Invokes doc-reviewer sync)
+4. **Spec-to-doc**: Does implemented code align with system docs? (Invokes cl-reviewer sync)
 
 Output: verification summary in IMPLEMENTATION_PROGRESS.md.
 
@@ -194,42 +194,42 @@ Handles spec changes mid-implementation. Queue adjustment logic:
 
 ### Change Area 2: Spec-Gen Handoff (Change 7)
 
-**What**: Replace the terminal statement in doc-spec-gen's guidelines with a handoff to the implementer.
+**What**: Replace the terminal statement in cl-implementer's guidelines with a handoff to the cl-implementer.
 
 **Why**: Research Finding 1 identified this as the cliff. The pipeline shouldn't declare itself "done" at specs — specs are the bridge to implementation, not the destination.
 
-**Current** (from `skills/doc-spec-gen/SKILL.md`, Guidelines section, last bullet):
+**Current** (from `skills/cl-implementer/SKILL.md`, Guidelines section, last bullet):
 > - **Specs end the pipeline.** After specs are generated and reviewed, the documentation
 >   pipeline's job is done. Implementation is a separate concern.
 
 **Proposed**:
 > - **Specs bridge to implementation.** After specs are generated and reviewed, the
->   `implementer` skill takes over — generating a unified task list, tracking progress,
->   and feeding gaps back into the pipeline. Run `/implementer start` to begin.
+>   `cl-implementer` skill takes over — generating a unified task list, tracking progress,
+>   and feeding gaps back into the pipeline. Run `/cl-implementer start` to begin.
 
 **Dependencies**: Change 1 must exist first (the skill being referenced).
 
 ### Change Area 3: Build-Plan Handoff (Change 8)
 
-**What**: Add a note to ui-designer's build-plan mode explaining that DESIGN_TASKS.md is consumed by the implementer.
+**What**: Add a note to cl-designer's build-plan mode explaining that DESIGN_TASKS.md is consumed by the cl-implementer.
 
-**Why**: Research Finding 5 established that TASKS.md is the single task authority. DESIGN_TASKS.md remains as a design artifact, but the implementer merges its tasks into the unified TASKS.md. Users should know this relationship.
+**Why**: Research Finding 5 established that TASKS.md is the single task authority. DESIGN_TASKS.md remains as a design artifact, but the cl-implementer merges its tasks into the unified TASKS.md. Users should know this relationship.
 
-**Current** (from `skills/ui-designer/references/build-plan-mode.md`, Update Tracking section, last paragraph):
+**Current** (from `skills/cl-designer/references/build-plan-mode.md`, Update Tracking section, last paragraph):
 > Tell the user: "Build plan complete. DESIGN_TASKS.md generated at
 > `{docsRoot}/specs/DESIGN_TASKS.md` with [N] tasks across [M] phases. You can start
-> implementation from Phase 1 (tokens), or run `/doc-reviewer design-review` first to
+> implementation from Phase 1 (tokens), or run `/cl-reviewer design-review` first to
 > validate the designs against the PRD."
 
 **Proposed**:
 > Tell the user: "Build plan complete. DESIGN_TASKS.md generated at
 > `{docsRoot}/specs/DESIGN_TASKS.md` with [N] tasks across [M] phases. Run
-> `/doc-reviewer design-review` to validate designs against the PRD, then
-> `/implementer start` to generate a unified implementation plan that merges these
+> `/cl-reviewer design-review` to validate designs against the PRD, then
+> `/cl-implementer start` to generate a unified implementation plan that merges these
 > design tasks with tasks from tech specs."
 >
 > **Note**: DESIGN_TASKS.md is a design artifact — the output of this build-plan mode.
-> The `implementer` skill's `start` mode reads it as one of its inputs and merges the
+> The `cl-implementer` skill's `start` mode reads it as one of its inputs and merges the
 > tasks into a unified `TASKS.md` alongside tasks derived from tech specs. DESIGN_TASKS.md
 > remains as the build-plan source reference; TASKS.md becomes the working implementation
 > copy.
@@ -251,17 +251,17 @@ Handles spec changes mid-implementation. Queue adjustment logic:
 > Clarity Loop manages the lifecycle of system documentation and implementation through five skills:
 
 **Current** (skills table, lines 29-34):
-> | **[doc-researcher](docs/doc-researcher.md)** | `/doc-researcher` | Bootstrap initial docs, triage complexity, research topics, plan document structure, generate proposals |
-> | **[doc-reviewer](docs/doc-reviewer.md)** | `/doc-reviewer` | Review proposals, fix issues, re-review, merge to system docs, verify merges, audit doc sets, apply corrections, check code-doc sync, review designs |
-> | **[doc-spec-gen](docs/doc-spec-gen.md)** | `/doc-spec-gen` | Generate structured specs from verified system docs, cross-spec consistency checks |
-> | **[ui-designer](docs/ui-designer.md)** | `/ui-designer` | Design discovery conversation, design token generation, reusable component library, screen mockups with visual feedback loops, implementation task breakdown |
+> | **[cl-researcher](docs/cl-researcher.md)** | `/cl-researcher` | Bootstrap initial docs, triage complexity, research topics, plan document structure, generate proposals |
+> | **[cl-reviewer](docs/cl-reviewer.md)** | `/cl-reviewer` | Review proposals, fix issues, re-review, merge to system docs, verify merges, audit doc sets, apply corrections, check code-doc sync, review designs |
+> | **[cl-implementer](docs/cl-implementer.md)** | `/cl-implementer` | Generate structured specs from verified system docs, cross-spec consistency checks |
+> | **[cl-designer](docs/cl-designer.md)** | `/cl-designer` | Design discovery conversation, design token generation, reusable component library, screen mockups with visual feedback loops, implementation task breakdown |
 
-**Proposed** (add row after ui-designer):
-> | **[implementer](docs/implementer.md)** | `/implementer` | Generate unified task list from specs, track implementation progress, handle runtime failures, reconcile external changes, feed spec gaps back into the pipeline |
+**Proposed** (add row after cl-designer):
+> | **[cl-implementer](docs/cl-implementer.md)** | `/cl-implementer` | Generate unified task list from specs, track implementation progress, handle runtime failures, reconcile external changes, feed spec gaps back into the pipeline |
 
 #### Lifecycle Diagram (Change 9, part 2)
 
-**Current** (lines 79-104): Diagram ends at `/doc-spec-gen review`.
+**Current** (lines 79-104): Diagram ends at `/cl-implementer spec-review`.
 
 **Proposed**: Extend the diagram to include implementation:
 
@@ -271,41 +271,41 @@ flowchart TD
     classDef ai fill:#dbeafe,stroke:#3b82f6,color:#1e40af
     classDef gate fill:#dcfce7,stroke:#16a34a,color:#166534
 
-    START["Idea or problem"] --> RESEARCH["/doc-researcher research"]:::human
-    RESEARCH -->|"human discussion"| STRUCTURE["/doc-researcher structure"]:::ai
-    STRUCTURE --> PROPOSAL["/doc-researcher proposal"]:::ai
-    PROPOSAL -->|"human reads & refines"| REVIEW["/doc-reviewer review"]:::gate
-    REVIEW -->|"issues found"| FIX["/doc-reviewer fix"]:::ai
+    START["Idea or problem"] --> RESEARCH["/cl-researcher research"]:::human
+    RESEARCH -->|"human discussion"| STRUCTURE["/cl-researcher structure"]:::ai
+    STRUCTURE --> PROPOSAL["/cl-researcher proposal"]:::ai
+    PROPOSAL -->|"human reads & refines"| REVIEW["/cl-reviewer review"]:::gate
+    REVIEW -->|"issues found"| FIX["/cl-reviewer fix"]:::ai
     FIX -->|"auto re-review"| REVIEW
-    REVIEW -->|"APPROVE"| MERGE["/doc-reviewer merge"]:::gate
-    MERGE -->|"auto-triggered"| VERIFY["/doc-reviewer verify"]:::gate
+    REVIEW -->|"APPROVE"| MERGE["/cl-reviewer merge"]:::gate
+    MERGE -->|"auto-triggered"| VERIFY["/cl-reviewer verify"]:::gate
     VERIFY -->|"repeat for all topics"| START
 
-    VERIFY -->|"UI features?"| SETUP["/ui-designer setup"]:::human
-    SETUP -->|"discovery conversation"| TOKENS["/ui-designer tokens"]:::human
-    TOKENS -->|"visual feedback loop"| MOCKUPS["/ui-designer mockups"]:::human
-    MOCKUPS -->|"visual feedback loop"| BUILD["/ui-designer build-plan"]:::human
-    BUILD -->|"human review"| DREVIEW["/doc-reviewer design-review"]:::gate
+    VERIFY -->|"UI features?"| SETUP["/cl-designer setup"]:::human
+    SETUP -->|"discovery conversation"| TOKENS["/cl-designer tokens"]:::human
+    TOKENS -->|"visual feedback loop"| MOCKUPS["/cl-designer mockups"]:::human
+    MOCKUPS -->|"visual feedback loop"| BUILD["/cl-designer build-plan"]:::human
+    BUILD -->|"human review"| DREVIEW["/cl-reviewer design-review"]:::gate
 
-    DREVIEW --> SPECS["/doc-spec-gen generate"]:::ai
+    DREVIEW --> SPECS["/cl-implementer spec"]:::ai
     VERIFY -->|"no UI"| SPECS
-    SPECS --> SPEC_REVIEW["/doc-spec-gen review"]:::gate
+    SPECS --> SPEC_REVIEW["/cl-implementer spec-review"]:::gate
 
-    SPEC_REVIEW --> IMPL_START["/implementer start"]:::human
-    IMPL_START -->|"task plan approved"| IMPL_RUN["/implementer run"]:::human
+    SPEC_REVIEW --> IMPL_START["/cl-implementer start"]:::human
+    IMPL_START -->|"task plan approved"| IMPL_RUN["/cl-implementer run"]:::human
     IMPL_RUN -->|"spec gap (L2)"| START
-    IMPL_RUN -->|"all tasks done"| IMPL_VERIFY["/implementer verify"]:::gate
-    IMPL_RUN -->|"specs changed"| IMPL_SYNC["/implementer sync"]:::ai
+    IMPL_RUN -->|"all tasks done"| IMPL_VERIFY["/cl-implementer verify"]:::gate
+    IMPL_RUN -->|"specs changed"| IMPL_SYNC["/cl-implementer sync"]:::ai
     IMPL_SYNC --> IMPL_RUN
 ```
 
 #### Project Structure (Change 10)
 
-**Current** (lines 340-396): No implementer skill in the tree.
+**Current** (lines 340-396): No cl-implementer skill in the tree.
 
 **Proposed**: Add to the skills section of the tree:
 ```
-    implementer/
+    cl-implementer/
       SKILL.md
       references/
         start-mode.md
@@ -316,7 +316,7 @@ flowchart TD
 
 And add to the docs section:
 ```
-    implementer.md                  implementer skill documentation
+    cl-implementer.md                  cl-implementer skill documentation
 ```
 
 #### Documentation Table (Change 11)
@@ -324,7 +324,7 @@ And add to the docs section:
 **Current** (lines 318-325): Four documentation entries.
 
 **Proposed**: Add row:
-> | [implementer](docs/implementer.md) | Start, run, verify, status, sync modes, unified TASKS.md, queue semantics, fix tasks, reconciliation |
+> | [cl-implementer](docs/cl-implementer.md) | Start, run, verify, status, sync modes, unified TASKS.md, queue semantics, fix tasks, reconciliation |
 
 **Dependencies**: Change 6 must exist first (the docs file being linked).
 
@@ -332,7 +332,7 @@ And add to the docs section:
 
 **What**: Add a new design decision documenting the implementation tracking approach.
 
-**Why**: Every major design choice in the plugin is recorded in `docs/research/DOC_PIPELINE_PLUGIN.md`. The implementer skill introduces significant new concepts (queue semantics, fix tasks, reconciliation, tangent tolerance) that need to be documented with rationale.
+**Why**: Every major design choice in the plugin is recorded in `docs/research/DOC_PIPELINE_PLUGIN.md`. The cl-implementer skill introduces significant new concepts (queue semantics, fix tasks, reconciliation, tangent tolerance) that need to be documented with rationale.
 
 **Current** (from `docs/research/DOC_PIPELINE_PLUGIN.md`): 11 design decisions, ending with Decision 11 (Visual Design as Separate Skill).
 
@@ -343,7 +343,7 @@ And add to the docs section:
 
 **Question**: What happens after specs are generated? Should the pipeline end at specs, or extend through implementation?
 
-**Decision**: A new `implementer` skill that extends the pipeline from specs to working code. The skill generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md), organized by implementation area with a cross-area Mermaid dependency graph. It tracks progress via `IMPLEMENTATION_PROGRESS.md`, handles spec changes mid-implementation via queue semantics (process front-to-back, validity-check before each task, pop/replace if superseded), and feeds gaps back into the pipeline through the existing triage mechanism (L0-L2).
+**Decision**: A new `cl-implementer` skill that extends the pipeline from specs to working code. The skill generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md), organized by implementation area with a cross-area Mermaid dependency graph. It tracks progress via `IMPLEMENTATION_PROGRESS.md`, handles spec changes mid-implementation via queue semantics (process front-to-back, validity-check before each task, pop/replace if superseded), and feeds gaps back into the pipeline through the existing triage mechanism (L0-L2).
 
 Three mechanisms handle real-world development messiness:
 - **Fix tasks (F-NNN)**: Runtime failures and regressions are distinct from spec gaps ("spec is right, code is wrong"). Fix tasks are created, prioritized, and trigger cascading re-verification of transitive dependents.
@@ -372,32 +372,32 @@ The skill uses dual-write tracking: TASKS.md is the persistent source of truth (
 
 | Term | Definition | Where Used |
 |------|-----------|-----------|
-| **TASKS.md** | Unified implementation task file generated from all specs. Organized by area with cross-area dependency graph. Single source of truth for what needs to be built. | implementer SKILL.md, start-mode.md, run-mode.md, sync-mode.md, README |
-| **IMPLEMENTATION_PROGRESS.md** | Session persistence file tracking task status, spec gaps, fix tasks, external changes, and spec sync history. | implementer SKILL.md, run-mode.md, verify-mode.md |
+| **TASKS.md** | Unified implementation task file generated from all specs. Organized by area with cross-area dependency graph. Single source of truth for what needs to be built. | cl-implementer SKILL.md, start-mode.md, run-mode.md, sync-mode.md, README |
+| **IMPLEMENTATION_PROGRESS.md** | Session persistence file tracking task status, spec gaps, fix tasks, external changes, and spec sync history. | cl-implementer SKILL.md, run-mode.md, verify-mode.md |
 | **Fix task (F-NNN)** | A task created in response to runtime errors or regressions, distinct from spec gaps. Tracked separately from implementation tasks (T-NNN). | run-mode.md, IMPLEMENTATION_PROGRESS.md |
 | **Queue semantics** | The model for handling TASKS.md: process front-to-back, validity-check before each task, pop/replace if superseded. | run-mode.md, sync-mode.md, SKILL.md |
-| **Reconciliation** | Git-diff-based detection and handling of code changes made outside the implementer. | run-mode.md |
+| **Reconciliation** | Git-diff-based detection and handling of code changes made outside the cl-implementer. | run-mode.md |
 | **Spec hash** | Content hash from `.spec-manifest.md` recorded per task. Used for validity checking and staleness detection. | start-mode.md, run-mode.md, sync-mode.md |
 | **Tangent tolerance** | The design principle that the skill accommodates off-script development. The queue is the plan, not the process. | run-mode.md, SKILL.md guidelines |
 | **Dual-write** | Pattern where task state is written to both TASKS.md (persistent) and Claude Code tasks (session view). | start-mode.md, run-mode.md |
 
 ### Migration
 
-No migration needed. This is entirely additive — new skill, new files, minor modifications to existing files. No breaking changes to existing workflows. Users who don't use the implementer skill are unaffected.
+No migration needed. This is entirely additive — new skill, new files, minor modifications to existing files. No breaking changes to existing workflows. Users who don't use the cl-implementer skill are unaffected.
 
-The one behavioral change: doc-spec-gen's last guideline changes from "pipeline done" to "hand off to implementer." This doesn't change spec-gen's behavior — it changes the messaging to users about what comes next.
+The one behavioral change: cl-implementer's last guideline changes from "pipeline done" to "hand off to cl-implementer." This doesn't change spec-gen's behavior — it changes the messaging to users about what comes next.
 
 ### Integration Points
 
 | Integration | How | Direction |
 |------------|-----|-----------|
-| doc-spec-gen → implementer | Spec-gen's updated guideline points users to `/implementer start` | Handoff |
-| ui-designer → implementer | Build-plan note explains DESIGN_TASKS.md consumption | Handoff |
-| implementer → doc-reviewer sync | Verify mode invokes sync to check code-doc alignment | Invocation |
-| implementer → doc-researcher | L2 spec gaps may trigger research cycles | Feedback |
-| implementer → STATUS.md | Emerged concepts during implementation captured via existing mechanism | Tracking |
-| implementer ← .spec-manifest.md | Reads spec hash for version tracking and validity checks | Input |
-| implementer ← DESIGN_TASKS.md | Reads and merges design tasks into unified TASKS.md | Input |
+| cl-implementer (spec) → cl-implementer (start) | Spec mode's updated guideline points users to `/cl-implementer start` | Handoff |
+| cl-designer → cl-implementer | Build-plan note explains DESIGN_TASKS.md consumption | Handoff |
+| cl-implementer → cl-reviewer sync | Verify mode invokes sync to check code-doc alignment | Invocation |
+| cl-implementer → cl-researcher | L2 spec gaps may trigger research cycles | Feedback |
+| cl-implementer → STATUS.md | Emerged concepts during implementation captured via existing mechanism | Tracking |
+| cl-implementer ← .spec-manifest.md | Reads spec hash for version tracking and validity checks | Input |
+| cl-implementer ← DESIGN_TASKS.md | Reads and merges design tasks into unified TASKS.md | Input |
 
 ## Design Decisions
 
@@ -429,7 +429,7 @@ None. The research doc resolved all open questions through five discussion round
 
 ## Appendix: Research Summary
 
-The research identified six gaps in the current pipeline after spec generation: no progress tracking, no implementation verification, no spec gap feedback, no loop awareness, no failure handling, and no external change tolerance. Through five discussion rounds (including user-identified critical gaps around runtime failures and off-script development) and two comprehensive dry runs (20 scenarios, 14 edge cases found and resolved), the research converged on a new `implementer` skill with queue-based loop awareness, fix tasks for runtime issues, git-based reconciliation for external changes, and a core design principle that "the queue is the plan, not the process."
+The research identified six gaps in the current pipeline after spec generation: no progress tracking, no implementation verification, no spec gap feedback, no loop awareness, no failure handling, and no external change tolerance. Through five discussion rounds (including user-identified critical gaps around runtime failures and off-script development) and two comprehensive dry runs (20 scenarios, 14 edge cases found and resolved), the research converged on a new `cl-implementer` skill with queue-based loop awareness, fix tasks for runtime issues, git-based reconciliation for external changes, and a core design principle that "the queue is the plan, not the process."
 
 Key findings:
 1. Two tracking dimensions needed: task progress AND contract compliance

@@ -1,6 +1,6 @@
 # Research Ledger
 
-Tracks all research cycles in this project. Updated by the `doc-researcher` skill.
+Tracks all research cycles in this project. Updated by the `cl-researcher` skill.
 
 ## Active
 

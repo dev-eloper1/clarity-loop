@@ -34,7 +34,7 @@ Clarity Loop manages five stages between "I have an idea" and "I have working co
 
 **4. Generate implementation specs.** Once all documentation is stable and verified, the plugin generates structured, implementation-ready specs — concrete types, enumerated edge cases, acceptance criteria. These are the bridge between "what to build" and "how to build it."
 
-**5. Implement with tracking.** This is the payoff. Because your docs are precise, your specs are concrete, and your library knowledge is current — the implementer runs on near-autopilot. It generates a task queue from specs, processes tasks front-to-back, verifies each against acceptance criteria, handles runtime bugs, triages emergent issues on the fly, and picks up exactly where it left off across sessions. You steer and approve; it does the rest.
+**5. Implement with tracking.** This is the payoff. Because your docs are precise, your specs are concrete, and your library knowledge is current — the cl-implementer runs on near-autopilot. It generates a task queue from specs, processes tasks front-to-back, verifies each against acceptance criteria, handles runtime bugs, triages emergent issues on the fly, and picks up exactly where it left off across sessions. You steer and approve; it does the rest.
 
 Stages 1-4 are the investment. Stage 5 is where it pays off — implementation that *just works* because the inputs were right.
 
@@ -48,31 +48,31 @@ Cutting across all stages, a **system-wide decision journal** (DECISIONS.md) cap
 
 ```bash
 # Start a new project
-/doc-researcher bootstrap
+/cl-researcher bootstrap
 # -> Auto-scaffolds docs directory structure
 # -> Discovery conversation about your project
 # -> Initial system docs generated (PRD, Architecture, TDD)
 # -> "Your Architecture doc references 4 libraries. Create context files? [Y/n]"
 
 # Research a feature
-/doc-researcher research "user authentication"
+/cl-researcher research "user authentication"
 # -> Multi-turn conversation grounded in your existing docs
 # -> Research doc generated with findings and recommendations
 
 # Generate a proposal
-/doc-researcher proposal
+/cl-researcher proposal
 # -> Concrete change manifest: what changes, where, why
 # -> "Proposal generated. Read it over and let me know when you'd like to review."
 
 # Review and merge
-/doc-reviewer review
+/cl-reviewer review
 # -> Six-dimension review against all system docs
 # -> Fix cycle until approved, then merge to protected system docs
 
 # Generate specs and implement
-/doc-spec-gen generate
-/implementer start
-/implementer run
+/cl-implementer spec
+/cl-implementer start
+/cl-implementer run
 # -> Task queue with acceptance criteria, context-aware implementation,
 #    fix tasks for regressions, spec gap feedback to the pipeline
 ```
@@ -107,7 +107,7 @@ claude --plugin-dir ./clarity-loop
 Then start your project — bootstrap handles everything:
 
 ```bash
-/doc-researcher bootstrap
+/cl-researcher bootstrap
 ```
 
 This auto-scaffolds the directory structure, runs a discovery conversation about your project, and generates initial system docs. If collisions are detected with existing directories, you'll be prompted to choose an alternative docs root.
@@ -126,15 +126,14 @@ Updates never touch your project's docs — only the plugin's skills, hooks, and
 
 ---
 
-## The Five Skills
+## The Four Skills
 
 | Skill | Command | What It Does |
 |-------|---------|-------------|
-| **doc-researcher** | `/doc-researcher` | Bootstraps initial docs, triages complexity, runs multi-turn research conversations, plans document structure, generates proposals, creates per-library context files |
-| **doc-reviewer** | `/doc-reviewer` | Reviews proposals against all system docs, manages fix cycles, merges to protected system docs, verifies merges, runs system-wide audits, checks code-doc alignment, reviews designs |
-| **doc-spec-gen** | `/doc-spec-gen` | Generates implementation-ready specs from verified system docs, runs cross-spec consistency checks |
-| **ui-designer** | `/ui-designer` | Runs design discovery conversations, generates design tokens and component libraries, creates screen mockups with visual feedback loops, produces implementation task breakdowns |
-| **implementer** | `/implementer` | Generates unified task queues from specs, tracks implementation progress, handles runtime failures and regressions, reconciles external changes, feeds spec gaps back into the pipeline |
+| **cl-researcher** | `/cl-researcher` | Bootstraps initial docs, triages complexity, runs multi-turn research conversations, plans document structure, generates proposals, creates per-library context files |
+| **cl-reviewer** | `/cl-reviewer` | Reviews proposals against all system docs, manages fix cycles, merges to protected system docs, verifies merges, runs system-wide audits, checks code-doc alignment, reviews designs |
+| **cl-designer** | `/cl-designer` | Runs design discovery conversations, generates design tokens and component libraries, creates screen mockups with visual feedback loops, produces implementation task breakdowns |
+| **cl-implementer** | `/cl-implementer` | Generates specs from verified docs, runs cross-spec consistency checks, generates unified task queues from specs, tracks implementation progress, handles runtime failures and regressions, reconciles external changes, feeds spec gaps back into the pipeline |
 
 ---
 
@@ -143,7 +142,7 @@ Updates never touch your project's docs — only the plugin's skills, hooks, and
 It's called Clarity **Loop** because problems flow backward, not just forward:
 
 - **Every stage loops internally.** Generate → review → feedback → refine → approve. Nothing advances until you're satisfied.
-- **Implementation loops back to the source.** Spec gaps route to research. Context gaps route to library knowledge. Design gaps route to the ui-designer. Fixes happen where the mistake originated, not in the code.
+- **Implementation loops back to the source.** Spec gaps route to research. Context gaps route to library knowledge. Design gaps route to the cl-designer. Fixes happen where the mistake originated, not in the code.
 - **Audits catch cumulative drift.** Each proposal is fine alone — but 10 proposals can silently move the system off course. Periodic audits check the full doc set and feed findings back into research.
 
 ### What else it handles
@@ -151,9 +150,9 @@ It's called Clarity **Loop** because problems flow backward, not just forward:
 | You worry about... | The pipeline handles it |
 |---|---|
 | **Ideas at the wrong time** | Every concept captured automatically in a parking lot. Scope it later, defer to V2, or discard. No FOMO. |
-| **Coming back after a break** | All state lives in markdown. On resume, the implementer diffs what changed, re-verifies affected tasks, picks up where it left off. |
+| **Coming back after a break** | All state lives in markdown. On resume, the cl-implementer diffs what changed, re-verifies affected tasks, picks up where it left off. |
 | **Editing code outside the pipeline** | External changes detected via git, mapped to tasks, manually-completed work marked as done. |
-| **Design issues found during build** | Design gaps route directly to `/ui-designer` — missing component states, layout issues, new components. No research cycle needed for visual fixes. |
+| **Design issues found during build** | Design gaps route directly to `/cl-designer` — missing component states, layout issues, new components. No research cycle needed for visual fixes. |
 | **Fixes breaking other things** | Fix tasks trigger automatic re-verification of all downstream completed tasks. |
 | **Docs drifting from code** | Code-doc sync extracts claims from docs and checks them against the actual codebase. |
 | **Full ceremony for trivial changes** | Triage routes typos to direct fixes. Correction mode handles audit findings without research cycles. |
@@ -200,17 +199,16 @@ For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md)
 
 | Document | Covers |
 |----------|--------|
-| [doc-researcher](docs/doc-researcher.md) | Bootstrap, triage, research, structure, proposal, context modes |
-| [doc-reviewer](docs/doc-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
-| [doc-spec-gen](docs/doc-spec-gen.md) | Spec generation, waterfall gate, cross-spec consistency review |
-| [ui-designer](docs/ui-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
-| [implementer](docs/implementer.md) | Start, run, autopilot, verify, status, sync modes, task queue, fix tasks, reconciliation |
+| [cl-researcher](docs/cl-researcher.md) | Bootstrap, triage, research, structure, proposal, context modes |
+| [cl-reviewer](docs/cl-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
+| [cl-designer](docs/cl-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
+| [cl-implementer](docs/cl-implementer.md) | Spec generation, waterfall gate, cross-spec consistency review, start, run, autopilot, verify, status, sync modes, task queue, fix tasks, reconciliation |
 | [Pipeline Concepts](docs/pipeline-concepts.md) | System doc protection, manifest, tracking files, context files, configuration |
 | [Hooks](docs/hooks.md) | PreToolUse protection, PostToolUse manifest generation |
 
 ### Pencil MCP (Optional)
 
-The ui-designer works with or without [Pencil](https://www.pencil.dev/) — a design-as-code tool with an MCP server. With Pencil, you get live visual design on an infinite canvas. Without it, you get equivalent structured markdown specs. See [Pencil setup](docs/ui-designer.md#pencil-setup) for installation.
+The cl-designer works with or without [Pencil](https://www.pencil.dev/) — a design-as-code tool with an MCP server. With Pencil, you get live visual design on an infinite canvas. Without it, you get equivalent structured markdown specs. See [Pencil setup](docs/cl-designer.md#pencil-setup) for installation.
 
 ---
 
@@ -222,7 +220,7 @@ clarity-loop/
     plugin.json                     Plugin manifest
     marketplace.json                Marketplace catalog
   skills/
-    doc-researcher/                 Research, proposals, library context
+    cl-researcher/                  Research, proposals, library context
       SKILL.md
       references/
         bootstrap-guide.md
@@ -230,7 +228,7 @@ clarity-loop/
         proposal-template.md
         document-plan-template.md
         context-mode.md
-    doc-reviewer/                   Review, merge, verify, audit
+    cl-reviewer/                    Review, merge, verify, audit
       SKILL.md
       references/
         re-review-mode.md
@@ -241,19 +239,16 @@ clarity-loop/
         fix-mode.md
         sync-mode.md
         design-review-mode.md
-    doc-spec-gen/                   Spec generation
+    cl-implementer/                 Spec generation, task queue, implementation tracking
       SKILL.md
       references/
         spec-consistency-check.md
-    implementer/                    Task queue, implementation tracking
-      SKILL.md
-      references/
         start-mode.md
         run-mode.md
         autopilot-mode.md
         verify-mode.md
         sync-mode.md
-    ui-designer/                    Design system, mockups
+    cl-designer/                    Design system, mockups
       SKILL.md
       references/
         setup-mode.md
@@ -298,7 +293,7 @@ Optional: [Pencil](https://www.pencil.dev/) for visual design generation.
 git config --global url."https://github.com/".insteadOf "git@github.com:"
 ```
 
-**Install shows "(no content)"** — Known CLI feedback gap. Restart and check if `/doc-` autocomplete works.
+**Install shows "(no content)"** — Known CLI feedback gap. Restart and check if `/cl-` autocomplete works.
 
 ---
 

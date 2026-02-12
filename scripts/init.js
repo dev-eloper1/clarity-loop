@@ -301,7 +301,7 @@ async function main() {
   log('');
   log('Next steps:');
   log(`  1. Add your system docs to ${docsRoot}/system/`);
-  log('  2. Run /doc-researcher research "topic" to start a research cycle');
+  log('  2. Run /cl-researcher research "topic" to start a research cycle');
 }
 
 main().catch((err) => {

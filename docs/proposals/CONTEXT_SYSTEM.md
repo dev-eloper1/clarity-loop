@@ -14,9 +14,9 @@ markdown files that capture the delta between the LLM's training data and curren
 reality. The system uses a three-layer progressive disclosure model (manifest index → library
 overview → detail files) so skills load only the context they need for the current task.
 
-The doc-researcher skill gains a new `context` mode that creates and maintains context files
+The cl-researcher skill gains a new `context` mode that creates and maintains context files
 through web research against official documentation and context7.com. All other skills gain a
-standard loading protocol to consume context. The implementer gets version-pinned staleness
+standard loading protocol to consume context. The cl-implementer gets version-pinned staleness
 checks and a failure-based feedback loop that routes knowledge gaps back to the researcher.
 
 Context files are stored locally in `{docsRoot}/context/`, committed to git as project
@@ -45,11 +45,11 @@ research docs, proposals, specs, and designs.
 
 | Plugin Artifact | Current State Summary | Sections Referenced |
 |----------------|----------------------|-------------------|
-| `skills/doc-researcher/SKILL.md` | Six modes: bootstrap, bootstrap-brownfield, triage, research, structure, proposal. No context creation capability. Frontmatter description + argument-hint list modes. | Frontmatter (lines 1-22), Mode Detection (lines 127-147) |
-| `skills/doc-researcher/references/` | Five reference files (bootstrap, brownfield, research-template, proposal-template, structure-plan-template). No context-mode reference. | Directory listing |
-| `skills/implementer/references/start-mode.md` | Four pre-checks: specs exist, spec review, git repo, spec coverage. No context staleness check. | Step 1: Pre-Checks (lines 12-43) |
-| `skills/implementer/references/run-mode.md` | Step 3c reads spec reference + dependency files before implementing. No context loading. Step 4 classifies issues as runtime-error/regression/integration-failure. No "context gap" classification. | Step 3c: Implement (lines 104-122), Step 4: Fix Tasks (lines 147-188) |
-| `skills/doc-spec-gen/SKILL.md` | Waterfall gate checks research/proposal status before generating. No context validation. | Step 1: Waterfall Gate Check (lines 110-128) |
+| `skills/cl-researcher/SKILL.md` | Six modes: bootstrap, bootstrap-brownfield, triage, research, structure, proposal. No context creation capability. Frontmatter description + argument-hint list modes. | Frontmatter (lines 1-22), Mode Detection (lines 127-147) |
+| `skills/cl-researcher/references/` | Five reference files (bootstrap, brownfield, research-template, proposal-template, structure-plan-template). No context-mode reference. | Directory listing |
+| `skills/cl-implementer/references/start-mode.md` | Four pre-checks: specs exist, spec review, git repo, spec coverage. No context staleness check. | Step 1: Pre-Checks (lines 12-43) |
+| `skills/cl-implementer/references/run-mode.md` | Step 3c reads spec reference + dependency files before implementing. No context loading. Step 4 classifies issues as runtime-error/regression/integration-failure. No "context gap" classification. | Step 3c: Implement (lines 104-122), Step 4: Fix Tasks (lines 147-188) |
+| `skills/cl-implementer/SKILL.md` | Waterfall gate checks research/proposal status before generating. No context validation. | Step 1: Waterfall Gate Check (lines 110-128) |
 | `docs/pipeline-concepts.md` | Documents four concepts: pipeline depth, system doc protection, manifest-based context loading, tracking files, emerged concepts, configuration, directory structure. No "context files" concept. | Full document (207 lines) |
 | `scripts/init.js` | Creates 8 directories: system, research, proposals, reviews/proposals, reviews/audit, reviews/design, specs, designs. No `context/` directory. | dirs array (lines 200-209) |
 | `README.md` | Project structure lists all current directories. Philosophy principles (lines 5-21). No mention of context files. | Project Structure (lines 391-458), Philosophy (lines 5-21) |
@@ -59,11 +59,11 @@ research docs, proposals, specs, and designs.
 
 After this proposal is applied:
 
-- **doc-researcher** has 7 modes (adds `context`)
+- **cl-researcher** has 7 modes (adds `context`)
 - A new reference file `context-mode.md` defines the context creation process
-- **implementer** pre-checks include context staleness validation
-- **implementer** run mode loads context before implementing and classifies context gaps
-- **doc-spec-gen** validates context freshness before generating specs
+- **cl-implementer** pre-checks include context staleness validation
+- **cl-implementer** run mode loads context before implementing and classifies context gaps
+- **cl-implementer** validates context freshness before generating specs
 - **pipeline-concepts.md** documents "Context Files" as a first-class concept
 - **init.js** scaffolds a `context/` directory
 - **README.md** reflects the new directory and concept
@@ -71,20 +71,20 @@ After this proposal is applied:
 
 ## Change Manifest
 
-> This is the contract between the proposal and the system docs. The doc-reviewer will
+> This is the contract between the proposal and the system docs. The cl-reviewer will
 > use this table to verify every change was applied correctly during the verify step.
 
 | # | Change Description | Target Doc | Target Section | Type | Research Ref |
 |---|-------------------|-----------|----------------|------|-------------|
-| 1 | Add `context` mode to frontmatter description and argument-hint | `skills/doc-researcher/SKILL.md` | Frontmatter (lines 1-22) | Modify | F4 |
-| 2 | Add context mode detection bullet | `skills/doc-researcher/SKILL.md` | Mode Detection (lines 127-147) | Add | F4 |
-| 3 | Add "Context Mode" section referencing context-mode.md | `skills/doc-researcher/SKILL.md` | After Proposal Mode (~line 410) | Add Section | F4, F5 |
-| 4 | Add context staleness to Pipeline State Check | `skills/doc-researcher/SKILL.md` | Session Start → Pipeline State Check (lines 101-123) | Add | F6 |
-| 5 | Create context-mode.md reference file | `skills/doc-researcher/references/context-mode.md` | (new file) | Add Doc | F1-F9 |
-| 6 | Add context staleness pre-check (check 5) | `skills/implementer/references/start-mode.md` | Step 1: Pre-Checks (lines 12-43) | Add | F6 |
-| 7 | Add context loading to implementation step | `skills/implementer/references/run-mode.md` | Step 3c: Implement (lines 104-122) | Modify | F5 |
-| 8 | Add `context-gap` issue classification | `skills/implementer/references/run-mode.md` | Step 4: Fix Tasks → Classify (lines 152-156) | Add | F4, F6 |
-| 9 | Add context validation to waterfall gate | `skills/doc-spec-gen/SKILL.md` | Step 1: Waterfall Gate Check (lines 110-128) | Add | F6 |
+| 1 | Add `context` mode to frontmatter description and argument-hint | `skills/cl-researcher/SKILL.md` | Frontmatter (lines 1-22) | Modify | F4 |
+| 2 | Add context mode detection bullet | `skills/cl-researcher/SKILL.md` | Mode Detection (lines 127-147) | Add | F4 |
+| 3 | Add "Context Mode" section referencing context-mode.md | `skills/cl-researcher/SKILL.md` | After Proposal Mode (~line 410) | Add Section | F4, F5 |
+| 4 | Add context staleness to Pipeline State Check | `skills/cl-researcher/SKILL.md` | Session Start → Pipeline State Check (lines 101-123) | Add | F6 |
+| 5 | Create context-mode.md reference file | `skills/cl-researcher/references/context-mode.md` | (new file) | Add Doc | F1-F9 |
+| 6 | Add context staleness pre-check (check 5) | `skills/cl-implementer/references/start-mode.md` | Step 1: Pre-Checks (lines 12-43) | Add | F6 |
+| 7 | Add context loading to implementation step | `skills/cl-implementer/references/run-mode.md` | Step 3c: Implement (lines 104-122) | Modify | F5 |
+| 8 | Add `context-gap` issue classification | `skills/cl-implementer/references/run-mode.md` | Step 4: Fix Tasks → Classify (lines 152-156) | Add | F4, F6 |
+| 9 | Add context validation to waterfall gate | `skills/cl-implementer/SKILL.md` | Step 1: Waterfall Gate Check (lines 110-128) | Add | F6 |
 | 10 | Add "Context Files" concept section | `docs/pipeline-concepts.md` | After "Tracking Files" (~line 117) | Add Section | F1, F3, F5, F9 |
 | 11 | Add `context/` to directory structure listing | `docs/pipeline-concepts.md` | Directory Structure (lines 177-196) | Modify | F3 |
 | 12 | Add `context/` to dirs array | `scripts/init.js` | dirs array (lines 200-209) | Modify | F10 |
@@ -99,10 +99,10 @@ After this proposal is applied:
 
 **Scope boundary**: This proposal ONLY modifies the docs/sections listed above. Any changes
 to other docs or sections are out of scope and unintended. Specifically:
-- `skills/ui-designer/SKILL.md` is a context consumer but gains the loading protocol
+- `skills/cl-designer/SKILL.md` is a context consumer but gains the loading protocol
   implicitly through the standard protocol documented in `context-mode.md`. No direct
   changes to its files.
-- `skills/doc-reviewer/SKILL.md` is not modified — context file review is out of scope
+- `skills/cl-reviewer/SKILL.md` is not modified — context file review is out of scope
   for this proposal (deferred to a future research cycle if needed).
 
 ## Cross-Proposal Conflicts
@@ -114,7 +114,7 @@ merged. No other proposals in `docs/proposals/` target the same sections.
 
 ### Change Area 1: Doc-Researcher Context Mode
 
-**What**: Add a new `context` mode to the doc-researcher skill that creates and maintains
+**What**: Add a new `context` mode to the cl-researcher skill that creates and maintains
 per-library context files through web research. This is the primary change — the new
 reference file `context-mode.md` contains the bulk of the logic.
 
@@ -122,13 +122,13 @@ reference file `context-mode.md` contains the bulk of the logic.
 researcher's existing role (web research, structured output, user collaboration). Research
 Decision 1 chose this over a standalone skill or auto-gen hook.
 
-**System doc impact**: Three changes to `skills/doc-researcher/SKILL.md`:
+**System doc impact**: Three changes to `skills/cl-researcher/SKILL.md`:
 
 **1a. Frontmatter (Change #1)**
 
 **Current** (from SKILL.md lines 1-22):
 > ```yaml
-> name: doc-researcher
+> name: cl-researcher
 > description: >
 >   Research agent for the Clarity Loop documentation pipeline. Supports six modes: bootstrap,
 >   bootstrap-brownfield, triage, research, structure planning, and proposal generation. [...]
@@ -137,13 +137,13 @@ Decision 1 chose this over a standalone skill or auto-gen hook.
 
 **Proposed**:
 > ```yaml
-> name: doc-researcher
+> name: cl-researcher
 > description: >
 >   Research agent for the Clarity Loop documentation pipeline. Supports seven modes: bootstrap,
 >   bootstrap-brownfield, triage, research, structure planning, proposal generation, and context
 >   management. [...existing trigger phrases...] Also trigger on "create context", "update
 >   context", "research context for [library]", "context files", "library context", or when
->   the implementer reports a context gap.
+>   the cl-implementer reports a context gap.
 > argument-hint: "[bootstrap|research [topic]|structure|proposal [R-NNN.md]|context [library]]"
 > ```
 
@@ -154,7 +154,7 @@ Decision 1 chose this over a standalone skill or auto-gen hook.
 
 **Proposed**: Add seventh bullet:
 > - **context**: User says "create context", "update context", "context for [library]",
->   "library context", or the implementer reported a context gap. Gate: system docs must
+>   "library context", or the cl-implementer reported a context gap. Gate: system docs must
 >   exist (specifically an Architecture doc or equivalent with a tech stack section).
 
 **1c. Context Mode Section (Change #3)**
@@ -189,7 +189,7 @@ Decision 1 chose this over a standalone skill or auto-gen hook.
 > - **Context staleness** — If `{docsRoot}/context/.context-manifest.md` exists, check
 >   `Last verified` dates. If any library's context is older than its configured freshness
 >   threshold (default: 1 week), note: "Context for [library] hasn't been verified in
->   [N] days. Consider running `/doc-researcher context [library]` to verify."
+>   [N] days. Consider running `/cl-researcher context [library]` to verify."
 
 **Dependencies**: None — this change area is self-contained.
 
@@ -197,7 +197,7 @@ Decision 1 chose this over a standalone skill or auto-gen hook.
 
 ### Change Area 2: Context Mode Reference File (New)
 
-**What**: Create `skills/doc-researcher/references/context-mode.md` — the full reference
+**What**: Create `skills/cl-researcher/references/context-mode.md` — the full reference
 for context creation, update, and maintenance.
 
 **Why**: Research Findings 1-9 collectively define the context system. This reference file
@@ -205,7 +205,7 @@ is the canonical implementation guide for the researcher's context capabilities.
 
 **This is a new file, so there's no current/proposed diff. The file covers:**
 
-1. **Entry points**: Manual (`/doc-researcher context [library]`) and auto-offer during
+1. **Entry points**: Manual (`/cl-researcher context [library]`) and auto-offer during
    bootstrap. Gate: system docs must exist with a tech stack section.
 
 2. **Context creation process** (per library):
@@ -268,14 +268,14 @@ is the canonical implementation guide for the researcher's context capabilities.
 
 ### Change Area 3: Implementer Start Mode — Context Pre-Check
 
-**What**: Add a 5th pre-check to the implementer's start mode that validates context
+**What**: Add a 5th pre-check to the cl-implementer's start mode that validates context
 staleness before generating tasks.
 
 **Why**: Research Finding 6 identified that stale context during implementation causes the
 exact build errors the system is designed to prevent. Catching staleness before generating
 tasks is cheaper than catching it during implementation.
 
-**System doc impact**: One addition to `skills/implementer/references/start-mode.md`:
+**System doc impact**: One addition to `skills/cl-implementer/references/start-mode.md`:
 
 **Current** (from start-mode.md lines 12-43):
 > Four pre-checks: specs exist, spec review, git repository, spec coverage.
@@ -288,12 +288,12 @@ tasks is cheaper than catching it during implementation.
 >      equivalent dependency file). Flag mismatches:
 >      "Context for [library] covers version [X] but package.json has [Y]. Context may
 >      be stale. Options:
->      a) Run `/doc-researcher context [library]` to update
+>      a) Run `/cl-researcher context [library]` to update
 >      b) Continue with current context (your call — may cause build issues)
 >      c) Skip context for this library"
 >    - Check `Last verified` dates against freshness thresholds
 >    If no context manifest exists: "No context files found. Context files help avoid
->    stale library knowledge during implementation. Run `/doc-researcher context` to
+>    stale library knowledge during implementation. Run `/cl-researcher context` to
 >    create them, or continue without. [Continue/Create context]"
 > ```
 
@@ -309,7 +309,7 @@ tasks is cheaper than catching it during implementation.
 **Why**: Research Finding 5 defines the loading protocol. Research Findings 4 and 6
 establish the feedback loop from implementation failures to context updates.
 
-**System doc impact**: Two changes to `skills/implementer/references/run-mode.md`:
+**System doc impact**: Two changes to `skills/cl-implementer/references/run-mode.md`:
 
 **4a. Context Loading in Step 3c (Change #7)**
 
@@ -369,15 +369,15 @@ establish the feedback loop from implementation failures to context updates.
 >    For `context-gap` issues:
 >    - Check if context files exist for the library in question
 >    - If no context: "Build error caused by stale [library] knowledge. No context file
->      exists. Run `/doc-researcher context [library]` to create one? [Y/n]"
+>      exists. Run `/cl-researcher context [library]` to create one? [Y/n]"
 >    - If context exists but may be wrong: "Context for [library] may be inaccurate
 >      (version [X]). Update context? Note: [N] tasks were implemented with current
 >      context — updating will version the context, not replace it. [Y/n]"
->    - If user approves: researcher updates/versions context, implementer retries task
+>    - If user approves: researcher updates/versions context, cl-implementer retries task
 > ```
 
 **Dependencies**: Change #5 (context-mode.md) must exist for the loading protocol to be
-defined. However, the implementer changes work independently at the file level.
+defined. However, the cl-implementer changes work independently at the file level.
 
 ---
 
@@ -389,7 +389,7 @@ defined. However, the implementer changes work independently at the file level.
 specs are generated. Stale context at spec time leads to stale specs that produce stale
 implementation.
 
-**System doc impact**: One addition to `skills/doc-spec-gen/SKILL.md`:
+**System doc impact**: One addition to `skills/cl-implementer/SKILL.md`:
 
 **Current** (from SKILL.md lines 110-128):
 > Three waterfall gate checks: research ledger, proposal tracker, unverified merges.
@@ -400,10 +400,10 @@ implementation.
 >    check version alignment and freshness dates for all libraries. If any context is
 >    stale (version mismatch or past freshness threshold), warn: "Context for [library]
 >    may be stale. Specs generated with stale context may produce implementation issues.
->    Run `/doc-researcher context [library]` to update, or continue anyway?"
+>    Run `/cl-researcher context [library]` to update, or continue anyway?"
 >    If no context exists but system docs reference a tech stack, note (advisory only):
 >    "No context files found. Context files improve implementation accuracy. Consider
->    running `/doc-researcher context` before or after spec generation."
+>    running `/cl-researcher context` before or after spec generation."
 > ```
 
 **Dependencies**: None — additive check.
@@ -450,7 +450,7 @@ artifact type. The pipeline-concepts doc is the canonical place for documenting 
 >
 > ### Lifecycle
 >
-> Created by doc-researcher (context mode) → consumed by all skills via standard loading
+> Created by cl-researcher (context mode) → consumed by all skills via standard loading
 > protocol → staleness detected by version pinning → updated/versioned by researcher →
 > optionally promoted to global after validation.
 >
@@ -556,7 +556,7 @@ other 12 design decisions.
 > **Question**: How should the plugin provide accurate, current library knowledge to skills?
 >
 > **Decision**: Per-library context files using three-layer progressive disclosure (manifest
-> index → library overview → detail files). Created by the doc-researcher through web
+> index → library overview → detail files). Created by the cl-researcher through web
 > research against official docs and context7.com (website, not MCP). Consumed by all skills
 > via a standard loading protocol. Staleness is version-pinned, not time-based — context
 > matches the library version in use, and is versioned (not replaced) when the project
@@ -585,18 +585,18 @@ other 12 design decisions.
 
 | Term | Definition | Where Used |
 |------|-----------|-----------|
-| Context file | A curated markdown file capturing the delta between LLM training data and current library reality. Contains version pinning, breaking changes, correct imports, working patterns, common errors, gotchas. | doc-researcher, implementer, doc-spec-gen, pipeline-concepts |
-| Context manifest | `.context-manifest.md` — Layer 1 index file listing all libraries with versions, paths, tags, and verification dates. | doc-researcher, all consumers |
-| `_meta.md` | Layer 2 overview file per library containing version, sources, tags, task tracking, and file inventory. | doc-researcher, all consumers |
-| Version pinning | Staleness model where context validity is tied to the library version in use, not calendar time. | doc-researcher context-mode, implementer start/run modes |
-| Context gap | Issue classification for build errors traced to stale or missing library knowledge. | implementer run-mode Step 4 |
-| Global promotion | Copying validated project-local context to `~/.claude/context/` for cross-project reuse. | doc-researcher context-mode |
+| Context file | A curated markdown file capturing the delta between LLM training data and current library reality. Contains version pinning, breaking changes, correct imports, working patterns, common errors, gotchas. | cl-researcher, cl-implementer, pipeline-concepts |
+| Context manifest | `.context-manifest.md` — Layer 1 index file listing all libraries with versions, paths, tags, and verification dates. | cl-researcher, all consumers |
+| `_meta.md` | Layer 2 overview file per library containing version, sources, tags, task tracking, and file inventory. | cl-researcher, all consumers |
+| Version pinning | Staleness model where context validity is tied to the library version in use, not calendar time. | cl-researcher context-mode, cl-implementer start/run modes |
+| Context gap | Issue classification for build errors traced to stale or missing library knowledge. | cl-implementer run-mode Step 4 |
+| Global promotion | Copying validated project-local context to `~/.claude/context/` for cross-project reuse. | cl-researcher context-mode |
 
 ### Migration
 
 No migration needed — this is a net new capability. All changes are additive:
-- New pre-check (implementer) is skipped when no context manifest exists
-- New loading step (implementer) is skipped when no context manifest exists
+- New pre-check (cl-implementer) is skipped when no context manifest exists
+- New loading step (cl-implementer) is skipped when no context manifest exists
 - New waterfall gate check (spec-gen) is advisory when no context exists
 - New mode (researcher) is only triggered by explicit invocation or auto-offer
 - Init script change only affects new project scaffolding (existing projects get the
@@ -606,9 +606,9 @@ No migration needed — this is a net new capability. All changes are additive:
 
 | Component | Integration | Contract |
 |-----------|------------|----------|
-| doc-researcher ↔ all skills | Researcher writes `.context-manifest.md` + library folders. All skills read via standard loading protocol. | Manifest format (library/version/path/tags/date table). `_meta.md` format (version, sources, tags, tasks, file inventory). |
-| implementer ↔ doc-researcher | Implementer classifies `context-gap` errors and prompts user to invoke researcher. Researcher updates/versions context. | Gap classification includes library name and version. Researcher reads the classification to know what to update. |
-| doc-spec-gen ↔ context manifest | Spec-gen reads manifest to validate freshness. Advisory only — doesn't block generation. | Manifest `Last Verified` dates and version fields. |
+| cl-researcher ↔ all skills | Researcher writes `.context-manifest.md` + library folders. All skills read via standard loading protocol. | Manifest format (library/version/path/tags/date table). `_meta.md` format (version, sources, tags, tasks, file inventory). |
+| cl-implementer ↔ cl-researcher | cl-implementer classifies `context-gap` errors and prompts user to invoke researcher. Researcher updates/versions context. | Gap classification includes library name and version. Researcher reads the classification to know what to update. |
+| cl-implementer ↔ context manifest | Spec-gen reads manifest to validate freshness. Advisory only — doesn't block generation. | Manifest `Last Verified` dates and version fields. |
 | Local ↔ global context | Researcher prompts for promotion after successful implementation. Global follows same structure. Local takes precedence. | Same file format. Precedence: `{docsRoot}/context/` > `~/.claude/context/`. |
 
 ## Design Decisions
@@ -658,7 +658,7 @@ during implementation.
 detail) balances token efficiency with knowledge availability. (2) Context7's website
 provides LLM-friendly library docs that can be fetched during research and distilled into
 curated files. (3) One folder per library with a `_meta.md` overview + topic-specific detail
-files is the optimal organization. (4) The doc-researcher is the natural owner — context
+files is the optimal organization. (4) The cl-researcher is the natural owner — context
 creation extends its existing web research capability. (5) A standard loading protocol lets
 all skills consume context consistently. (6) Staleness is version-pinned, not time-based —
 context must match dev work. (7) Local storage with optional global promotion balances

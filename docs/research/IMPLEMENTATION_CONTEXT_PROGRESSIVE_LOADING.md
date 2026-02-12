@@ -14,12 +14,12 @@ This research relates to the following plugin artifacts:
 
 | Document | Relevance |
 |----------|-----------|
-| `skills/doc-researcher/SKILL.md` | Primary owner. The researcher creates context files during research phases, using web search against official docs and context7.com as sources. New "context" mode or sub-capability. |
-| `skills/implementer/SKILL.md` | Primary consumer. Run mode loads context before implementing tasks. Failure feedback loop triggers context updates. Start mode validates context staleness. |
-| `skills/implementer/references/run-mode.md` | Step 3c ("Implement") currently reads spec references but has no mechanism to load library-specific knowledge. Context loading hooks in here. |
-| `skills/implementer/references/start-mode.md` | Pre-checks section (Step 1) needs a context staleness check. Step 2 reads specs but doesn't cross-reference with context. |
-| `skills/doc-spec-gen/SKILL.md` | Spec generation should re-validate context files. Specs reference libraries — context files should be current when specs are generated. |
-| `skills/ui-designer/SKILL.md` | Consumer. Design decisions reference frameworks (Tailwind, React) that have context files. |
+| `skills/cl-researcher/SKILL.md` | Primary owner. The researcher creates context files during research phases, using web search against official docs and context7.com as sources. New "context" mode or sub-capability. |
+| `skills/cl-implementer/SKILL.md` | Primary consumer. Run mode loads context before implementing tasks. Failure feedback loop triggers context updates. Start mode validates context staleness. |
+| `skills/cl-implementer/references/run-mode.md` | Step 3c ("Implement") currently reads spec references but has no mechanism to load library-specific knowledge. Context loading hooks in here. |
+| `skills/cl-implementer/references/start-mode.md` | Pre-checks section (Step 1) needs a context staleness check. Step 2 reads specs but doesn't cross-reference with context. |
+| `skills/cl-implementer/SKILL.md` | Spec generation should re-validate context files. Specs reference libraries — context files should be current when specs are generated. |
+| `skills/cl-designer/SKILL.md` | Consumer. Design decisions reference frameworks (Tailwind, React) that have context files. |
 | `docs/pipeline-concepts.md` | New concept: "Context files" as a pipeline artifact type alongside research docs, proposals, specs, and designs. |
 | `README.md` | Philosophy principle 6 ("Tools enhance, never gate") — context files follow this. New directory in Setup section. |
 | `docs/research/DOC_PIPELINE_PLUGIN.md` | Design Decision #13 needed for the context system. |
@@ -27,7 +27,7 @@ This research relates to the following plugin artifacts:
 
 ### Current State
 
-The pipeline currently has NO mechanism for providing accurate, current library/framework knowledge to any skill. When the implementer writes code, Claude uses training data that may be months or years stale. When the researcher investigates a library choice, it has no cached knowledge about current API surfaces.
+The pipeline currently has NO mechanism for providing accurate, current library/framework knowledge to any skill. When the cl-implementer writes code, Claude uses training data that may be months or years stale. When the researcher investigates a library choice, it has no cached knowledge about current API surfaces.
 
 The problem manifests as:
 - **Stale imports**: `import { X } from 'library'` where `X` was renamed or moved in a recent version
@@ -55,7 +55,7 @@ Observed during testing the Clarity Loop plugin on a todo app. The documentation
 5. Staleness detection and refresh triggers
 6. Local-first storage with user-prompted global promotion
 7. "Pass by reference" pattern — Architecture docs referencing context files for version/API details
-8. Failure feedback loop — implementer → researcher for context gaps
+8. Failure feedback loop — cl-implementer → researcher for context gaps
 9. Web research sources (official docs, context7.com website, changelogs)
 10. Integration with the init script (new directory)
 
@@ -209,16 +209,16 @@ When the researcher reads the Architecture doc and identifies the tech stack (e.
 - Present to user: "Your tech stack uses these libraries. I've created/verified context for: [list]. Missing context for: [list]. Want me to research those?"
 
 **2. During spec generation** (validation):
-When `doc-spec-gen` generates specs, it cross-references spec content against context files:
+When `cl-implementer` generates specs, it cross-references spec content against context files:
 - Spec references Drizzle → check `context/drizzle-orm/_meta.md` exists and version matches
 - If context is missing or stale: warn before generating specs
 - This is validation, not creation — but it may trigger the researcher to update context
 
 **3. On implementation failure** (feedback loop):
-When the implementer hits a build error traced to stale library knowledge:
+When the cl-implementer hits a build error traced to stale library knowledge:
 - Classify: is this a code bug (fix task) or a knowledge gap (context gap)?
 - If context gap: flag for researcher update. "Build failed because `drizzle-orm` import path changed in 0.38. Context file covers 0.33. Update context? [Y/n]"
-- If user approves: researcher fetches current docs, updates context, implementer retries
+- If user approves: researcher fetches current docs, updates context, cl-implementer retries
 
 **The research process for context creation**:
 1. Read Architecture doc for library name + version
@@ -229,7 +229,7 @@ When the implementer hits a build error traced to stale library knowledge:
 6. Discard: tutorials, marketing copy, exhaustive API listings
 7. Present to user for review before writing
 
-**Source**: User requirements (researcher creates, implementer validates), existing researcher workflow patterns.
+**Source**: User requirements (researcher creates, cl-implementer validates), existing researcher workflow patterns.
 
 **Tradeoffs**: Making the researcher responsible means context files go through a human review step (the user sees what's being captured). The downside is it adds time to research — but the time saved during implementation (fewer build errors, less debugging) should more than compensate.
 
@@ -309,13 +309,13 @@ change:
    mismatch. Something in the context is definitely wrong for the version in use.
 
 **Refresh triggers**:
-- `/implementer start` pre-checks: compare `package.json` versions against context `_meta.md`
+- `/cl-implementer start` pre-checks: compare `package.json` versions against context `_meta.md`
   versions. Warn on mismatches.
-- `/doc-spec-gen generate`: validate context before generating specs. Stale context → stale specs.
-- Build failure during `/implementer run`: classify error → if context gap → trigger researcher
+- `/cl-implementer spec`: validate context before generating specs. Stale context → stale specs.
+- Build failure during `/cl-implementer run`: classify error → if context gap → trigger researcher
   update for the specific version in use.
-- User-initiated: `/doc-researcher context [library]` — explicitly re-research a library.
-- Weekly soft check: if context is older than 1 week and the implementer is active, offer a
+- User-initiated: `/cl-researcher context [library]` — explicitly re-research a library.
+- Weekly soft check: if context is older than 1 week and the cl-implementer is active, offer a
   quick verification pass.
 
 **Version-pinned `_meta.md` example**:
@@ -340,7 +340,7 @@ the context instead.
 
 1. **Created locally**: During project research, context files are written to `{docsRoot}/context/`. They're project artifacts — committed to git, versioned, reviewed.
 
-2. **Validated through use**: The implementer uses context during task execution. If tasks succeed (acceptance criteria met, no build errors from stale knowledge), the context is implicitly validated.
+2. **Validated through use**: The cl-implementer uses context during task execution. If tasks succeed (acceptance criteria met, no build errors from stale knowledge), the context is implicitly validated.
 
 3. **Promotion prompt**: After successful use, or when the user starts a new project with the same library, prompt: "You have validated Drizzle ORM context from [project]. Promote to global (`~/.claude/context/drizzle-orm/`) for use across projects? [Y/n]"
 
@@ -469,11 +469,11 @@ The `.context-manifest.md` is created by the researcher when the first context f
 
 ### Primary Recommendation
 
-Add context file management as a new capability within the doc-researcher skill, with a standard loading protocol consumed by all skills.
+Add context file management as a new capability within the cl-researcher skill, with a standard loading protocol consumed by all skills.
 
 **Implementation approach**:
 
-1. **New `context` mode** for doc-researcher: `/doc-researcher context [library]`
+1. **New `context` mode** for cl-researcher: `/cl-researcher context [library]`
    - Gate: system docs must exist (specifically an Architecture doc with tech stack). Cannot create
      context without knowing what libraries the project uses.
    - Reads Architecture doc for tech stack
@@ -483,7 +483,7 @@ Add context file management as a new capability within the doc-researcher skill,
      categories)
    - Present to user for review
    - Write to `{docsRoot}/context/[library]/`
-   - Manual invocation: `/doc-researcher context drizzle-orm` to create/refresh a specific library
+   - Manual invocation: `/cl-researcher context drizzle-orm` to create/refresh a specific library
 
 2. **Auto-offer during bootstrap**: When bootstrapping a new project, after generating Architecture
    doc, automatically offer to create context files for the declared tech stack: "Your Architecture
@@ -523,16 +523,16 @@ Add context file management as a new capability within the doc-researcher skill,
 
 | Artifact | Expected Changes |
 |----------|-----------------|
-| `skills/doc-researcher/SKILL.md` | Add context mode to mode detection, description, argument-hint |
-| `skills/doc-researcher/references/` | New `context-mode.md` reference file |
-| `skills/implementer/references/start-mode.md` | Add context staleness pre-check |
-| `skills/implementer/references/run-mode.md` | Add context loading to Step 3c, context gap classification to Step 4/5 |
-| `skills/doc-spec-gen/SKILL.md` | Add context validation before spec generation |
+| `skills/cl-researcher/SKILL.md` | Add context mode to mode detection, description, argument-hint |
+| `skills/cl-researcher/references/` | New `context-mode.md` reference file |
+| `skills/cl-implementer/references/start-mode.md` | Add context staleness pre-check |
+| `skills/cl-implementer/references/run-mode.md` | Add context loading to Step 3c, context gap classification to Step 4/5 |
+| `skills/cl-implementer/SKILL.md` | Add context validation before spec generation |
 | `docs/pipeline-concepts.md` | New "Context Files" section documenting the concept |
 | `scripts/init.js` | Add `context/` to dirs array |
 | `README.md` | Add context to directory structure, mention in relevant sections |
 | `docs/research/DOC_PIPELINE_PLUGIN.md` | Design Decision #13 |
-| (new) `docs/doc-researcher.md` | Document the context mode |
+| (new) `docs/cl-researcher.md` | Document the context mode |
 
 ---
 
@@ -547,7 +547,7 @@ Add context file management as a new capability within the doc-researcher skill,
 | 5 | Progressive disclosure | Load all / Tag-based / Three-layer | Three-layer (manifest → meta → detail) | Proven pattern across Claude Code skills, Cursor rules, MCP meta-tools. Minimal overhead (1-2 extra reads), significant context savings. |
 | 6 | Architecture doc integration | Inline versions / Pass by reference / Both optional | Both optional | Pass by reference is cleaner but not mandatory. Projects can use either style. Context file is authoritative when both exist. |
 | 7 | Scope | Implementer only / Plugin-wide | Plugin-wide | All skills benefit from accurate library knowledge. Researcher creates, all consume. |
-| 8 | Context creation trigger | Auto-offer only / Manual only / Both | Both | Auto-offer during bootstrap (after Architecture doc generated). Manual via `/doc-researcher context [library]`. Gate: system docs must exist — can't create context without knowing the tech stack. |
+| 8 | Context creation trigger | Auto-offer only / Manual only / Both | Both | Auto-offer during bootstrap (after Architecture doc generated). Manual via `/cl-researcher context [library]`. Gate: system docs must exist — can't create context without knowing the tech stack. |
 | 9 | Category tag granularity | Strict standard set / Freeform / Freeform with conventions | Freeform with conventions | Library-dependent — an ORM needs different categories than a UI framework. Aim for consistency across similar library types but don't enforce rigid taxonomy. |
 | 10 | Staleness model | Time-based (90 days) / Version-pinned / Hybrid | Version-pinned with 1-week soft check | Context is stale when version mismatches, not when time passes. 1-week soft check catches errata within current version. Never update context if dev work already depends on it — version it instead. |
 
@@ -567,7 +567,7 @@ All resolved in Round 2.
 
 1. **Should the researcher auto-trigger context creation during bootstrap?**
    **Decision**: Both. Auto-offer during bootstrap after Architecture doc is generated. Also
-   available as manual command `/doc-researcher context [library]`. Gate: system docs must exist
+   available as manual command `/cl-researcher context [library]`. Gate: system docs must exist
    (specifically Architecture doc with tech stack). Can't create context without knowing what
    libraries the project uses.
 

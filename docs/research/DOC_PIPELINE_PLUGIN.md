@@ -215,10 +215,10 @@ Persistent memory plugin for Claude Code (AGPL-3.0). Captures observations durin
 
 **Question**: How many skills? One monolith, or many small ones?
 
-**Decision**: Five skills — `doc-researcher` (triage + research + structure + proposals), `doc-reviewer` (review + merge + verify + audit + correct + fix + sync + design review), `doc-spec-gen` (spec generation + consistency review), `ui-designer` (design discovery + tokens + mockups + build plan), `implementer` (task generation + implementation tracking + verification + spec sync).
+**Decision**: Five skills — `cl-researcher` (triage + research + structure + proposals), `cl-reviewer` (review + merge + verify + audit + correct + fix + sync + design review), `cl-implementer` (spec generation + consistency review), `cl-designer` (design discovery + tokens + mockups + build plan), `cl-implementer` (task generation + implementation tracking + verification + spec sync).
 
 **Rationale**:
-- Triage is lightweight — lives inside doc-researcher as the entry point, not its own skill
+- Triage is lightweight — lives inside cl-researcher as the entry point, not its own skill
 - Structure planning is tightly coupled to research — separating it fragments the flow
 - Spec generation has different inputs (all system docs, not one proposal) and a different execution model (waterfall). It earns its own skill
 - Review, verify, audit, merge, correct, fix, and sync are all "checking and applying" operations on the same artifact types — one skill with modes keeps them cohesive
@@ -299,7 +299,7 @@ Persistent memory plugin for Claude Code (AGPL-3.0). Captures observations durin
 
 **Question**: How to detect when code drifts from what system docs claim?
 
-**Decision**: An on-demand `/doc-reviewer sync` mode that extracts verifiable claims from system docs (file structure, dependencies, API shapes, config values) and checks them against the actual codebase. Two scopes: full scan or git-diff targeted. Output is an advisory report — findings feed into corrections or research cycles. The mode does not modify docs directly.
+**Decision**: An on-demand `/cl-reviewer sync` mode that extracts verifiable claims from system docs (file structure, dependencies, API shapes, config values) and checks them against the actual codebase. Two scopes: full scan or git-diff targeted. Output is an advisory report — findings feed into corrections or research cycles. The mode does not modify docs directly.
 
 **Principles**: Structured iteration (sync detects drift, findings feed back into the pipeline) + The system remembers (sync report is a persistent artifact, not a one-time check).
 
@@ -307,7 +307,7 @@ Persistent memory plugin for Claude Code (AGPL-3.0). Captures observations durin
 
 **Question**: Should the plugin handle UI/UX design, and if so, how?
 
-**Decision**: A separate `ui-designer` skill that owns the entire design flow. **Pencil
+**Decision**: A separate `cl-designer` skill that owns the entire design flow. **Pencil
 MCP** generates designs from scratch — .pen files with tokens, components, and mockups
 created through a discovery + generate + screenshot + feedback loop. A **markdown
 fallback** produces equivalent structured specs when Pencil is not available. Both paths
@@ -319,7 +319,7 @@ input (screenshots, component library research) to short-circuit preference ques
 **Rationale**:
 - Text-based design specs (colors, spacing) are hard to evaluate without seeing them
 - Visual references and component library research during discovery reduce iteration
-- Design review belongs in doc-reviewer (separation of creation and validation)
+- Design review belongs in cl-reviewer (separation of creation and validation)
 - Three trigger points (post-merge nudge, audit finding, on-demand) ensure design
   is suggested when relevant but never forced
 - Markdown fallback ensures value even without design MCP tools
@@ -331,7 +331,7 @@ input (screenshots, component library research) to short-circuit preference ques
 
 **Question**: What happens after specs are generated? Should the pipeline end at specs, or extend through implementation?
 
-**Decision**: A new `implementer` skill that extends the pipeline from specs to working code. The skill generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md), organized by implementation area with a cross-area Mermaid dependency graph. It tracks progress via `IMPLEMENTATION_PROGRESS.md`, handles spec changes mid-implementation via queue semantics (process front-to-back, validity-check before each task, pop/replace if superseded), and feeds gaps back into the pipeline through the existing triage mechanism (L0-L2).
+**Decision**: A new `cl-implementer` skill that extends the pipeline from specs to working code. The skill generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md), organized by implementation area with a cross-area Mermaid dependency graph. It tracks progress via `IMPLEMENTATION_PROGRESS.md`, handles spec changes mid-implementation via queue semantics (process front-to-back, validity-check before each task, pop/replace if superseded), and feeds gaps back into the pipeline through the existing triage mechanism (L0-L2).
 
 Three mechanisms handle real-world development messiness:
 - **Fix tasks (F-NNN)**: Runtime failures and regressions are distinct from spec gaps ("spec is right, code is wrong"). Fix tasks are created, prioritized, and trigger cascading re-verification of transitive dependents.
@@ -355,7 +355,7 @@ The skill uses dual-write tracking: TASKS.md is the persistent source of truth (
 
 **Question**: How should the plugin provide accurate, current library knowledge to skills?
 
-**Decision**: Per-library context files using three-layer progressive disclosure (manifest index → library overview → detail files). Created by the doc-researcher through web research against official docs and context7.com (website, not MCP). Consumed by all skills via a standard loading protocol. Staleness is version-pinned, not time-based — context matches the library version in use, and is versioned (not replaced) when the project upgrades. Stored locally in `{docsRoot}/context/`, optionally promoted to global `~/.claude/context/`.
+**Decision**: Per-library context files using three-layer progressive disclosure (manifest index → library overview → detail files). Created by the cl-researcher through web research against official docs and context7.com (website, not MCP). Consumed by all skills via a standard loading protocol. Staleness is version-pinned, not time-based — context matches the library version in use, and is versioned (not replaced) when the project upgrades. Stored locally in `{docsRoot}/context/`, optionally promoted to global `~/.claude/context/`.
 
 **Rationale**:
 - Context7 MCP was rejected because it bloats the session context with raw API dumps (~9.7k tokens per query). Context files are fetched once during research, distilled into curated files, and loaded selectively (~50-2000 tokens per task).

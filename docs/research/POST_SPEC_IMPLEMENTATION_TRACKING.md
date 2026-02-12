@@ -14,9 +14,9 @@ This research relates to the following system docs and plugin artifacts:
 
 | Document | Relevance |
 |----------|-----------|
-| `skills/doc-spec-gen/SKILL.md` | Currently declares "Specs end the pipeline. Implementation is a separate concern." This research challenges that boundary. |
-| `skills/doc-spec-gen/references/build-plan-mode.md` (via ui-designer) | Already generates DESIGN_TASKS.md with phased tasks, dependency graphs, and acceptance criteria. The closest existing artifact to implementation tracking. |
-| `skills/doc-reviewer/references/sync-mode.md` | Compares doc claims against code. Advisory and reactive — only runs after code exists. Could inform the verification dimension. |
+| `skills/cl-implementer/SKILL.md` | Currently declares "Specs end the pipeline. Implementation is a separate concern." This research challenges that boundary. |
+| `skills/cl-implementer/references/build-plan-mode.md` (via cl-designer) | Already generates DESIGN_TASKS.md with phased tasks, dependency graphs, and acceptance criteria. The closest existing artifact to implementation tracking. |
+| `skills/cl-reviewer/references/sync-mode.md` | Compares doc claims against code. Advisory and reactive — only runs after code exists. Could inform the verification dimension. |
 | `docs/pipeline-concepts.md` | Pipeline depth (L0-L3), emerged concepts, tracking files. The triage and feedback patterns apply directly to implementation gap handling. |
 | `README.md` | Philosophy section — "AI does the work. Humans make the calls. Files hold the truth." and "Structured iteration beats one-shot generation." Both apply to implementation. |
 | `docs/research/DOC_PIPELINE_PLUGIN.md` | Design lineage. States the goal: "specs that a junior dev (or AI) can implement without hand-holding." The implementation skill is the mechanism that delivers on this. |
@@ -29,18 +29,18 @@ This research relates to the following system docs and plugin artifacts:
 
 The pipeline currently produces two categories of implementation-ready artifacts:
 
-**Task-oriented** (from ui-designer build-plan):
+**Task-oriented** (from cl-designer build-plan):
 - `DESIGN_TASKS.md` — phased task list with dependency graph, acceptance criteria, design references
 - Tasks are numbered (T-001, T-002...), organized into 5 phases, each with concrete acceptance criteria
 
-**Contract-oriented** (from doc-spec-gen):
+**Contract-oriented** (from cl-implementer):
 - Spec files in `docs/specs/` — OpenAPI, JSON Schema, SQL DDL, structured markdown
 - `.spec-manifest.md` — index with source doc mappings, cross-spec dependencies
 - Each spec traces to system doc sections
 
 ### What's Missing
 
-After specs are generated, the pipeline ends. The doc-spec-gen SKILL.md explicitly says: "Specs end the pipeline. After specs are generated and reviewed, the documentation pipeline's job is done. Implementation is a separate concern."
+After specs are generated, the pipeline ends. The cl-implementer SKILL.md explicitly says: "Specs end the pipeline. After specs are generated and reviewed, the documentation pipeline's job is done. Implementation is a separate concern."
 
 This creates six gaps:
 
@@ -72,21 +72,21 @@ The user experience goes from highly structured (every change reviewed, tracked,
 
 - Code generation techniques (how Claude Code writes code is not this skill's concern — it orchestrates, tracks, and verifies)
 - IDE integration or dashboard UI for progress visualization
-- Deciding WHAT to test or WHAT CI/CD to use (that's a research/spec concern — if it's in the specs, the implementer implements it)
+- Deciding WHAT to test or WHAT CI/CD to use (that's a research/spec concern — if it's in the specs, the cl-implementer implements it)
 
 ### Explicitly In Scope (Clarified in Round 3)
 
-- **Testing and CI/CD implementation**: If the specs include testing strategy, test specs, or CI/CD configuration, the implementer includes those as tasks in TASKS.md and implements them. If specs DON'T include testing but system docs mention test requirements, the skill nudges the user (see Finding 7).
+- **Testing and CI/CD implementation**: If the specs include testing strategy, test specs, or CI/CD configuration, the cl-implementer includes those as tasks in TASKS.md and implements them. If specs DON'T include testing but system docs mention test requirements, the skill nudges the user (see Finding 7).
 - **Parallel task execution**: Claude Code supports fork/subagents. Independent tasks with no shared file dependencies can be parallelized (see Finding 8).
 - **User reordering of tasks**: The auto-generated task order is a suggestion. Users can reorder, reprioritize, split, merge, or skip tasks (see Finding 9).
 - **Runtime failure and regression handling**: When implemented code throws errors or breaks previously-working features, the skill supports diagnosis, fix tasks, and cascading re-verification (see Finding 10).
-- **External change reconciliation**: The user or other tools can modify code outside the implementer. On resume, the skill detects external changes via git diff and reconciles with tracked state (see Finding 11).
+- **External change reconciliation**: The user or other tools can modify code outside the cl-implementer. On resume, the skill detects external changes via git diff and reconciles with tracked state (see Finding 11).
 - **Tangent tolerance**: Real development has interruptions — debugging, exploration, refactoring. The skill accommodates tangents without losing queue state (see Finding 12).
 
 ### Constraints
 
 - Must follow existing plugin patterns (SKILL.md format, reference files, progress tracking via markdown)
-- Must work with Claude Code as the implementer (AI-driven, can be instrumented)
+- Must work with Claude Code as the cl-implementer (AI-driven, can be instrumented)
 - Must survive session boundaries (context compression, crashes, multi-day implementation)
 - Must not break the waterfall principle — specs are still generated from stable docs. The implementation skill handles what happens when stability is disrupted by new cycles.
 - Must follow the plugin philosophy: AI does the work, humans make the calls, files hold the truth.
@@ -218,13 +218,13 @@ This file is the single source of truth for implementation state. On session sta
 
 ### Finding 5: Unified TASKS.md — Single Task Authority
 
-The current pipeline produces task breakdowns in one place (DESIGN_TASKS.md from ui-designer's build-plan mode) and spec contracts in another (spec files from doc-spec-gen). But there's no task breakdown for non-UI work — API endpoints, data models, services, infrastructure. A developer implementing from tech specs has contracts but no worklist.
+The current pipeline produces task breakdowns in one place (DESIGN_TASKS.md from cl-designer's build-plan mode) and spec contracts in another (spec files from cl-implementer). But there's no task breakdown for non-UI work — API endpoints, data models, services, infrastructure. A developer implementing from tech specs has contracts but no worklist.
 
-**The solution: a single unified `TASKS.md`** generated by the implementer's `start` mode from ALL spec artifacts.
+**The solution: a single unified `TASKS.md`** generated by the cl-implementer's `start` mode from ALL spec artifacts.
 
 **What goes into TASKS.md:**
 
-The implementer reads every spec file and DESIGN_TASKS.md (if it exists), then produces a single task file organized by implementation area:
+The cl-implementer reads every spec file and DESIGN_TASKS.md (if it exists), then produces a single task file organized by implementation area:
 
 ```markdown
 # Implementation Tasks
@@ -296,13 +296,13 @@ flowchart TD
 
 2. **Cross-area dependencies**: The Mermaid graph shows dependencies across areas. T-007 (Dashboard screen) depends on both T-006 (Button component, UI area) and T-004 (CRUD endpoints, API area). This is impossible to represent in phase-based ordering.
 
-3. **Absorbs DESIGN_TASKS.md**: If DESIGN_TASKS.md exists from ui-designer, its tasks are merged into the UI area of TASKS.md. DESIGN_TASKS.md remains as a source artifact (build-plan output) but TASKS.md is the working copy. This avoids two task lists that can drift.
+3. **Absorbs DESIGN_TASKS.md**: If DESIGN_TASKS.md exists from cl-designer, its tasks are merged into the UI area of TASKS.md. DESIGN_TASKS.md remains as a source artifact (build-plan output) but TASKS.md is the working copy. This avoids two task lists that can drift.
 
-4. **Feeds Claude Code's task system**: On session start, the implementer reads TASKS.md and creates Claude Code tasks via `TaskCreate`. As tasks complete, it updates both the Claude Code task system (`TaskUpdate`) and TASKS.md (the persistent file). The markdown is the source of truth; the Claude Code task system is the active session view.
+4. **Feeds Claude Code's task system**: On session start, the cl-implementer reads TASKS.md and creates Claude Code tasks via `TaskCreate`. As tasks complete, it updates both the Claude Code task system (`TaskUpdate`) and TASKS.md (the persistent file). The markdown is the source of truth; the Claude Code task system is the active session view.
 
 5. **Spec traceability per task**: Every task links to a spec file and section. When specs change (loop scenario), impact analysis traces from changed spec → affected tasks → required action.
 
-**What happens to DESIGN_TASKS.md?** It stays as build-plan output — the ui-designer generates it during the design phase. The implementer's `start` mode reads it as one of its inputs and merges those tasks into TASKS.md alongside tasks derived from tech specs. DESIGN_TASKS.md is a design artifact; TASKS.md is an implementation artifact.
+**What happens to DESIGN_TASKS.md?** It stays as build-plan output — the cl-designer generates it during the design phase. The cl-implementer's `start` mode reads it as one of its inputs and merges those tasks into TASKS.md alongside tasks derived from tech specs. DESIGN_TASKS.md is a design artifact; TASKS.md is an implementation artifact.
 
 ### Finding 6: Verification as a First-Class Mode
 
@@ -313,7 +313,7 @@ Post-implementation verification is distinct from task-by-task acceptance criter
 - **Cross-spec**: Do implemented modules work together the way the specs said they should? (Integration check)
 - **Spec-to-doc**: Does the implemented code still align with the system docs? (This is where `sync` mode gets invoked)
 
-This maps to a dedicated `verify` mode that runs after all tasks are complete (or after a significant batch). It's the implementation equivalent of `doc-reviewer verify` after a merge.
+This maps to a dedicated `verify` mode that runs after all tasks are complete (or after a significant batch). It's the implementation equivalent of `cl-reviewer verify` after a merge.
 
 ### Finding 7: Testing and CI/CD Are Spec-Driven
 
@@ -324,10 +324,10 @@ The original research excluded testing and CI/CD from scope. This was wrong — 
 | Scenario | What Happens |
 |----------|-------------|
 | **Testing is in the specs** | TASKS.md includes testing tasks: write unit tests, set up test infrastructure, configure CI pipeline. These are regular tasks with acceptance criteria. |
-| **Testing is NOT in specs, but system docs mention it** | Nudge during `start` mode: "Your PRD mentions test coverage requirements but no testing spec exists. Consider running `/doc-researcher research 'testing strategy'` before or during implementation." |
-| **Testing is not mentioned anywhere** | No nudge. The implementer implements what's specced, nothing more. |
+| **Testing is NOT in specs, but system docs mention it** | Nudge during `start` mode: "Your PRD mentions test coverage requirements but no testing spec exists. Consider running `/cl-researcher research 'testing strategy'` before or during implementation." |
+| **Testing is not mentioned anywhere** | No nudge. The cl-implementer implements what's specced, nothing more. |
 
-The implementer doesn't decide what to test or which framework to use — that's a research/spec concern. But it absolutely implements testing tasks if they're in the specs. Similarly for CI/CD: if there's a spec for deployment configuration, the implementer creates those tasks.
+The cl-implementer doesn't decide what to test or which framework to use — that's a research/spec concern. But it absolutely implements testing tasks if they're in the specs. Similarly for CI/CD: if there's a spec for deployment configuration, the cl-implementer creates those tasks.
 
 **The nudge is important**: Many projects specify testing requirements in the PRD ("90% coverage", "E2E tests for critical flows") but never research a testing strategy. The nudge surfaces this gap before the user gets deep into implementation and realizes tests were never planned.
 
@@ -445,13 +445,13 @@ Fix tasks are tracked in IMPLEMENTATION_PROGRESS.md alongside spec gaps:
 
 ### Finding 11: Reconciliation on Resume — External Change Tolerance
 
-The implementer is not the only thing that modifies code. The user can:
+The cl-implementer is not the only thing that modifies code. The user can:
 - Open a regular Claude Code session and fix bugs, add features, refactor
 - Manually edit files in their IDE
 - Run other tools that generate or modify code
 - Pull changes from a collaborator
 
-The implementer must tolerate this. It doesn't gate or prevent external changes — it reconciles with them.
+The cl-implementer must tolerate this. It doesn't gate or prevent external changes — it reconciles with them.
 
 **Reconciliation protocol (runs at the start of every `run` invocation):**
 
@@ -474,7 +474,7 @@ The implementer must tolerate this. It doesn't gate or prevent external changes 
 6. **Present reconciliation summary to user**:
    ```
    Since your last session (2026-02-10):
-   - 3 files changed outside the implementer
+   - 3 files changed outside the cl-implementer
    - T-003 (auth endpoints): auth.ts modified — needs re-verification
    - 2 new files not associated with any task (src/utils/date.ts, src/config/env.ts)
    Re-verify affected tasks before continuing? [Y/n]
@@ -482,9 +482,9 @@ The implementer must tolerate this. It doesn't gate or prevent external changes 
 
 7. **User decides**: re-verify (recommended), skip (trust external changes), or mark tasks as `externally-managed` (remove from queue verification scope)
 
-**New task status: `externally-managed`**: For tasks where the user says "I rewrote this myself, don't track it anymore." The task stays in TASKS.md for completeness but the implementer doesn't verify or re-implement it.
+**New task status: `externally-managed`**: For tasks where the user says "I rewrote this myself, don't track it anymore." The task stays in TASKS.md for completeness but the cl-implementer doesn't verify or re-implement it.
 
-**Key principle**: The implementer doesn't fight the user's workflow. External changes are legitimate. The skill's job is to keep TASKS.md and IMPLEMENTATION_PROGRESS.md accurate — reflecting reality, not enforcing a process.
+**Key principle**: The cl-implementer doesn't fight the user's workflow. External changes are legitimate. The skill's job is to keep TASKS.md and IMPLEMENTATION_PROGRESS.md accurate — reflecting reality, not enforcing a process.
 
 ### Finding 12: Tangent Tolerance — The Queue Is the Plan, Not the Process
 
@@ -501,7 +501,7 @@ Real development has tangents. Debugging sessions, exploratory refactors, "let m
 
 **The "off-script" scenario in detail:**
 
-The user gets frustrated with the queue, opens Claude Code directly, implements several features manually over two days, then comes back to the implementer. This is fine. On resume:
+The user gets frustrated with the queue, opens Claude Code directly, implements several features manually over two days, then comes back to the cl-implementer. This is fine. On resume:
 
 1. Git diff reveals extensive changes across many files
 2. Reconciliation maps changes to tasks — some tasks are now effectively done (code exists and meets criteria), some are partially done, some are untouched
@@ -510,9 +510,9 @@ The user gets frustrated with the queue, opens Claude Code directly, implements 
 5. Tasks whose criteria are met → mark `done (external)`. Tasks partially met → mark `in-progress` with notes. Tasks unaffected → remain `pending`.
 6. Updated TASKS.md reflects reality. The user can continue from wherever the queue actually stands.
 
-**The key design principle**: **The queue is the plan, not the process.** The plan says what needs to be built and what "done" looks like (acceptance criteria). The process of how it gets built — through the queue, through manual work, through a mix — is the user's choice. The implementer's job is to keep the plan accurate against reality, not to enforce a rigid workflow.
+**The key design principle**: **The queue is the plan, not the process.** The plan says what needs to be built and what "done" looks like (acceptance criteria). The process of how it gets built — through the queue, through manual work, through a mix — is the user's choice. The cl-implementer's job is to keep the plan accurate against reality, not to enforce a rigid workflow.
 
-This means the implementer must be **stateless about HOW code was written** and only care about **WHETHER acceptance criteria are met**. If T-003's acceptance criteria are satisfied by code the user wrote manually, T-003 is done. The implementer doesn't care that it didn't implement it.
+This means the cl-implementer must be **stateless about HOW code was written** and only care about **WHETHER acceptance criteria are met**. If T-003's acceptance criteria are satisfied by code the user wrote manually, T-003 is done. The cl-implementer doesn't care that it didn't implement it.
 
 ---
 
@@ -522,7 +522,7 @@ Comprehensive scenario testing across two dry runs revealed 15 edge cases. All a
 
 | # | Gap | Resolution | Finding |
 |---|-----|------------|---------|
-| 1 | No spec review check in `start` | `start` warns if `/doc-spec-gen review` was never run | Start mode pre-checks |
+| 1 | No spec review check in `start` | `start` warns if `/cl-implementer spec-review` was never run | Start mode pre-checks |
 | 2 | No resume protocol for partial tasks | Reconciliation detects in-progress tasks, asks user to continue or restart | Finding 11 |
 | 3 | Pausing a task doesn't cascade to dependents | Pausing cascades `blocked` to transitive dependents automatically | Finding 10 |
 | 4 | No auto-detect of spec changes in `run` | `run` checks spec hash every invocation, suggests sync on mismatch | Finding 2 + 11 |
@@ -542,9 +542,9 @@ Comprehensive scenario testing across two dry runs revealed 15 edge cases. All a
 
 ## Options Analysis
 
-### Option 1: New `implementer` Skill
+### Option 1: New `cl-implementer` Skill
 
-Create a standalone skill (`implementer` or `spec-runner`) with its own SKILL.md and reference files.
+Create a standalone skill (`cl-implementer` or `spec-runner`) with its own SKILL.md and reference files.
 
 **Modes:**
 
@@ -552,22 +552,22 @@ Create a standalone skill (`implementer` or `spec-runner`) with its own SKILL.md
 |------|---------|
 | `start` | Read ALL specs + DESIGN_TASKS.md, generate unified TASKS.md with cross-area dependency graph, identify parallelizable groups, present for user reordering, create IMPLEMENTATION_PROGRESS.md, populate Claude Code tasks. Nudge if testing/CI-CD gaps detected. |
 | `run` | Reconcile external changes (git diff since last session), pick next unblocked task (queue order), validity-check against current specs, implement (fork subagents for parallel groups), verify acceptance criteria, handle runtime failures (fix tasks), update TASKS.md + Claude Code tasks, triage gaps |
-| `verify` | Post-implementation: check all specs against code, contract compliance, invoke doc-reviewer sync |
+| `verify` | Post-implementation: check all specs against code, contract compliance, invoke cl-reviewer sync |
 | `status` | Progress report: done, remaining, gaps, spec staleness, queue state |
 | `sync` | Specs changed — check task spec hashes against current specs, pop/replace superseded tasks, re-queue affected completed tasks for verification |
 
 **Pros:**
 - Clean separation — implementation has its own skill, own tracking, own modes
-- Follows the pattern of other skills (doc-researcher, doc-reviewer, ui-designer, doc-spec-gen)
+- Follows the pattern of other skills (cl-researcher, cl-reviewer, cl-designer, cl-implementer)
 - Can evolve independently
 - Queue semantics keep the loop-awareness model simple
 
 **Cons:**
 - Another skill to maintain
-- Overlap with `doc-reviewer sync` (code-vs-doc verification)
+- Overlap with `cl-reviewer sync` (code-vs-doc verification)
 - The skill boundary between spec-gen and implementer is "specs end here, implementation starts here" — but sync mode blurs that
 
-### Option 2: Extend `doc-spec-gen` with Implementation Modes
+### Option 2: Extend `cl-implementer` with Implementation Modes
 
 Add `implement`, `verify-impl`, and `sync-impl` modes to the existing spec-gen skill.
 
@@ -577,18 +577,18 @@ Add `implement`, `verify-impl`, and `sync-impl` modes to the existing spec-gen s
 - Fewer skills to discover
 
 **Cons:**
-- doc-spec-gen currently runs as `context: fork` (heavy subagent). Implementation needs main context (interactive feedback).
+- cl-implementer currently runs as `context: fork` (heavy subagent). Implementation needs main context (interactive feedback).
 - Spec generation and implementation are fundamentally different activities — one derives artifacts, the other produces code
 - The skill gets large and dual-purpose
 
 ### Option 3: Hybrid — New Skill, but Integrate with Existing Pipeline
 
-New `implementer` skill, but with explicit integration points:
+New `cl-implementer` skill, but with explicit integration points:
 
 - Generates a unified `TASKS.md` from ALL spec artifacts + DESIGN_TASKS.md, organized by implementation area with a cross-area dependency graph
 - Populates Claude Code's native task system (`TaskCreate`) on session start, syncs back to TASKS.md on completion (`TaskUpdate`)
-- Reads spec manifest (from doc-spec-gen) for version tracking
-- Invokes `doc-reviewer sync` as part of its verify mode
+- Reads spec manifest (from cl-implementer) for version tracking
+- Invokes `cl-reviewer sync` as part of its verify mode
 - Feeds gaps back via emerged concepts (existing STATUS.md mechanism)
 - Uses pipeline depth triage for gap handling (existing concept)
 - Triggers spec-gen staleness checks when relevant
@@ -607,7 +607,7 @@ New `implementer` skill, but with explicit integration points:
 
 ## Recommendation
 
-**Option 3: Hybrid — New `implementer` skill with pipeline integration.**
+**Option 3: Hybrid — New `cl-implementer` skill with pipeline integration.**
 
 Rationale:
 1. Implementation is a distinct activity that deserves its own skill, not a mode tacked onto spec-gen
@@ -618,7 +618,7 @@ Rationale:
 
 ### Naming
 
-`implementer` — short, clear, describes what it does. Follows the pattern of skills named for their role (researcher, reviewer, designer).
+`cl-implementer` — short, clear, describes what it does. Follows the pattern of skills named for their role (researcher, reviewer, designer).
 
 ### Risk: Scope Creep
 
@@ -650,13 +650,13 @@ Subagent parallel execution can produce file conflicts if independence analysis 
 
 | Document | Change Type | Description |
 |----------|-------------|-------------|
-| `skills/implementer/SKILL.md` | Add Doc | New skill definition with five modes |
-| `skills/implementer/references/start-mode.md` | Add Doc | Unified TASKS.md generation from all specs, Claude Code task population, progress file creation |
-| `skills/implementer/references/run-mode.md` | Add Doc | Core implementation loop with verification, gap triage, dual tracking (TASKS.md + Claude Code tasks) |
-| `skills/implementer/references/verify-mode.md` | Add Doc | Post-implementation contract compliance check |
-| `skills/implementer/references/sync-mode.md` | Add Doc | Spec change impact analysis, TASKS.md adjustment, re-verification of completed work |
-| `skills/doc-spec-gen/SKILL.md` | Modify | Remove "implementation is a separate concern" line, add handoff to implementer |
-| `skills/ui-designer/references/build-plan-mode.md` | Modify | Note that DESIGN_TASKS.md is consumed by the implementer's start mode and merged into the unified TASKS.md |
+| `skills/cl-implementer/SKILL.md` | Add Doc | New skill definition with five modes |
+| `skills/cl-implementer/references/start-mode.md` | Add Doc | Unified TASKS.md generation from all specs, Claude Code task population, progress file creation |
+| `skills/cl-implementer/references/run-mode.md` | Add Doc | Core implementation loop with verification, gap triage, dual tracking (TASKS.md + Claude Code tasks) |
+| `skills/cl-implementer/references/verify-mode.md` | Add Doc | Post-implementation contract compliance check |
+| `skills/cl-implementer/references/sync-mode.md` | Add Doc | Spec change impact analysis, TASKS.md adjustment, re-verification of completed work |
+| `skills/cl-implementer/SKILL.md` | Modify | Remove "implementation is a separate concern" line, add handoff to implementer |
+| `skills/cl-designer/references/build-plan-mode.md` | Modify | Note that DESIGN_TASKS.md is consumed by the cl-implementer's start mode and merged into the unified TASKS.md |
 | `README.md` | Modify | Add implementer to skills table, update lifecycle diagram, extend pipeline to include implementation |
 | `docs/research/DOC_PIPELINE_PLUGIN.md` | Modify | Add Design Decision #12 about implementation tracking and unified task authority |
 | `docs/` | Add Doc | `implementer.md` — detailed documentation for the skill |
@@ -683,27 +683,27 @@ Subagent parallel execution can produce file conflicts if independence analysis 
 | Loop handling model | Complex impact analysis, simple queue, hybrid | Queue semantics | Process front-to-back, validity-check before each task, pop/replace if superseded. Simpler, consistent, occasionally redundant but predictable. |
 | Runtime failure model | Stop all, log and continue, fix tasks | Fix tasks (F-NNN) with cascade re-verification | Distinct from spec gaps (spec is right, code is wrong). Fix tasks are prioritized, targeted, and trigger transitive re-verification of dependents. Small issues absorbed inline. |
 | External change handling | Block external changes, ignore them, reconcile | Reconcile on resume via git diff | Implementer is not the gatekeeper of code changes. It reconciles with reality. `externally-managed` status for user-owned tasks. |
-| Tangent tolerance model | Strict queue enforcement, abandon queue, plan-not-process | Plan-not-process: queue is the plan, acceptance criteria are the measure | The implementer is stateless about HOW code was written. Only cares WHETHER acceptance criteria are met. Supports off-script work, manual edits, and multi-day absences. |
+| Tangent tolerance model | Strict queue enforcement, abandon queue, plan-not-process | Plan-not-process: queue is the plan, acceptance criteria are the measure | The cl-implementer is stateless about HOW code was written. Only cares WHETHER acceptance criteria are met. Supports off-script work, manual edits, and multi-day absences. |
 
 ---
 
 ## Resolved Questions
 
-1. **~~Should the implementer generate task lists from tech specs?~~** Yes — resolved in Discussion Round 2. The implementer's `start` mode generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md if it exists). Tasks are organized by implementation area with a cross-area Mermaid dependency graph. See Finding 5.
+1. **~~Should the cl-implementer generate task lists from tech specs?~~** Yes — resolved in Discussion Round 2. The cl-implementer's `start` mode generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md if it exists). Tasks are organized by implementation area with a cross-area Mermaid dependency graph. See Finding 5.
 
-2. **~~Should testing and CI/CD be in scope?~~** Yes, if they're in the specs — resolved in Discussion Round 3. The implementer implements ALL specs, including testing and CI/CD. If testing isn't specced but system docs mention it, the skill nudges the user. See Finding 7.
+2. **~~Should testing and CI/CD be in scope?~~** Yes, if they're in the specs — resolved in Discussion Round 3. The cl-implementer implements ALL specs, including testing and CI/CD. If testing isn't specced but system docs mention it, the skill nudges the user. See Finding 7.
 
 3. **~~Should parallel execution be V2?~~** No — resolved in Discussion Round 3. Claude Code already supports fork. Independent tasks with no shared file dependencies can be parallelized with user approval. See Finding 8.
 
 4. **~~How should task ordering work?~~** Suggested + user override — resolved in Discussion Round 3. Auto-generated order is a suggestion. Users can reorder, split, merge, skip, or add tasks. Dependency graph enforces hard constraints only. See Finding 9.
 
-5. **~~How should the implementer handle partial implementation when specs change?~~** Queue semantics — resolved in Discussion Round 3. TASKS.md is a queue processed front-to-back. Before each task, validity-check against current specs. Superseded tasks are popped and replaced. Completed tasks affected by spec changes are re-queued for verification. Simple, consistent, occasionally redundant but predictable. See Finding 2.
+5. **~~How should the cl-implementer handle partial implementation when specs change?~~** Queue semantics — resolved in Discussion Round 3. TASKS.md is a queue processed front-to-back. Before each task, validity-check against current specs. Superseded tasks are popped and replaced. Completed tasks affected by spec changes are re-queued for verification. Simple, consistent, occasionally redundant but predictable. See Finding 2.
 
-6. **~~How should the implementer handle runtime failures and regressions?~~** Fix tasks (F-NNN) — resolved in Discussion Round 4. Runtime failures are distinct from spec gaps (spec is right, code is wrong). Fix tasks are created, prioritized over new tasks, and trigger cascading re-verification of transitive dependents. Small issues absorbed inline. See Finding 10.
+6. **~~How should the cl-implementer handle runtime failures and regressions?~~** Fix tasks (F-NNN) — resolved in Discussion Round 4. Runtime failures are distinct from spec gaps (spec is right, code is wrong). Fix tasks are created, prioritized over new tasks, and trigger cascading re-verification of transitive dependents. Small issues absorbed inline. See Finding 10.
 
-7. **~~How should the implementer handle external changes (user edits, other tools, manual work)?~~** Reconciliation on resume — resolved in Discussion Round 4. Git diff since last session maps changed files to tracked tasks. User decides: re-verify, skip, or mark as `externally-managed`. The implementer doesn't fight the user's workflow. See Finding 11.
+7. **~~How should the cl-implementer handle external changes (user edits, other tools, manual work)?~~** Reconciliation on resume — resolved in Discussion Round 4. Git diff since last session maps changed files to tracked tasks. User decides: re-verify, skip, or mark as `externally-managed`. The cl-implementer doesn't fight the user's workflow. See Finding 11.
 
-8. **~~How should the implementer handle tangents and off-script development?~~** Plan-not-process — resolved in Discussion Round 4. The queue is the plan, not the process. The implementer is stateless about HOW code was written, only cares WHETHER acceptance criteria are met. Full reconciliation handles even multi-day off-script absences. See Finding 12.
+8. **~~How should the cl-implementer handle tangents and off-script development?~~** Plan-not-process — resolved in Discussion Round 4. The queue is the plan, not the process. The cl-implementer is stateless about HOW code was written, only cares WHETHER acceptance criteria are met. Full reconciliation handles even multi-day off-script absences. See Finding 12.
 
 ## Open Questions
 

@@ -178,6 +178,6 @@ The script checks for existing directories that would collide with Clarity Loop'
 ## Related
 
 - [Pipeline Concepts](pipeline-concepts.md) — Protection model, manifest, configuration
-- [doc-reviewer](doc-reviewer.md#merge) — Creates authorization markers during merge
-- [doc-reviewer](doc-reviewer.md#correct) — Creates authorization markers during corrections
-- [doc-researcher](doc-researcher.md#bootstrap) — Creates authorization markers during bootstrap
+- [cl-reviewer](cl-reviewer.md#merge) — Creates authorization markers during merge
+- [cl-reviewer](cl-reviewer.md#correct) — Creates authorization markers during corrections
+- [cl-researcher](cl-researcher.md#bootstrap) — Creates authorization markers during bootstrap

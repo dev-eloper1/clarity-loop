@@ -15,7 +15,7 @@ Not every change needs the full pipeline. Triage determines the right level of c
 | **L2 — Complex** | Cross-cutting, multi-doc impact, unclear scope | Full pipeline: research → structure → proposal → review → merge → verify |
 | **L3 — Exploratory** | Unclear idea, needs discovery, multiple approaches | Extended research with multiple discussion rounds, then full pipeline |
 
-The [doc-researcher triage](doc-researcher.md#triage) evaluates complexity based on doc impact, clarity, novelty, and cross-cutting concerns.
+The [cl-researcher triage](cl-researcher.md#triage) evaluates complexity based on doc impact, clarity, novelty, and cross-cutting concerns.
 
 ---
 
@@ -33,9 +33,9 @@ Only three pipeline operations can write to system docs, each creating a tempora
 
 | Operation | When | Used By |
 |-----------|------|---------|
-| `bootstrap` | Initial doc creation | [doc-researcher bootstrap](doc-researcher.md#bootstrap) |
-| `merge` | Applying approved proposals | [doc-reviewer merge](doc-reviewer.md#merge) |
-| `correct` | Targeted fixes from audit/review | [doc-reviewer correct](doc-reviewer.md#correct) |
+| `bootstrap` | Initial doc creation | [cl-researcher bootstrap](cl-researcher.md#bootstrap) |
+| `merge` | Applying approved proposals | [cl-reviewer merge](cl-reviewer.md#merge) |
+| `correct` | Targeted fixes from audit/review | [cl-reviewer correct](cl-reviewer.md#correct) |
 
 The marker is created before edits and removed immediately after. If a skill finds a stale marker on startup (from an interrupted operation), it helps clean up.
 
@@ -152,13 +152,13 @@ Context files capture the delta between the LLM's training data and current libr
 
 ### Lifecycle
 
-Created by doc-researcher (context mode) → consumed by all skills via standard loading protocol → staleness detected by version pinning → updated/versioned by researcher → optionally promoted to global after validation.
+Created by cl-researcher (context mode) → consumed by all skills via standard loading protocol → staleness detected by version pinning → updated/versioned by researcher → optionally promoted to global after validation.
 
 ### Version Pinning
 
 Context is stale when the library version changes, not when time passes. Each `_meta.md` tracks which implementation tasks depend on it. Context is versioned (not replaced) when a library upgrade occurs mid-implementation.
 
-For the full context creation process, loading protocol, and staleness model, see the [context mode reference](../skills/doc-researcher/references/context-mode.md).
+For the full context creation process, loading protocol, and staleness model, see the [context mode reference](../skills/cl-researcher/references/context-mode.md).
 
 ---
 
@@ -255,8 +255,8 @@ After initialization, your project has this structure:
 
 ## Related
 
-- [doc-researcher](doc-researcher.md) — Uses manifest, tracking files, protection model, and context mode
-- [doc-reviewer](doc-reviewer.md) — Manages protection markers during merge and correct
-- [doc-spec-gen](doc-spec-gen.md) — Checks tracking files for waterfall gate
-- [ui-designer](ui-designer.md) — Uses designs/ directory, DESIGN_PROGRESS.md
+- [cl-researcher](cl-researcher.md) — Uses manifest, tracking files, protection model, and context mode
+- [cl-reviewer](cl-reviewer.md) — Manages protection markers during merge and correct
+- [cl-implementer](cl-implementer.md) — Checks tracking files for waterfall gate
+- [cl-designer](cl-designer.md) — Uses designs/ directory, DESIGN_PROGRESS.md
 - [Hooks](hooks.md) — Implements protection and manifest generation
