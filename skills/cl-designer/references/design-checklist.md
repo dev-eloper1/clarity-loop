@@ -43,12 +43,26 @@ Run this checklist after completing tokens mode, before moving to mockups.
 | 4 | Core components generated | Cross-reference PRD features | 2 |
 | 5 | Components use tokens (not hardcoded) | Pencil search or markdown check | 3 |
 | 6 | Each component reviewed by user | DESIGN_PROGRESS.md approval entries | 2 |
-| 7 | DESIGN_SYSTEM.md generated | File exists with token + component catalog | 3 |
-| 8 | User approved | Explicit user confirmation | 1 |
+| 7 | Component behavioral states documented | Each interactive component has a state table (idle, loading, error, disabled) with triggers. Non-interactive components (Badge, Divider) may skip this. | 2 |
+| 8 | Interactive state triggers defined | For each behavioral state, the trigger condition is documented (e.g., "disabled when required fields empty") | 2 |
+| 9 | Contrast ratios verified | Text on backgrounds meets 4.5:1 ratio. UI components and graphical objects meet 3:1 ratio. Use token values to calculate or Pencil's contrast check if available. | 3 |
+| 10 | Keyboard interactions documented per component | Each interactive component documents which keys do what (Enter, Space, Escape, Arrow keys, Tab). Refer to WAI-ARIA Authoring Practices for standard patterns. | 3 |
+| 11 | Focus indicators defined | Design system includes focus indicator tokens (outline color, outline offset, outline width). Components show visible focus styling distinct from other states. | 3 |
+| 12 | Component boundary behavior specified | Each component documents truncation strategy (ellipsis, wrap, fade), overflow handling, and min/max constraints where applicable. | 3 |
+| 13 | DESIGN_SYSTEM.md generated | File exists at `{docsRoot}/specs/DESIGN_SYSTEM.md` with token catalog + component catalog + behavioral states | 3 |
+| 14 | User approved | Explicit user confirmation that the design system is ready for mockups | 1 |
 
-**Gate semantics**: Items 1–7 are self-assessed by the skill. Item 8 requires explicit user
-confirmation. If any of items 1–6 are incomplete, present what's missing and ask the user:
-"These gaps remain: [list]. Proceed to mockups anyway, or address them first?"
+**Gate semantics**: Items 1–13 are self-assessed by the skill. Item 14 requires explicit user
+confirmation (Tier 1 — Must Confirm). Items 7-8 are Tier 2 (Batch Review) — generated in
+batch with other component specs, user flags issues. Items 9-12 are Tier 3 (Auto-proceed) —
+generated with sensible defaults, logged to DECISIONS.md with `[auto-default]` tag. The
+`ux.autoDefaults` config controls which tiers auto-proceed. If behavioral/accessibility gaps
+remain, present what's missing and ask: "These behavioral/accessibility gaps remain: [list].
+Proceed to mockups anyway, or address them first?" The user can choose to proceed with gaps
+if the project doesn't require full behavioral specification (e.g., a prototype).
+
+This replaces the P0.5 placeholder ("When P1's checklist items are added...") with the
+actual items and their tier assignments.
 
 ### Mockups Checklist
 
@@ -60,23 +74,20 @@ Run this checklist after completing mockups mode, before generating the build pl
 | 2 | Mockups use design system components | Pencil ref nodes or markdown refs | 3 |
 | 3 | Responsive states represented (if applicable) | Conditional check | 3 |
 | 4 | Each mockup reviewed by user | DESIGN_PROGRESS.md approval entries | 2 |
-| 5 | UI_SCREENS.md generated | File exists with screen-to-feature mapping | 3 |
-| 6 | User approved | Explicit user confirmation | 1 |
+| 5 | Behavioral walkthroughs completed for all screens | DESIGN_PROGRESS.md has walkthrough entries per screen. Each screen has screen states, interaction flows, navigation context, and content decisions recorded. | 2 |
+| 6 | Empty, loading, and error states addressed per screen | UI_SCREENS.md Screen States table exists for each screen with at minimum: empty (first-use or N/A), loading (or N/A), and error states defined. | 2 |
+| 7 | Key interaction flows documented with expected outcomes | UI_SCREENS.md Interaction Flows table exists for each screen with user actions, expected behavior, and error cases. | 2 |
+| 8 | Navigation context defined per screen | Each screen in UI_SCREENS.md has: route, auth requirement, back behavior, state persistence, and focus-on-arrival documented. | 2 |
+| 9 | Non-default state content defined | Empty state copy, error messages, and confirmation dialog text are actual text (not placeholders like "Error" or "No items"). | 2 |
+| 10 | UI_SCREENS.md generated | File exists at `{docsRoot}/specs/UI_SCREENS.md` with screen-to-feature mapping, behavioral contracts, and test scenarios | 3 |
+| 11 | User approved | Explicit user confirmation that mockups and behavioral specs are complete | 1 |
 
-**When P1's checklist items are added**, they receive these tiers:
-- Component behavioral states: Tier 2
-- Interactive state triggers: Tier 2
-- Contrast ratios: Tier 3
-- Keyboard interactions: Tier 3
-- Focus indicators: Tier 3
-- Component boundary behavior: Tier 3
-- Behavioral walkthroughs completed: Tier 2
-- Empty/loading/error states: Tier 2
-- Key interaction flows: Tier 2
-- Navigation context: Tier 2
-- Non-default state content: Tier 2
-- User approved (behavioral): Tier 1
+**Gate semantics**: Items 1–10 are self-assessed. Item 3 is conditional — skip if not
+applicable. Items 5-9 are new behavioral checks at Tier 2 (Batch Review) — generated in
+batch, user reviews the set and flags issues. Item 11 is Tier 1 (Must Confirm). The
+`ux.autoDefaults` config controls which tiers auto-proceed. If behavioral gaps exist,
+present them and let the user decide whether to proceed: "These behavioral gaps remain:
+[list]. The build plan will have less behavioral detail for these screens. Proceed anyway?"
 
-**Gate semantics**: Items 1–5 are self-assessed. Item 3 is conditional — skip if not
-applicable. Item 6 requires explicit user confirmation. If gaps exist, present them and
-let the user decide whether to proceed.
+This replaces the P0.5 placeholder ("When P1's checklist items are added...") with the
+actual items and their tier assignments.

@@ -23,6 +23,9 @@ Detect whether the Pencil MCP is available.
 3. If found, probe with `get_guidelines("tailwind")` to verify the server is responsive
 4. Record: Pencil MCP available = true/false
 
+**Note**: Only Pencil MCP is currently supported for design generation. Figma MCP
+integration (read/extract from existing Figma files) is planned for a future version.
+
 **Report findings to user:**
 
 - **Pencil available**: "Pencil MCP detected. I can generate designs from scratch —

@@ -12,7 +12,7 @@ to verify — no tasks have been implemented yet."
 
 ---
 
-### Four Verification Dimensions
+### Six Verification Dimensions
 
 #### Dimension 1: Per-Task Acceptance Criteria
 
@@ -82,6 +82,59 @@ If cl-reviewer sync is not available (skill not loaded), do a lightweight manual
 - Verify key claims against implemented code
 - Flag any obvious misalignments
 
+#### Dimension 5: Test Coverage Against Test Spec
+
+If `TEST_SPEC.md` exists, verify that the test suite conforms to the specification.
+
+This catches:
+- Missing test files for modules that TEST_SPEC.md defines test cases for
+- Mock boundaries that don't match TEST_SPEC.md (e.g., spec says mock DB, tests use real DB)
+- Missing integration tests for boundaries defined in TEST_SPEC.md
+- Missing contract tests
+- Test data factories that don't cover all entities in TEST_SPEC.md
+
+For each section in TEST_SPEC.md:
+1. Check that corresponding test files exist
+2. Verify test count covers the specified test cases (not necessarily 1:1, but
+   all specified functions/flows should have at least one test)
+3. Verify integration test tasks match cross-spec integration contracts
+4. Run the full test suite and report results
+
+If TEST_SPEC.md doesn't exist, skip this dimension with a note: "No TEST_SPEC.md
+found — test coverage verification skipped. Consider regenerating specs to include
+test specifications."
+
+#### Dimension 6: Dependency Audit
+
+Check the project's dependency health as a whole.
+
+This catches:
+- Vulnerabilities published after dependencies were installed
+- Transitive dependency issues not caught per-task
+- License compliance across the full dependency tree
+- Hallucinated packages that slipped through (package exists but provides wrong functionality)
+- Unnecessary dependencies (installed but never imported)
+
+Steps:
+1. Run `npm audit --json` (or equivalent for the project's package manager)
+2. Parse results: group by severity (critical, high, medium, low)
+3. Check all direct dependencies against SECURITY_SPEC.md approved license list
+4. Cross-reference `package.json` dependencies against actual imports in source code —
+   flag unused dependencies
+5. Verify lockfile integrity (`npm ci --dry-run` or equivalent)
+
+Report (with checkpoint tier assignments for autopilot compatibility).
+Note: Medium CVEs are intentionally escalated from Tier 3 (during per-task implementation
+in run mode) to Tier 2 here because verify is the final gate — a medium CVE that was
+acceptable per-task may compound across the full dependency tree.
+- Critical/High: must fix before implementation is considered complete — **Tier 1** (must-confirm, always stops autopilot)
+- Medium: should fix, log for tracking — **Tier 2** (batch review, escalated from Tier 3 at final gate)
+- Low: informational only — **Tier 3** (auto-proceed, logged with [auto-default] tag)
+- License violations: flag for user decision — **Tier 1** (copyleft implications require explicit approval)
+- Unused dependencies: suggest removal — **Tier 3** (advisory)
+
+If no package manager or no SECURITY_SPEC.md: skip this dimension with a note.
+
 ---
 
 ### Output
@@ -110,6 +163,19 @@ Update IMPLEMENTATION_PROGRESS.md with verification results:
 
 ### Spec-to-Doc Alignment
 - [cl-reviewer sync results or manual check findings]
+
+### Test Coverage (if TEST_SPEC.md exists)
+- Per-module unit test coverage: 8/8 modules have tests ✓
+  (or: Auth Service module has 3/7 specified test cases covered)
+- Integration test coverage: 3/3 boundaries tested ✓
+- Contract test coverage: 2/2 contracts verified ✓
+- Full suite: 47 tests passing ✓
+
+### Dependency Audit
+- npm audit: 0 critical, 0 high, 2 medium (advisory only)
+- Licenses: all MIT/Apache-2.0 — compliant
+- Unused dependencies: `lodash` (installed but never imported) — suggest removal
+- Lockfile: verified
 ```
 
 ### After Verification

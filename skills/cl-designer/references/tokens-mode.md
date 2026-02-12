@@ -211,6 +211,19 @@ these components: [list with variants]. Add or remove any?"
    - Show all variants side-by-side within the container (e.g., Button: primary, secondary,
      ghost — all in one row with labels)
    - Keep operations to ~25 per `batch_design` call
+   - **Generate behavioral state variants** for components that have significant states
+     beyond visual variants. Not every component needs this — focus on components with
+     loading, error, or disabled states that affect user interaction:
+     - **Button**: idle, loading (spinner variant), disabled. Show loading variant with
+       spinner replacing or overlaying text.
+     - **Input**: empty, focused, filled, error (with error message), disabled. Show
+       error variant with inline error text.
+     - **Form group**: pristine, dirty, submitting, error. At minimum show error state.
+     - **List/Table**: populated, empty (with empty state component), loading (skeleton rows).
+     - **Modal**: open state with focus trap indicator (visual note, not animation).
+     - **Toast/Alert**: visible state with variants (success, error, warning, info).
+     Place behavioral state variants in a separate row below the visual variants within
+     the component group, labeled "States". Use `snapshot_layout` to prevent overlap.
 5. **Every element must be inside its category frame.** Never create floating elements
    on the root canvas. If a component doesn't fit existing categories, create a new
    category frame for it.
@@ -234,12 +247,12 @@ Generate ALL components first (Steps 3.1-3.5 above), then present them as a set:
    **Pencil path**: Take a grid screenshot showing all component categories
    (or one screenshot per category if the grid is too dense). Present with a summary table:
 
-   | Component | Variants | PRD Feature | Tokens Used | Status |
-   |-----------|----------|-------------|-------------|--------|
-   | Button | primary, secondary, ghost | Task actions, forms | primary-500, space-3 | Review |
-   | Input | text, email, password | Forms, search | neutral-200, space-2 | Review |
-   | Card | default, compact | Task list, dashboard | neutral-50, shadow-md | Review |
-   | ... | ... | ... | ... | Review |
+   | Component | Variants | PRD Feature | Tokens Used | Behavioral States | A11y | Status |
+   |-----------|----------|-------------|-------------|-------------------|------|--------|
+   | Button | primary, secondary, ghost | Task actions, forms | primary-500, space-3 | idle, loading, disabled | Enter/Space, aria-busy | Review |
+   | Input | text, email, password | Forms, search | neutral-200, space-2 | empty, focused, error, disabled | aria-invalid, Tab | Review |
+   | Card | default, compact | Task list, dashboard | neutral-50, shadow-md | | | Review |
+   | ... | ... | ... | ... | ... | ... | Review |
 
    "Here are all [N] components. Review the summary and screenshots. Flag any that need
    changes -- I'll revise those and leave the rest as-is."
@@ -256,9 +269,28 @@ Generate ALL components first (Steps 3.1-3.5 above), then present them as a set:
    - Re-screenshot the specific component (zoomed in)
    - Present the revision: "Updated Button loading state. Here's the before and after."
    - If Pencil: re-run `snapshot_layout` to verify no new overlaps
+   - When presenting a component (during revision or initial review), include:
+     - **Behavioral states**: Explain the state model. "Button has idle, loading, and
+       disabled states. Loading shows a spinner and prevents re-click. Disabled triggers:
+       [proposed triggers based on PRD context]."
+     - **Accessibility**: Note ARIA attributes and keyboard interaction. "Button uses
+       `aria-busy` during loading, `aria-disabled` when conditions aren't met. Activates on
+       Enter and Space."
+     - **Boundary behavior**: Note truncation/overflow strategy. "Text truncates with
+       ellipsis at container width. Minimum width: 80px."
 
 5. **Record all decisions** in DESIGN_PROGRESS.md -- both batch-approved and individually
    revised components.
+
+6. **Capture behavioral specification per component** in DESIGN_PROGRESS.md:
+
+   ```markdown
+   ### [Component Name]
+   - **Approval**: [Approved | Needs changes]
+   - **Behavioral states**: [idle, loading, error, disabled — with triggers]
+   - **Accessibility**: [ARIA attributes, keyboard interaction, focus behavior]
+   - **Boundary behavior**: [truncation strategy, overflow, min/max constraints]
+   ```
 
 **Efficiency note**: Most components are approved without changes. Batch review turns
 N interruptions into 1 + K (where K is the number flagged for revision, typically 2-3).
@@ -271,7 +303,16 @@ component individually":
 For each component (or small batches of related components):
 1. Call `get_screenshot` of the specific component group
 2. Call `snapshot_layout` to check for layout issues
-3. Present screenshot to user with component name, PRD feature, variants, tokens used
+3. Present screenshot to user with component name, PRD feature, variants, tokens used.
+   Include when presenting:
+   - **Behavioral states**: Explain the state model. "Button has idle, loading, and
+     disabled states. Loading shows a spinner and prevents re-click. Disabled triggers:
+     [proposed triggers based on PRD context]."
+   - **Accessibility**: Note ARIA attributes and keyboard interaction. "Button uses
+     `aria-busy` during loading, `aria-disabled` when conditions aren't met. Activates on
+     Enter and Space."
+   - **Boundary behavior**: Note truncation/overflow strategy. "Text truncates with
+     ellipsis at container width. Minimum width: 80px."
 4. Gather feedback: Approved / Needs changes / Rejected
 5. Record all decisions and iterations in DESIGN_PROGRESS.md
 
@@ -301,9 +342,32 @@ markdown in the output DESIGN_SYSTEM.md.
 For each component identified from PRD features, document:
 - **Name**: Component name
 - **Purpose**: What it does, which PRD feature it serves
-- **Variants**: List of variants with descriptions
+- **Variants**: List of visual variants with descriptions (primary, secondary, ghost, etc.)
 - **Props/inputs**: What the component accepts (name, type, default)
-- **States**: Interactive states (default, hover, focus, disabled, error, loading)
+- **Visual states**: Appearance states (default, hover, focus, disabled)
+- **Behavioral states**: State machine with triggers and transitions:
+
+  | State | Trigger | Visual Change | Behavior |
+  |-------|---------|---------------|----------|
+  | idle | default | — | Clickable, accepts focus |
+  | loading | form submit / async action | Spinner, text change or overlay | Prevents re-click, `aria-busy="true"` |
+  | error | action failure | Error styling (red border, etc.) | Shows error message, allows retry |
+  | disabled | [condition from PRD context] | Reduced opacity | Not focusable via click, `aria-disabled="true"` |
+
+  Not every component needs all states. Focus on states that affect user interaction —
+  a Badge has no loading state. A Button does.
+
+- **Accessibility**: ARIA attributes, keyboard interaction, focus behavior:
+  - `role` (if not implicit from HTML element)
+  - Relevant ARIA attributes (e.g., `aria-expanded`, `aria-invalid`, `aria-busy`)
+  - Keyboard interaction: which keys do what (Enter, Space, Escape, Arrow keys)
+  - Focus behavior: is it focusable? Tab order? Focus trap (for modals)?
+
+- **Boundary behavior**:
+  - Truncation strategy (ellipsis, fade, word boundary, none)
+  - Overflow handling (scroll, wrap, hide)
+  - Min/max constraints (minimum width, maximum content length)
+
 - **Token usage**: Which tokens the component uses (colors, spacing, typography)
 - **Visual description**: Textual description of appearance since no screenshot is available
 
@@ -362,8 +426,28 @@ After tokens and components are complete (any path), generate
 
 - **Purpose**: [what it does]
 - **PRD feature**: [which feature drove this component]
-- **Variants**: [list]
+- **Variants**: [visual variants list — primary, secondary, ghost, etc.]
 - **Design reference**: [.pen node ID | "markdown spec"]
+
+**Behavioral States**:
+| State | Trigger | Visual Change | Behavior |
+|-------|---------|---------------|----------|
+| idle | default | — | [default behavior] |
+| loading | [trigger] | [visual change] | [behavioral change, e.g., prevents re-click] |
+| error | [trigger] | [visual change] | [behavioral change, e.g., shows error message] |
+| disabled | [trigger] | [visual change] | [behavioral change, e.g., not focusable] |
+
+Omit states that don't apply to this component.
+
+**Accessibility**:
+- **ARIA**: [relevant attributes — aria-busy, aria-disabled, aria-expanded, etc.]
+- **Keyboard**: [interaction model — Enter/Space activates, Escape closes, Arrow keys navigate]
+- **Focus**: [focusable? Tab order? Focus trap? Focus visible styling?]
+
+**Boundary Behavior**:
+- **Truncation**: [strategy — ellipsis, word boundary, fade, none]
+- **Overflow**: [handling — scroll, wrap, clip]
+- **Constraints**: [min width, max content length, etc.]
 
 [Repeat for each component]
 

@@ -35,11 +35,13 @@ Run these checks before generating anything:
    system docs vs topics covered in specs. Warn on significant gaps:
    - "Your PRD describes [X] but no spec covers it. This area won't have implementation
      tasks. Intentional?"
-   - Special case: if system docs mention testing requirements (search PRD for "test",
-     "coverage", "CI", "CI/CD") but no testing spec exists, offer three paths:
-     a) Add test tasks manually to TASKS.md after generation
-     b) Run `/cl-researcher research 'testing strategy'` to create proper specs first
-     c) Skip — implement features first, address testing later
+   - Special case: if `TEST_SPEC.md` exists in `{docsRoot}/specs/`, test tasks will be
+     generated automatically (see Step 3). If `TEST_SPEC.md` does NOT exist but system docs
+     mention testing requirements (search PRD for "test", "coverage", "CI", "CI/CD"), warn:
+     "System docs mention testing but no TEST_SPEC.md exists. Options:
+     a) Regenerate specs with `/cl-implementer spec` — this will produce TEST_SPEC.md
+     b) Add test tasks manually to TASKS.md after generation
+     c) Skip — implement features first, address testing later"
 
 5. **Context freshness** — If `{docsRoot}/context/.context-manifest.md` exists:
    - Read the manifest, get all library entries
@@ -91,6 +93,12 @@ refresh. Proceed with these defaults, or adjust?"
 
 4. Read Architecture doc for tech stack context (framework, language, styling approach) —
    this informs task descriptions and complexity estimates.
+
+5. Read `{docsRoot}/specs/TEST_SPEC.md` if it exists. Parse its structure:
+   - Test architecture (mock boundaries, test data strategy, environment requirements)
+   - Per-module unit test cases
+   - Cross-spec integration contracts
+   - Contract test definitions
 
 ---
 
@@ -178,6 +186,87 @@ flowchart TD
 7. **Source marker.** All spec-derived tasks get `source: spec-derived`. Later, user-added
    tasks get `source: user-added` — they're tracked for progress but excluded from spec-based
    verification and sync.
+
+8. **Test infrastructure task.** If TEST_SPEC.md exists, generate a test infrastructure
+   task in the "Testing" area:
+
+   ```markdown
+   ## Area: Testing
+
+   ### T-00X: Test Infrastructure Setup
+   - **Spec reference**: TEST_SPEC.md, Test Architecture section
+   - **Spec hash**: [hash]
+   - **Dependencies**: None
+   - **Status**: pending
+   - **Source**: spec-derived
+   - **Acceptance criteria**:
+     - [ ] Test runner configured ([framework] from TEST_SPEC.md/DECISIONS.md)
+     - [ ] Test database setup (if TEST_SPEC.md requires it for integration tests)
+     - [ ] Mock server configured (if TEST_SPEC.md specifies external API mocking)
+     - [ ] Factory functions created for each entity in TEST_SPEC.md Test Data table
+     - [ ] Test helper utilities in place (e.g., `createAuthenticatedContext()`)
+     - [ ] `npm test` (or equivalent) runs and passes with zero tests
+   - **Complexity**: Medium
+   ```
+
+   This task has NO dependencies and can run in parallel with early implementation tasks.
+
+9. **Unit test tasks.** For each per-module section in TEST_SPEC.md, generate a unit test
+   task that FOLLOWS its corresponding implementation task:
+
+   ```markdown
+   ### T-005T: Auth Service Unit Tests
+   - **Spec reference**: TEST_SPEC.md, Per-Module Test Cases > Auth Service
+   - **Spec hash**: [hash of TEST_SPEC.md section]
+   - **Dependencies**: T-005 (Auth Service implementation), T-00X (Test Infrastructure)
+   - **Status**: pending
+   - **Source**: spec-derived
+   - **Acceptance criteria**:
+     - [ ] Unit tests cover all functions in TEST_SPEC.md table for this module
+     - [ ] Edge cases from TEST_SPEC.md table are tested
+     - [ ] Mock boundaries match TEST_SPEC.md specification
+     - [ ] All tests pass
+   - **Complexity**: [derived from implementation task complexity]
+   ```
+
+   Unit test task IDs use the `T-NNNT` suffix convention — tied to their implementation
+   task. This makes the relationship visible in TASKS.md and the dependency graph.
+
+10. **Integration test tasks.** For each cross-spec integration contract in TEST_SPEC.md,
+    generate an integration test task that depends on ALL implementation tasks it spans:
+
+    ```markdown
+    ### T-0XX: Data-API Integration Tests
+    - **Spec reference**: TEST_SPEC.md, Cross-Spec Integration Contracts > Data ↔ API
+    - **Spec hash**: [hash]
+    - **Dependencies**: T-001 (DB schema), T-002 (Auth service), T-003 (API endpoints), T-00X (Test Infrastructure)
+    - **Status**: pending
+    - **Source**: spec-derived
+    - **Acceptance criteria**:
+      - [ ] Full request lifecycle flows tested per TEST_SPEC.md
+      - [ ] Error propagation chains verified per TEST_SPEC.md
+      - [ ] All integration tests pass against running test environment
+    - **Complexity**: Complex
+    ```
+
+    Integration test tasks are placed in the "Testing" area and positioned in the
+    dependency graph AFTER all implementation tasks they span.
+
+11. **Contract test tasks.** For each contract in TEST_SPEC.md's Contract Tests section,
+    generate a task verifying cross-layer contracts:
+
+    ```markdown
+    ### T-0XX: API-Frontend Contract Tests
+    - **Spec reference**: TEST_SPEC.md, Contract Tests
+    - **Spec hash**: [hash]
+    - **Dependencies**: [API implementation tasks], [Frontend implementation tasks], T-00X (Test Infrastructure)
+    - **Status**: pending
+    - **Source**: spec-derived
+    - **Acceptance criteria**:
+      - [ ] Response shapes verified against consumer type expectations
+      - [ ] All contract tests pass
+    - **Complexity**: Medium
+    ```
 
 ---
 

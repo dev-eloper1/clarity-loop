@@ -116,8 +116,45 @@ Implement the task. This is where Claude Code writes code:
    d. Record which context files were loaded in IMPLEMENTATION_PROGRESS.md
    (See `skills/cl-researcher/references/context-mode.md` → "Standard Loading Protocol"
    for the full protocol.)
+3.5. **Dependency verification** — When the implementation requires adding a new dependency
+     (detected by `npm install`, `yarn add`, or similar in the implementation code):
+
+     a) **Pre-install: Registry existence check** — Before installing, verify the package
+        exists in the npm registry (or relevant package manager registry). This catches
+        hallucinated packages — AI-generated code frequently imports packages that don't
+        exist, creating typosquatting risk. Check: `npm view <package-name> version`.
+        If the package doesn't exist — **Tier 1** (must-confirm): "Package `<name>` not
+        found in npm registry. This may be a hallucinated dependency. Searching for
+        alternatives..." — then search for the intended functionality and suggest a real
+        package.
+
+     b) **Post-install: Vulnerability audit** — After installation, run `npm audit --json`
+        (or equivalent). Parse results with checkpoint tier assignments:
+        - **Critical/High CVEs** — **Tier 1** (must-confirm): Block. "Dependency `<name>`
+          has critical vulnerability [CVE-ID]: [description]. Options: a) Find an alternative
+          package, b) Pin to a patched version if available, c) Accept risk (requires user
+          approval)."
+        - **Medium/Low** — **Tier 3** (auto-proceed): Warn. "Note: `<name>` has [N]
+          medium/low advisories. Logged for reference." Continue without blocking.
+
+     c) **License check** — Verify the package's license against the approved list from
+        SECURITY_SPEC.md (or defaults from `dependencies` category decision in DECISIONS.md,
+        or fallback: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC).
+        - **Flagged license** (GPL, LGPL, AGPL, unknown) — **Tier 1** (must-confirm): Warn.
+          "Package `<name>` uses [license]. This may have copyleft implications. Continue?
+          [Y/flag for review]"
+        - **Approved license**: Continue silently — **Tier 3** (auto-proceed).
+
+     Record all dependency additions in IMPLEMENTATION_PROGRESS.md with package name,
+     version, license, and audit status.
+
 4. Implement the code to meet the acceptance criteria
-5. Test/verify the implementation against each criterion
+5. Test/verify the implementation against each criterion. If `TEST_SPEC.md` exists and
+   has a per-module section for this task's spec reference, use the test cases defined
+   there as additional verification criteria — particularly the edge cases and mock
+   boundary specifications. This does not mean writing formal test files in run mode
+   (that's autopilot's job) — it means checking the implementation against the test
+   spec's expectations to catch issues before moving on.
 6. Record files modified and update `_meta.md` "Tasks Implemented With This Context" for
    each library whose context was loaded
 
@@ -193,6 +230,21 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
 
      Distinguished from `spec-gap` by asking: "Is this a *what to build* question (spec
      gap) or a *how it should look/behave visually* question (design gap)?"
+
+   - `supply-chain`: Dependency issue — vulnerable package, hallucinated import, license
+     violation, or version conflict. Detection: `npm audit` failure, registry lookup failure,
+     or license check failure. Distinguished from `context-gap` by asking: "Is this about
+     how to USE a library correctly (context gap) or about WHETHER this library is safe to
+     use (supply chain)?"
+
+   For `supply-chain` issues:
+   - Identify the problematic dependency and the specific issue (CVE, hallucination, license)
+   - Propose resolution:
+     - **Hallucinated**: Search for a real package that provides the needed functionality
+     - **Vulnerable**: Find a patched version or alternative package
+     - **License**: Flag for user decision
+   - Replace the dependency in all affected files
+   - Re-run tests for all tasks that depend on the replaced package
 
    For `context-gap` issues:
    - Check if context files exist for the library in question

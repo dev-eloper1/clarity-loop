@@ -55,11 +55,83 @@ Have a genuine conversation with the user to understand the project:
 - What are the key components or subsystems?
 - What's the tech stack?
 
-**Then dig deeper (conversational):**
+**Then dig deeper — functional:**
 - What are the main workflows or user journeys?
 - Are there external integrations or dependencies?
 - What are the key architectural decisions already made?
 - What's the scope? What's explicitly out of scope?
+
+**Behavioral and UX questions** (ask these as a natural continuation of the conversation,
+not as a separate checklist dump — adapt to context and skip what's not applicable):
+- How should the app handle errors? Toast notifications? Inline errors? Error pages?
+  (Establishes error handling philosophy — category: `errors`)
+- Should actions feel instant (optimistic updates) or show loading states?
+  (Establishes state management approach — category: `resilience`)
+- What happens when there's no data yet? Empty states with onboarding? Minimal
+  placeholders? (Establishes empty state philosophy — category: `content`)
+- What accessibility level are you targeting? WCAG 2.1 AA? 2.2? No specific target?
+  (Category: `accessibility` — this constrains design tokens and component specs)
+- Is this keyboard-first, mouse-first, or touch-optimized?
+  (Affects interaction patterns, component sizing, focus management — category: `accessibility`)
+- What's the app's voice — professional? Friendly? Minimal? Technical?
+  (Establishes content tone for error messages, empty states, help text — category: `content`)
+- How should the app handle being offline or network errors?
+  (Establishes resilience philosophy — category: `resilience`. Skip for server-only apps)
+- What's your testing philosophy? Specific framework? Coverage expectations?
+  (Category: `testing` — feeds into spec generation)
+- Target devices? Desktop only? Mobile? Both? Tablet?
+  (Establishes responsive targets — category: `responsive`)
+
+Not every project needs all of these. Server-side APIs don't need empty state philosophy.
+Simple tools don't need offline handling. Ask what's relevant to the project type. But
+**always ask about error handling and accessibility** — these affect every project.
+
+These conversational answers feed into Step 2b (profile detection) and Step 2c (defaults
+sheet). If the user answered a behavioral question here, the defaults sheet pre-fills that
+category with source `[from discovery]` instead of `[preset]` or `[research-generated]`.
+This means the user won't be re-asked the same question in the defaults sheet — their
+conversational answer takes precedence per the DECISIONS.md precedence rules.
+
+**Testing strategy (probe when project type warrants it — skip for pure documentation
+or simple scripts):**
+
+The project profile system (Step 2b) already captures basic testing decisions via
+auto-detect and presets (framework, mock boundaries, test data approach, coverage
+expectations). These probes go deeper into project-specific testing architecture:
+
+- "What integration boundaries matter most? (API contracts? Database operations?
+  Full user flows? Authentication chain?)"
+  → Record in DECISIONS.md with category `testing`
+- "Are there any testing constraints? (CI time budget, specific test environments,
+  external service dependencies that can't be mocked?)"
+  → Record in DECISIONS.md with category `testing`
+
+If the profile system already resolved framework, mock boundaries, test data, and
+coverage via auto-detect or presets, don't re-ask those. Only probe for gaps.
+
+These are ARCHITECTURE-LEVEL decisions. Don't ask for implementation details — ask for
+strategy and philosophy. The answers go into DECISIONS.md with category tag `testing`
+and are consumed by spec generation when producing TEST_SPEC.md.
+
+**If the user doesn't have strong opinions and the profile system provided no
+testing defaults**: Use sensible defaults:
+- Framework: vitest (for JS/TS projects) or pytest (for Python)
+- Test data: factories for entities, fixtures for API responses
+- Mocking: mock DB in unit tests, real test DB in integration tests, always mock
+  external APIs
+- Coverage: focus on business logic and integration boundaries
+- Integration priority: API contracts and auth flows
+
+Record the defaults in DECISIONS.md with source `[auto-default]` and category `testing`.
+
+**Dig deeper — security and data (scale to project type):**
+- Data sensitivity? (PII, financial data, health data, public only?)
+- Compliance requirements? (GDPR, HIPAA, SOC2, PCI-DSS, none?)
+- Are there admin vs. regular user roles? What can each do?
+
+These questions inform the `security`, `auth`, and `authorization` category decisions
+in the defaults sheet (Step 2c). For hobby/prototype projects, these can be brief —
+the Prototype preset already defaults to "Skip" for security depth.
 
 Continue the conversation naturally. These questions establish the project's identity.
 Don't rush -- the quality of initial docs depends on getting the picture right.

@@ -147,9 +147,11 @@ always the first mode to run.
 When running tokens mode, read `references/tokens-mode.md` and follow its process.
 
 Tokens mode generates design tokens (colors, typography, spacing) and a reusable component
-library. Two paths based on the MCP detected during setup: Pencil generates from scratch,
-markdown fallback documents everything as structured specs. Both paths produce
-DESIGN_SYSTEM.md.
+library with **behavioral states** (idle, loading, error, disabled), **accessibility
+attributes** (ARIA, keyboard interactions, focus behavior), and **boundary behavior**
+(truncation, overflow, min/max constraints). Two paths based on the MCP detected during
+setup: Pencil generates from scratch, markdown fallback documents everything as structured
+specs. Both paths produce DESIGN_SYSTEM.md.
 
 The default review style is **batch**: all components are generated, then presented as a set
 for the user to review and flag items for revision. Serial review (one component at a time)
@@ -162,9 +164,12 @@ then batch screenshot then batch feedback then revise flagged items.
 
 When running mockups mode, read `references/mockups-mode.md` and follow its process.
 
-Mockups mode creates screen-level designs using the design system components from tokens mode.
-Pencil generates layouts, markdown fallback documents layout hierarchy. Both paths produce
-UI_SCREENS.md.
+Mockups mode creates screen-level designs using the design system components from tokens mode,
+then runs a **behavioral walkthrough** per screen — capturing screen states (empty, loading,
+error), interaction flows (what happens on click, on failure), navigation context (route,
+auth, back behavior, focus), and content decisions (actual copy for non-default states).
+Pencil generates layouts and state variants, markdown fallback documents everything as
+structured specs. Both paths produce UI_SCREENS.md with behavioral contracts.
 
 The default review style is **batch**: all screens are generated, then presented as a set.
 The user flags specific screens for revision. Serial review (one screen at a time) is
@@ -177,9 +182,12 @@ available via `ux.reviewStyle` config.
 When running build plan mode, read `references/build-plan-mode.md` and follow its process.
 
 Build plan mode generates a phased implementation task breakdown from the design artifacts.
-Five phases: token setup, atomic components, composite components, screen layouts, interactive
-states. Each task maps to a design reference with dependencies and acceptance criteria.
-Produces DESIGN_TASKS.md.
+Five phases: token setup + accessibility infrastructure, atomic components with behavioral
+states, composite components with interaction behavior, screen layouts + navigation with
+behavioral contracts, and integration behavior + responsive. Behavioral acceptance criteria
+from DESIGN_SYSTEM.md and UI_SCREENS.md appear in Phase 2-4 tasks — not deferred to Phase 5.
+Each task maps to a design reference with dependencies and acceptance criteria. Produces
+DESIGN_TASKS.md.
 
 ---
 
@@ -301,3 +309,27 @@ Produces DESIGN_TASKS.md.
   `accessibility`, `errors`, `content`, `responsive`). Use existing decisions as defaults.
   When generating batch behavioral specs, use DECISIONS.md entries to derive defaults for
   all screens simultaneously rather than asking per-screen questions.
+
+### Browser Validation Tools (Optional)
+
+Three browser automation tools may be available during design. Detection is optional —
+the design skill works without any of them. But when available, they enhance validation:
+
+**Detection** (run once during setup mode, record result in DESIGN_PROGRESS.md):
+1. Check for `agent-browser`: `which agent-browser` — CLI tool, most context-efficient
+2. Check for Playwright MCP: ToolSearch for `mcp__playwright__*` — most capable, cross-browser
+3. Check for /chrome: ToolSearch for `mcp__claude-in-chrome__*` — built-in, no install
+
+**When useful during design**:
+- **Accessibility pre-check**: If a dev server is running and components are implemented,
+  inject axe-core to check contrast ratios and ARIA attributes before the user reviews.
+  This catches accessibility issues early rather than during implementation.
+- **Behavioral smoke test**: If the design skill is re-run after partial implementation
+  (e.g., to add a new screen), browser tools can verify existing screens still behave
+  correctly.
+
+**When NOT to use**: During initial design (no code exists yet). Browser tools are only
+useful when there's a running application to test against.
+
+Record the detected tool in DESIGN_PROGRESS.md so downstream skills (cl-implementer
+autopilot) know what's available without re-detecting.

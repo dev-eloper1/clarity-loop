@@ -5,7 +5,7 @@
 **Research**: docs/research/PIPELINE_GAP_ANALYSIS.md
 **Document Plan**: None (structure derived from research recommendations, Changes 1-7)
 **Author**: Bhushan + AI Researcher
-**Depends On**: P0 (SKILL_RENAME_AND_FOLD.md) — all file paths use the cl-* namespace
+**Depends On**: P0 (SKILL_RENAME_AND_FOLD.md) — all file paths use the cl-* namespace; P0.5 (UX pattern infrastructure) — decision flow protocol, batch/serial/minimal review styles, tiered checkpoints, project profile system, generate-confirm pattern, warmth gradient, parallelization hints, and config keys (ux.reviewStyle, ux.profileMode, ux.autoDefaults, ux.parallelGeneration) are already applied to skill files
 
 ## Summary
 
@@ -21,36 +21,36 @@ This proposal is based on the following research:
 
 | Research Doc | Key Findings Used | Recommendation Adopted |
 |---|---|---|
-| docs/research/PIPELINE_GAP_ANALYSIS.md | F1 (structural behavioral gap), F2 (design phase as optimal capture point), F3 (component behavioral states), F4 (mockups behavioral walkthrough), F5 (screen states / defensive UI), F6 (navigation), F7 (accessibility), F10 (edge cases / boundary conditions), F11 (responsive), F12 (animation), F13 (content strategy), F14 (browser validation tooling), F15 (testing strategy home), F16 (spec-testing duality) | Option B primary recommendation, Changes 1-7 (Tier 1 + Tier 2 behavioral) |
+| docs/research/PIPELINE_GAP_ANALYSIS.md | F1 (structural behavioral gap), F2 (design phase as optimal capture point), F3 (component behavioral states), F4 (mockups behavioral walkthrough), F5 (screen states / defensive UI), F6 (navigation), F7 (accessibility), F10 (edge cases / boundary conditions), F11 (responsive), F12 (animation), F13 (content strategy), F14 (browser validation tooling), F15 (testing strategy home), F16 (spec-testing duality) | Option B primary recommendation, Changes 1-7 (research priority group 1 + group 2 behavioral) |
 
 ## System Context
 
 ### Research Type: Evolutionary
 
-This proposal modifies existing skill files to add behavioral specification capability. No new files are created (except the extended UI_SCREENS.md format, which is an evolution of the existing format). All changes integrate into the existing pipeline flow.
+This proposal modifies existing skill files to add behavioral specification capability. One new reference file is created (`skills/cl-designer/references/behavioral-walkthrough.md`) to house the behavioral walkthrough process, keeping mockups-mode.md within the ~3000 token budget. All changes integrate into the existing pipeline flow.
 
 ### Current State
 
 | Artifact | Current State Summary | Sections Referenced |
 |---|---|---|
-| `skills/cl-designer/SKILL.md` | Defines four modes (setup, tokens, mockups, build-plan). No behavioral specification in any mode. Build plan Phase 5 treats interactive states as an afterthought. | Mode Detection, Tokens Mode, Mockups Mode, Build Plan Mode sections |
-| `skills/cl-designer/references/tokens-mode.md` | Generates components with visual variants (primary, secondary, ghost) and visual states (hover, focus, disabled appearance). No behavioral states, no accessibility attributes, no boundary behavior. | Step 3 (Generate Reusable Components), Step 4 (Visual Validation Loop), Markdown Fallback Step 3 |
-| `skills/cl-designer/references/mockups-mode.md` | Generates static screenshots of screens in their default populated state. User approves the visual and moves on. No behavioral walkthrough, no screen states, no navigation context, no content for non-default states. | Step 2 (Generate Mockups), Feedback loop, All Paths: Generate UI_SCREENS.md |
+| `skills/cl-designer/SKILL.md` | Defines four modes (setup, tokens, mockups, build-plan). Tokens and Mockups mode summaries mention batch/serial/minimal review styles (P0.5). Decision flow guideline added (P0.5). No behavioral specification in any mode. Build plan Phase 5 treats interactive states as an afterthought. | Mode Detection, Tokens Mode, Mockups Mode, Build Plan Mode, Guidelines sections |
+| `skills/cl-designer/references/tokens-mode.md` | Generates components with visual variants (primary, secondary, ghost) and visual states (hover, focus, disabled appearance). Batch/serial/minimal review styles implemented for component validation (P0.5). Parallelization hints section added (P0.5). No behavioral states, no accessibility attributes, no boundary behavior. | Step 3 (Generate Reusable Components), Step 4 (Component Validation — batch/serial/minimal), Markdown Fallback Step 3, Parallelization Hints |
+| `skills/cl-designer/references/mockups-mode.md` | Generates static screenshots of screens in their default populated state. Batch/serial/minimal review styles implemented for screen review (P0.5). A "Behavioral Walkthrough: Batch Mode" section already exists as a P0.5 stub (generate-confirm pattern for behavioral specs using DECISIONS.md defaults). Parallelization hints section added (P0.5). No full behavioral walkthrough process, no screen states, no navigation context, no content for non-default states. | Step 2 (Generate Mockups), Screen Review (batch/serial), Behavioral Walkthrough: Batch Mode, Parallelization Hints, All Paths: Generate UI_SCREENS.md |
 | `skills/cl-designer/references/build-plan-mode.md` | Five phases: tokens, atomics, composites, screens, interactive states. Phase 5 is listed last as an afterthought. Acceptance criteria in Phase 2-4 are purely visual. | Step 2 (Generate Phased Task List), all five phase descriptions |
-| `skills/cl-designer/references/design-checklist.md` | Tokens checklist: 8 items, zero behavioral or accessibility checks. Mockups checklist: 6 items, zero behavioral, empty state, or interaction checks. | Tokens Checklist, Mockups Checklist |
-| `skills/cl-designer/references/setup-mode.md` | Design discovery asks about aesthetic, colors, typography, interaction patterns, theme, constraints. No behavioral questions (error handling, empty states, accessibility level). | Phase 2: Design Discovery, Step 2 |
+| `skills/cl-designer/references/design-checklist.md` | Checkpoint tiering system (Tier 1/2/3) implemented (P0.5). Tokens checklist: 8 items with tier assignments, zero behavioral or accessibility checks. Mockups checklist: 6 items with tier assignments, zero behavioral, empty state, or interaction checks. Has a P0.5 placeholder noting future P1 tier assignments for behavioral items. | Checkpoint Tiering, Tokens Checklist, Mockups Checklist |
+| `skills/cl-designer/references/setup-mode.md` | Design discovery with generate-confirm pattern for preferences (P0.5). Reads DECISIONS.md before asking questions (P0.5). No behavioral questions (error handling, empty states, accessibility level). | Phase 2: Design Discovery, Step 2 (Design Preferences — Generate-Confirm) |
 | `skills/cl-researcher/SKILL.md` | Bootstrap mode references `bootstrap-guide.md`. No behavioral probing in the skill itself. | Bootstrap Mode section |
-| `skills/cl-researcher/references/bootstrap-guide.md` | Discovery conversation asks about workflows, integrations, architectural decisions, performance, security, scope. Single question about "user journeys" — no dedicated behavioral, accessibility, resilience, content, or testing probing. | Greenfield Bootstrap, Step 2: Discovery Conversation |
+| `skills/cl-researcher/references/bootstrap-guide.md` | Discovery conversation asks about workflows, integrations, architectural decisions, scope. Three-level project profile system (Level 1 Auto-Detect, Level 2 Quick Research, Level 3 Presets) implemented (P0.5). Defaults sheet with generate-confirm pattern (P0.5). Records decisions to DECISIONS.md with category tags and source attribution (P0.5). No dedicated behavioral, accessibility, resilience, content, or testing probing in the discovery conversation itself. | Greenfield Bootstrap, Step 2: Discovery Conversation, Step 2b: Project Profile Detection, Step 2c: Defaults Sheet |
 
 ### Proposed State
 
-After this proposal is applied, the design phase becomes a behavioral specification capture point:
+After this proposal is applied (on top of P0.5's UX infrastructure), the design phase becomes a behavioral specification capture point:
 
-- **Tokens mode** generates components with behavioral state tables, accessibility attributes, keyboard interaction models, and boundary behavior alongside visual variants.
-- **Mockups mode** runs a behavioral walkthrough after each screen's visual approval: identifying screen states, walking through interactions, capturing navigation context, and pinning down content for non-default states.
+- **Tokens mode** generates components with behavioral state tables, accessibility attributes, keyboard interaction models, and boundary behavior alongside visual variants. The existing batch/serial/minimal review structure (P0.5) presents behavioral specs alongside visual specs in the same review flow.
+- **Mockups mode** runs a behavioral walkthrough after each screen's visual approval: identifying screen states, walking through interactions, capturing navigation context, and pinning down content for non-default states. The walkthrough integrates with P0.5's review style system — batch mode uses the existing generate-confirm stub, serial mode uses the full conversational walkthrough.
 - **UI_SCREENS.md** includes per-screen behavioral contracts: route/auth/focus metadata, screen states table, interaction flows table, and test scenarios.
-- **Design checklists** include behavioral, accessibility, and content checks.
-- **Bootstrap** asks high-level behavioral questions (error handling, accessibility, content tone, resilience, testing, responsive targets).
+- **Design checklists** include behavioral, accessibility, and content checks with tiered checkpoints (P0.5 Tier 1/2/3 system). Behavioral items are Tier 2 (Batch Review), accessibility details are Tier 3 (Auto-proceed), user approval remains Tier 1 (Must Confirm).
+- **Bootstrap** asks high-level behavioral questions (error handling, accessibility, content tone, resilience, testing, responsive targets) during discovery conversation. Answers feed into P0.5's defaults sheet and DECISIONS.md using established category tags.
 - **Build plan** distributes behavioral acceptance criteria across Phase 2-4 tasks instead of deferring to Phase 5. Phase 5 becomes "Integration Behavior + Responsive" for cross-screen flows only.
 - **Autopilot** detects browser validation tools and can execute behavioral and accessibility tests.
 
@@ -61,12 +61,13 @@ After this proposal is applied, the design phase becomes a behavioral specificat
 
 | # | Change Description | Target File | Target Section | Type | Research Ref |
 |---|---|---|---|---|---|
-| 1 | Add behavioral walkthrough step after visual approval in mockups mode | `skills/cl-designer/references/mockups-mode.md` | After "Feedback loop per screen" (Pencil Path), after "Step 2: Document Screens" (Markdown Fallback), and in "All Paths: Generate UI_SCREENS.md" | Add Section + Modify |  F1, F2, F4, F5, F6, F13 |
-| 2 | Add component behavioral states, accessibility, and boundary behavior to tokens mode | `skills/cl-designer/references/tokens-mode.md` | Step 3 (Generate Reusable Components), Step 4 (Visual Validation Loop), Markdown Fallback Step 3 | Modify | F3, F7, F10 |
-| 3 | Add behavioral and accessibility items to tokens checklist | `skills/cl-designer/references/design-checklist.md` | Tokens Checklist | Add | F3, F7, F10 |
-| 4 | Add behavioral, empty state, interaction, and navigation items to mockups checklist | `skills/cl-designer/references/design-checklist.md` | Mockups Checklist | Add | F4, F5, F6, F13 |
+| 1 | Add behavioral walkthrough reference pointers in mockups mode (Pencil and Markdown Fallback paths); consolidate P0.5 "Behavioral Walkthrough: Batch Mode" stub into pointer to new reference file | `skills/cl-designer/references/mockups-mode.md` | After "Screen Review" (Pencil Path), after "Step 2: Document Screens" (Markdown Fallback), replace existing "Behavioral Walkthrough: Batch Mode" section with pointer | Modify | F1, F2, F4, F5, F6, F13 |
+| 1b | New reference file containing the full behavioral walkthrough process (screen states, interaction flows, navigation context, content decisions, batch/serial paths) | `skills/cl-designer/references/behavioral-walkthrough.md` | New file | Add Doc | F1, F2, F4, F5, F6, F13 |
+| 2 | Add component behavioral states, accessibility, and boundary behavior to tokens mode | `skills/cl-designer/references/tokens-mode.md` | Step 3 (Generate Reusable Components), Step 4 (Component Validation — batch/serial/minimal), Markdown Fallback Step 3 | Modify | F3, F7, F10 |
+| 3 | Add behavioral and accessibility items to tokens checklist with tier assignments; replace P0.5 placeholder | `skills/cl-designer/references/design-checklist.md` | Tokens Checklist | Add + Modify | F3, F7, F10 |
+| 4 | Add behavioral, empty state, interaction, and navigation items to mockups checklist with tier assignments; replace P0.5 placeholder | `skills/cl-designer/references/design-checklist.md` | Mockups Checklist | Add + Modify | F4, F5, F6, F13 |
 | 5 | Add behavioral probing questions to bootstrap discovery conversation | `skills/cl-researcher/references/bootstrap-guide.md` | Greenfield Bootstrap, Step 2: Discovery Conversation | Add | F1, F7, F9, F11, F13, F15 |
-| 6 | Extend UI_SCREENS.md format with behavioral contracts | `skills/cl-designer/references/mockups-mode.md` | All Paths: Generate UI_SCREENS.md | Modify | F4, F5, F6, F13, F16 |
+| 6 | Extend UI_SCREENS.md format with behavioral contracts | `skills/cl-designer/references/mockups-mode.md` (Screen Details template in "All Paths: Generate UI_SCREENS.md") and `skills/cl-designer/references/behavioral-walkthrough.md` (walkthrough output format reference) | All Paths: Generate UI_SCREENS.md, behavioral walkthrough output | Modify | F4, F5, F6, F13, F16 |
 | 7 | Add autopilot browser validation tooling section | `skills/cl-designer/SKILL.md` | Guidelines | Add Section | F14 |
 | 8 | Restructure build plan phases with behavioral acceptance criteria | `skills/cl-designer/references/build-plan-mode.md` | Step 2 (Generate Phased Task List) — all five phase descriptions | Modify | F1, F4, F7 |
 | 9 | Update SKILL.md mockups mode summary to mention behavioral walkthrough | `skills/cl-designer/SKILL.md` | Mockups Mode section | Modify | F4 |
@@ -85,32 +86,68 @@ After this proposal is applied, the design phase becomes a behavioral specificat
 | Conflict With | Overlapping Sections | Resolution |
 |---|---|---|
 | SKILL_RENAME_AND_FOLD.md (P0) | All target files (renamed from doc-* to cl-*) | P0 must merge first. This proposal uses cl-* names throughout. |
+| P0.5 (UX Pattern Infrastructure) | tokens-mode.md (Step 4 renamed to Component Validation, batch/serial/minimal added), mockups-mode.md (Screen Review batch/serial added, Behavioral Walkthrough: Batch Mode stub added, Parallelization Hints added), design-checklist.md (Tier column added, P1 tier placeholders added), SKILL.md (review style mentions in Tokens/Mockups summaries, decision flow guideline added), bootstrap-guide.md (profile system added, defaults sheet added), setup-mode.md (generate-confirm pattern, DECISIONS.md reads) | P0.5 must merge first. This proposal builds on P0.5 infrastructure: behavioral walkthrough uses the review style system, new checklist items use tiered checkpoints, bootstrap questions integrate with the defaults sheet pattern, DECISIONS.md category tags are used for behavioral decisions. All "Current" sections reflect post-P0.5 state. |
 | CONTEXT_SYSTEM.md | None | No overlap. |
 | IMPLEMENTER_SKILL.md | None | No overlap. |
 
-No conflicts with in-flight proposals beyond the dependency on P0.
+No conflicts with in-flight proposals beyond the dependencies on P0 and P0.5.
 
 ## Detailed Design
 
-### Change 1: Mockups Mode Behavioral Walkthrough
+### Change 1: Mockups Mode Behavioral Walkthrough (Pointers) + Change 1b: New Reference File
 
-**What**: After the user approves each screen's visual layout, the skill runs a structured behavioral walkthrough. This is the single highest-impact change in this proposal.
+**What**: After the user approves each screen's visual layout, the skill runs a structured behavioral walkthrough. This is the single highest-impact change in this proposal. The full walkthrough process is housed in a new reference file (`references/behavioral-walkthrough.md`) to keep mockups-mode.md within the ~3000 token budget. mockups-mode.md contains brief pointers to the new file.
 
 **Why**: Research Finding F4 identified that mockups mode generates a static screenshot, the user approves the visual, and moves on. The screen's behavior is never discussed. Finding F2 established that the design phase is the optimal capture point because users can point at elements and describe behavior concretely when looking at a screen. Finding F5 showed that every interactive screen has multiple states (empty, loading, error, partial, offline, permission denied) that collectively represent 60-80% of what users actually see — all unspecified today. Finding F6 identified that navigation behavior (routes, auth guards, back button, focus management) is never captured. Finding F13 showed that content for non-default states (error messages, empty state copy, confirmation dialogs) is never designed.
 
-**Target file**: `skills/cl-designer/references/mockups-mode.md`
+**Why extract**: mockups-mode.md is currently 334 lines. Inlining the full walkthrough process (~95 lines for Pencil path, ~15 for markdown fallback, plus the expanded batch mode content) would push it to ~450-460 lines, exceeding the ~3000 token budget established in this proposal's Context Budget section. The walkthrough content is self-contained and applies identically to both Pencil and markdown fallback paths, making extraction clean.
 
-**System doc impact**: Three insertion points.
+**Target files**: `skills/cl-designer/references/mockups-mode.md` (pointers), `skills/cl-designer/references/behavioral-walkthrough.md` (new file, full process)
+
+**System doc impact**: Three changes to mockups-mode.md (pointers only), one new file.
 
 ---
 
-**Insertion Point A — Pencil Path, after "Feedback loop per screen" (after the line "Record all iterations in DESIGN_PROGRESS.md")**:
+**Change 1 — mockups-mode.md modifications (pointers only)**:
 
-Add a new subsection:
+**Insertion Point A — Pencil Path, after "Screen Review" section (after the serial review and parallel screen generation subsections)**:
 
-**Proposed** (new section "Step 3: Behavioral Walkthrough"):
+Add a brief pointer:
 
 > #### Step 3: Behavioral Walkthrough (Per Screen)
+>
+> After visual approval, run the behavioral walkthrough for each screen. For the full
+> walkthrough process, read `references/behavioral-walkthrough.md`.
+
+**Insertion Point B — Markdown Fallback, after "Step 2: Document Screens" section**:
+
+Add a brief pointer:
+
+> #### Step 3: Behavioral Walkthrough (Per Screen)
+>
+> Same behavioral walkthrough process as the Pencil path. For the full walkthrough process,
+> read `references/behavioral-walkthrough.md`. The only difference is that all states are
+> described in structured text rather than generated as visual variants.
+
+**Merge instruction — P0.5 "Behavioral Walkthrough: Batch Mode" stub consolidation**: During merge, replace the P0.5 "Behavioral Walkthrough: Batch Mode" stub in mockups-mode.md (lines ~201-225) with a reference pointer to `references/behavioral-walkthrough.md`. The new file incorporates and expands the stub content — the batch mode generate-confirm table, serial conversational walkthrough, and hybrid approach are all defined in the new reference file. The stub should be replaced with:
+
+> #### Behavioral Walkthrough
+>
+> After screen review, run the behavioral walkthrough. Read
+> `references/behavioral-walkthrough.md` for the full process, including batch mode
+> (generate-confirm, default), serial mode (conversational, opt-in), and hybrid approaches.
+
+This consolidation eliminates the structural ambiguity where the batch stub and the new Step 3 pointers could appear as disconnected sections. There is one walkthrough process, documented in one place, with three brief pointers from mockups-mode.md (Pencil path, markdown fallback, and the consolidated stub location).
+
+---
+
+**Change 1b — New file: `skills/cl-designer/references/behavioral-walkthrough.md`**:
+
+This new reference file contains the full behavioral walkthrough process. It is loaded on-demand when the skill reaches Step 3 of mockups mode.
+
+**Proposed** (full file content):
+
+> ## Behavioral Walkthrough
 >
 > After visual approval, walk through each screen's behavioral requirements. This is a
 > conversation — propose behaviors, ask clarifying questions, and record decisions. The
@@ -120,7 +157,32 @@ Add a new subsection:
 > wrong" failure mode. Without it, the implementer makes 50+ behavioral micro-decisions
 > per screen, many of which will be wrong.
 >
-> **1. Screen States**
+> ---
+>
+> ### Review Style Integration
+>
+> **Check the review style** from `.clarity-loop.json` (`ux.reviewStyle`):
+>
+> **Batch mode (default)**: Generate behavioral specs for all screens at once using
+> DECISIONS.md entries to inform defaults. Present as a review table:
+>
+> | Screen | States Defined | Key Interactions | Nav Context | Content Notes |
+> |--------|---------------|------------------|-------------|---------------|
+> | Dashboard | default, empty, loading, error | View task, filter | `/dashboard`, auth | Empty: "Create your first task" |
+> | Task List | default, empty (filtered), loading | Add, edit, delete, bulk | `/tasks`, auth | Filtered empty: "No tasks match" |
+> | Settings | default, saving, error | Edit prefs, toggle theme | `/settings`, auth | -- |
+>
+> Gather batch feedback: "Dashboard empty state should have an illustration. Task List
+> needs an offline state. Rest looks good." Revise flagged items.
+>
+> **Serial mode** (`ux.reviewStyle: "serial"`): Run the full conversational walkthrough
+> below per screen.
+>
+> **Hybrid**: Batch-approve most screens, serial walkthrough for 1-2 complex screens.
+>
+> ---
+>
+> ### 1. Screen States
 >
 > For each approved screen, identify all states it can be in:
 >
@@ -147,7 +209,7 @@ Add a new subsection:
 > components by name: "Empty state uses the EmptyState component with illustration and
 > 'Create your first task' CTA button."
 >
-> **2. Interaction Flows**
+> ### 2. Interaction Flows
 >
 > Walk through each significant user interaction on the screen:
 >
@@ -168,7 +230,7 @@ Add a new subsection:
 > | Delete item | Confirm dialog, then remove with undo toast | Error toast, item restored |
 > ```
 >
-> **3. Navigation Context**
+> ### 3. Navigation Context
 >
 > For each screen, capture:
 > - **Route**: URL path (e.g., `/tasks`, `/tasks/:id`)
@@ -177,7 +239,7 @@ Add a new subsection:
 > - **State persistence**: What's preserved when navigating away and returning? (scroll, filters, form data)
 > - **Focus on arrival**: Where does focus go when this screen loads? (heading, first interactive element, search input)
 >
-> **4. Content Decisions**
+> ### 4. Content Decisions
 >
 > Pin down actual content for non-default states:
 > - Empty state copy (not "No items" — actual text: "Create your first task to get started")
@@ -186,7 +248,7 @@ Add a new subsection:
 > - Loading text if applicable ("Fetching your tasks..." vs. no text, just skeleton)
 > - Help text, tooltips, inline guidance
 >
-> **5. Record and Continue**
+> ### 5. Record and Continue
 >
 > Record all walkthrough decisions in DESIGN_PROGRESS.md under the screen entry:
 >
@@ -201,7 +263,7 @@ Add a new subsection:
 > ```
 >
 > These decisions flow into UI_SCREENS.md when generating the output artifact (see
-> "All Paths: Generate UI_SCREENS.md").
+> mockups-mode.md "All Paths: Generate UI_SCREENS.md").
 >
 > **Efficiency tip**: For screens that share a layout pattern (e.g., all list views, all
 > form pages), conduct the walkthrough on the first screen of each pattern, then confirm
@@ -209,28 +271,9 @@ Add a new subsection:
 
 ---
 
-**Insertion Point B — Markdown Fallback, after "Step 2: Document Screens" section, before "All Paths: Responsive States"**:
-
-Add:
-
-> #### Step 3: Behavioral Walkthrough (Per Screen)
->
-> Same walkthrough process as the Pencil path (see Step 3 above), but all states are
-> described in structured text rather than generated as visual variants.
->
-> For each screen:
-> 1. Walk through screen states — describe each applicable state with component references
-> 2. Walk through interaction flows — build the interaction table
-> 3. Capture navigation context
-> 4. Pin down content for non-default states
-> 5. Record in DESIGN_PROGRESS.md
->
-> The markdown fallback produces equivalent behavioral specifications — the only difference
-> is no visual variant frames to screenshot and approve.
-
----
-
 **Insertion Point C — The existing "All Paths: Responsive States" section**: No change to the responsive section itself, but the behavioral walkthrough (Step 3) runs before responsive states are considered. The order becomes: Step 2 (generate screens) → Step 3 (behavioral walkthrough per screen) → responsive states → generate UI_SCREENS.md.
+
+**P0.5 integration**: The P0.5 "Behavioral Walkthrough: Batch Mode" stub content is fully incorporated into the new `behavioral-walkthrough.md` file (see "Review Style Integration" section above, which includes the batch generate-confirm table, serial conversational walkthrough, and hybrid approach). The P0.5 parallelization hint ("While user reviews visual mockup batch, pre-generate ALL behavioral specs") applies to the expanded walkthrough and remains in mockups-mode.md's Parallelization Hints section.
 
 **Dependencies**: Change 6 (UI_SCREENS.md format) must be applied simultaneously — the walkthrough output feeds into the extended format.
 
@@ -287,19 +330,21 @@ Add:
 
 ---
 
-**Section: Pencil Path, Step 4 (Visual Validation Loop)**
+**Section: Step 4 (Component Validation) — Batch Review presentation**
 
-**Current** (item 3 — presenting to user):
-> 3. Present screenshot to user with:
->    - Component name and which PRD feature it serves
->    - Variants shown and what each is for
->    - Brief note on tokens used (e.g., "Uses primary-500 for fill, space-3 for padding")
+P0.5 renamed Step 4 from "Visual Validation Loop" to "Component Validation" and restructured it into batch/serial/minimal review paths. The behavioral additions integrate into the existing review structure.
 
-**Proposed** (replace item 3):
-> 3. Present screenshot to user with:
->    - Component name and which PRD feature it serves
->    - Variants shown and what each is for
->    - Brief note on tokens used (e.g., "Uses primary-500 for fill, space-3 for padding")
+**Current** (Batch Review, item 2 — summary table):
+> | Component | Variants | PRD Feature | Tokens Used | Status |
+> |-----------|----------|-------------|-------------|--------|
+
+**Proposed** (extend the summary table):
+> | Component | Variants | PRD Feature | Tokens Used | Behavioral States | A11y | Status |
+> |-----------|----------|-------------|-------------|-------------------|------|--------|
+> | Button | primary, secondary, ghost | Task actions, forms | primary-500, space-3 | idle, loading, disabled | Enter/Space, aria-busy | Review |
+> | Input | text, email, password | Forms, search | neutral-200, space-2 | empty, focused, error, disabled | aria-invalid, Tab | Review |
+
+Add behavioral detail to the per-component presentation (both batch "revise flagged items" step and serial review path). When presenting a component, include:
 >    - **Behavioral states**: Explain the state model. "Button has idle, loading, and
 >      disabled states. Loading shows a spinner and prevents re-click. Disabled triggers:
 >      [proposed triggers based on PRD context]."
@@ -311,7 +356,7 @@ Add:
 
 ---
 
-**Section: Pencil Path, Step 4 (Visual Validation Loop), after item 5 (Record all decisions)**
+**Section: Step 4 (Component Validation) — after batch "Record all decisions" step (item 5)**
 
 Add new item 6:
 
@@ -384,41 +429,47 @@ Add new item 6:
 
 **Target file**: `skills/cl-designer/references/design-checklist.md`
 
-**Current** (Tokens Checklist):
-> | # | Check | How to Verify |
-> |---|-------|---------------|
-> | 1 | All colors defined as tokens | Review DESIGN_SYSTEM.md color section — no raw hex/rgb in components |
-> | 2 | Typography scale defined | Font families, size scale (xs–4xl), weights, line heights all present |
-> | 3 | Spacing scale defined | Base unit + scale (1x–16x) documented |
-> | 4 | Core components generated | Cross-reference PRD features — each UI-facing feature has components |
-> | 5 | Components use tokens (not hardcoded values) | Pencil: `search_all_unique_properties` to find hardcoded values. Markdown: component specs reference token names |
-> | 6 | Each component reviewed by user | DESIGN_PROGRESS.md has approval entries for each component |
-> | 7 | DESIGN_SYSTEM.md generated | File exists at `{docsRoot}/specs/DESIGN_SYSTEM.md` with token catalog + component catalog |
-> | 8 | User approved | Explicit user confirmation that the design system is ready for mockups |
+**Current** (Tokens Checklist — post-P0.5, includes Tier column):
+> | # | Check | How to Verify | Tier |
+> |---|-------|---------------|------|
+> | 1 | All colors defined as tokens | Review DESIGN_SYSTEM.md color section | 3 |
+> | 2 | Typography scale defined | Font families, size scale, weights, line heights | 3 |
+> | 3 | Spacing scale defined | Base unit + scale documented | 3 |
+> | 4 | Core components generated | Cross-reference PRD features | 2 |
+> | 5 | Components use tokens (not hardcoded) | Pencil search or markdown check | 3 |
+> | 6 | Each component reviewed by user | DESIGN_PROGRESS.md approval entries | 2 |
+> | 7 | DESIGN_SYSTEM.md generated | File exists with token + component catalog | 3 |
+> | 8 | User approved | Explicit user confirmation | 1 |
 
-**Proposed**:
-> | # | Check | How to Verify |
-> |---|-------|---------------|
-> | 1 | All colors defined as tokens | Review DESIGN_SYSTEM.md color section — no raw hex/rgb in components |
-> | 2 | Typography scale defined | Font families, size scale (xs–4xl), weights, line heights all present |
-> | 3 | Spacing scale defined | Base unit + scale (1x–16x) documented |
-> | 4 | Core components generated | Cross-reference PRD features — each UI-facing feature has components |
-> | 5 | Components use tokens (not hardcoded values) | Pencil: `search_all_unique_properties` to find hardcoded values. Markdown: component specs reference token names |
-> | 6 | Each component reviewed by user | DESIGN_PROGRESS.md has approval entries for each component |
-> | 7 | Component behavioral states documented | Each interactive component has a state table (idle, loading, error, disabled) with triggers. Non-interactive components (Badge, Divider) may skip this. |
-> | 8 | Interactive state triggers defined | For each behavioral state, the trigger condition is documented (e.g., "disabled when required fields empty") |
-> | 9 | Contrast ratios verified | Text on backgrounds meets 4.5:1 ratio. UI components and graphical objects meet 3:1 ratio. Use token values to calculate or Pencil's contrast check if available. |
-> | 10 | Keyboard interactions documented per component | Each interactive component documents which keys do what (Enter, Space, Escape, Arrow keys, Tab). Refer to WAI-ARIA Authoring Practices for standard patterns. |
-> | 11 | Focus indicators defined | Design system includes focus indicator tokens (outline color, outline offset, outline width). Components show visible focus styling distinct from other states. |
-> | 12 | Component boundary behavior specified | Each component documents truncation strategy (ellipsis, wrap, fade), overflow handling, and min/max constraints where applicable. |
-> | 13 | DESIGN_SYSTEM.md generated | File exists at `{docsRoot}/specs/DESIGN_SYSTEM.md` with token catalog + component catalog + behavioral states |
-> | 14 | User approved | Explicit user confirmation that the design system is ready for mockups |
+**Proposed** (add behavioral/accessibility items with tier assignments, replace the P0.5 placeholder):
+> | # | Check | How to Verify | Tier |
+> |---|-------|---------------|------|
+> | 1 | All colors defined as tokens | Review DESIGN_SYSTEM.md color section | 3 |
+> | 2 | Typography scale defined | Font families, size scale, weights, line heights | 3 |
+> | 3 | Spacing scale defined | Base unit + scale documented | 3 |
+> | 4 | Core components generated | Cross-reference PRD features | 2 |
+> | 5 | Components use tokens (not hardcoded) | Pencil search or markdown check | 3 |
+> | 6 | Each component reviewed by user | DESIGN_PROGRESS.md approval entries | 2 |
+> | 7 | Component behavioral states documented | Each interactive component has a state table (idle, loading, error, disabled) with triggers. Non-interactive components (Badge, Divider) may skip this. | 2 |
+> | 8 | Interactive state triggers defined | For each behavioral state, the trigger condition is documented (e.g., "disabled when required fields empty") | 2 |
+> | 9 | Contrast ratios verified | Text on backgrounds meets 4.5:1 ratio. UI components and graphical objects meet 3:1 ratio. Use token values to calculate or Pencil's contrast check if available. | 3 |
+> | 10 | Keyboard interactions documented per component | Each interactive component documents which keys do what (Enter, Space, Escape, Arrow keys, Tab). Refer to WAI-ARIA Authoring Practices for standard patterns. | 3 |
+> | 11 | Focus indicators defined | Design system includes focus indicator tokens (outline color, outline offset, outline width). Components show visible focus styling distinct from other states. | 3 |
+> | 12 | Component boundary behavior specified | Each component documents truncation strategy (ellipsis, wrap, fade), overflow handling, and min/max constraints where applicable. | 3 |
+> | 13 | DESIGN_SYSTEM.md generated | File exists at `{docsRoot}/specs/DESIGN_SYSTEM.md` with token catalog + component catalog + behavioral states | 3 |
+> | 14 | User approved | Explicit user confirmation that the design system is ready for mockups | 1 |
 >
 > **Gate semantics**: Items 1–13 are self-assessed by the skill. Item 14 requires explicit user
-> confirmation. Items 7-12 are new behavioral/accessibility checks — if any are incomplete,
-> present what's missing and ask the user: "These behavioral/accessibility gaps remain: [list].
+> confirmation (Tier 1 — Must Confirm). Items 7-8 are Tier 2 (Batch Review) — generated in
+> batch with other component specs, user flags issues. Items 9-12 are Tier 3 (Auto-proceed) —
+> generated with sensible defaults, logged to DECISIONS.md with `[auto-default]` tag. The
+> `ux.autoDefaults` config controls which tiers auto-proceed. If behavioral/accessibility gaps
+> remain, present what's missing and ask: "These behavioral/accessibility gaps remain: [list].
 > Proceed to mockups anyway, or address them first?" The user can choose to proceed with gaps
 > if the project doesn't require full behavioral specification (e.g., a prototype).
+>
+> This replaces the P0.5 placeholder ("When P1's checklist items are added...") with the
+> actual items and their tier assignments.
 
 ---
 
@@ -430,36 +481,40 @@ Add new item 6:
 
 **Target file**: `skills/cl-designer/references/design-checklist.md`
 
-**Current** (Mockups Checklist):
-> | # | Check | How to Verify |
-> |---|-------|---------------|
-> | 1 | All major PRD views have mockups | Cross-reference PRD features with UI_SCREENS.md screen inventory |
-> | 2 | Mockups use design system components | Pencil: components are `ref` nodes. Markdown: screen specs reference component catalog |
-> | 3 | Responsive states represented (if applicable) | Only if PRD specifies or user requested — check for mobile/tablet/desktop variants |
-> | 4 | Each mockup reviewed by user | DESIGN_PROGRESS.md has approval entries for each screen |
-> | 5 | UI_SCREENS.md generated | File exists at `{docsRoot}/specs/UI_SCREENS.md` with screen-to-feature mapping |
-> | 6 | User approved | Explicit user confirmation that mockups are complete |
+**Current** (Mockups Checklist — post-P0.5, includes Tier column):
+> | # | Check | How to Verify | Tier |
+> |---|-------|---------------|------|
+> | 1 | All major PRD views have mockups | Cross-reference PRD features | 2 |
+> | 2 | Mockups use design system components | Pencil ref nodes or markdown refs | 3 |
+> | 3 | Responsive states represented (if applicable) | Conditional check | 3 |
+> | 4 | Each mockup reviewed by user | DESIGN_PROGRESS.md approval entries | 2 |
+> | 5 | UI_SCREENS.md generated | File exists with screen-to-feature mapping | 3 |
+> | 6 | User approved | Explicit user confirmation | 1 |
 
-**Proposed**:
-> | # | Check | How to Verify |
-> |---|-------|---------------|
-> | 1 | All major PRD views have mockups | Cross-reference PRD features with UI_SCREENS.md screen inventory |
-> | 2 | Mockups use design system components | Pencil: components are `ref` nodes. Markdown: screen specs reference component catalog |
-> | 3 | Responsive states represented (if applicable) | Only if PRD specifies or user requested — check for mobile/tablet/desktop variants |
-> | 4 | Each mockup reviewed by user | DESIGN_PROGRESS.md has approval entries for each screen |
-> | 5 | Behavioral walkthroughs completed for all screens | DESIGN_PROGRESS.md has walkthrough entries per screen. Each screen has screen states, interaction flows, navigation context, and content decisions recorded. |
-> | 6 | Empty, loading, and error states addressed per screen | UI_SCREENS.md Screen States table exists for each screen with at minimum: empty (first-use or N/A), loading (or N/A), and error states defined. |
-> | 7 | Key interaction flows documented with expected outcomes | UI_SCREENS.md Interaction Flows table exists for each screen with user actions, expected behavior, and error cases. |
-> | 8 | Navigation context defined per screen | Each screen in UI_SCREENS.md has: route, auth requirement, back behavior, state persistence, and focus-on-arrival documented. |
-> | 9 | Non-default state content defined | Empty state copy, error messages, and confirmation dialog text are actual text (not placeholders like "Error" or "No items"). |
-> | 10 | UI_SCREENS.md generated | File exists at `{docsRoot}/specs/UI_SCREENS.md` with screen-to-feature mapping, behavioral contracts, and test scenarios |
-> | 11 | User approved | Explicit user confirmation that mockups and behavioral specs are complete |
+**Proposed** (add behavioral items with tier assignments, replace the P0.5 placeholder):
+> | # | Check | How to Verify | Tier |
+> |---|-------|---------------|------|
+> | 1 | All major PRD views have mockups | Cross-reference PRD features | 2 |
+> | 2 | Mockups use design system components | Pencil ref nodes or markdown refs | 3 |
+> | 3 | Responsive states represented (if applicable) | Conditional check | 3 |
+> | 4 | Each mockup reviewed by user | DESIGN_PROGRESS.md approval entries | 2 |
+> | 5 | Behavioral walkthroughs completed for all screens | DESIGN_PROGRESS.md has walkthrough entries per screen. Each screen has screen states, interaction flows, navigation context, and content decisions recorded. | 2 |
+> | 6 | Empty, loading, and error states addressed per screen | UI_SCREENS.md Screen States table exists for each screen with at minimum: empty (first-use or N/A), loading (or N/A), and error states defined. | 2 |
+> | 7 | Key interaction flows documented with expected outcomes | UI_SCREENS.md Interaction Flows table exists for each screen with user actions, expected behavior, and error cases. | 2 |
+> | 8 | Navigation context defined per screen | Each screen in UI_SCREENS.md has: route, auth requirement, back behavior, state persistence, and focus-on-arrival documented. | 2 |
+> | 9 | Non-default state content defined | Empty state copy, error messages, and confirmation dialog text are actual text (not placeholders like "Error" or "No items"). | 2 |
+> | 10 | UI_SCREENS.md generated | File exists at `{docsRoot}/specs/UI_SCREENS.md` with screen-to-feature mapping, behavioral contracts, and test scenarios | 3 |
+> | 11 | User approved | Explicit user confirmation that mockups and behavioral specs are complete | 1 |
 >
 > **Gate semantics**: Items 1–10 are self-assessed. Item 3 is conditional — skip if not
-> applicable. Items 5-9 are new behavioral checks. Item 11 requires explicit user
-> confirmation. If behavioral gaps exist, present them and let the user decide whether to
-> proceed: "These behavioral gaps remain: [list]. The build plan will have less behavioral
-> detail for these screens. Proceed anyway?"
+> applicable. Items 5-9 are new behavioral checks at Tier 2 (Batch Review) — generated in
+> batch, user reviews the set and flags issues. Item 11 is Tier 1 (Must Confirm). The
+> `ux.autoDefaults` config controls which tiers auto-proceed. If behavioral gaps exist,
+> present them and let the user decide whether to proceed: "These behavioral gaps remain:
+> [list]. The build plan will have less behavioral detail for these screens. Proceed anyway?"
+>
+> This replaces the P0.5 placeholder ("When P1's checklist items are added...") with the
+> actual items and their tier assignments.
 
 ---
 
@@ -471,52 +526,62 @@ Add new item 6:
 
 **Target file**: `skills/cl-researcher/references/bootstrap-guide.md`
 
-**Current** (Greenfield Bootstrap, Step 2: Discovery Conversation, "Then dig deeper" section):
-> **Then dig deeper:**
+**Current** (Greenfield Bootstrap, Step 2: Discovery Conversation, "Then dig deeper" section — post-P0.5):
+> **Then dig deeper (conversational):**
 > - What are the main workflows or user journeys?
 > - Are there external integrations or dependencies?
 > - What are the key architectural decisions already made?
-> - Are there performance, security, or compliance requirements?
 > - What's the scope? What's explicitly out of scope?
 
-**Proposed** (replace the "Then dig deeper" section):
-> **Then dig deeper:**
+Note: P0.5 reorganized the discovery flow. After Step 2 (discovery conversation), Step 2b
+runs project profile detection (Level 1 Auto-Detect, Level 2 Quick Research, Level 3 Presets),
+then Step 2c generates a defaults sheet for batch review. The defaults sheet already covers
+some behavioral categories (error handling, accessibility, content tone, resilience, loading
+states, target devices) via presets and auto-detect. However, the discovery conversation
+itself has no behavioral probing — it relies entirely on the profile system and presets to
+surface these decisions, which means they appear as defaults rather than discovered through
+conversation.
+
+**Proposed** (add behavioral probing to the "Then dig deeper" section, before Step 2b):
+> **Then dig deeper (conversational):**
 > - What are the main workflows or user journeys?
 > - Are there external integrations or dependencies?
 > - What are the key architectural decisions already made?
-> - Are there performance, security, or compliance requirements?
 > - What's the scope? What's explicitly out of scope?
 >
 > **Behavioral and UX questions** (ask these as a natural continuation of the conversation,
 > not as a separate checklist dump — adapt to context and skip what's not applicable):
 > - How should the app handle errors? Toast notifications? Inline errors? Error pages?
->   (Establishes error handling philosophy)
+>   (Establishes error handling philosophy — category: `errors`)
 > - Should actions feel instant (optimistic updates) or show loading states?
->   (Establishes state management approach)
+>   (Establishes state management approach — category: `resilience`)
 > - What happens when there's no data yet? Empty states with onboarding? Minimal
->   placeholders? (Establishes empty state philosophy)
+>   placeholders? (Establishes empty state philosophy — category: `content`)
 > - What accessibility level are you targeting? WCAG 2.1 AA? 2.2? No specific target?
->   (Record in DECISIONS.md — this constrains design tokens and component specs)
+>   (Category: `accessibility` — this constrains design tokens and component specs)
 > - Is this keyboard-first, mouse-first, or touch-optimized?
->   (Affects interaction patterns, component sizing, focus management)
+>   (Affects interaction patterns, component sizing, focus management — category: `accessibility`)
 > - What's the app's voice — professional? Friendly? Minimal? Technical?
->   (Establishes content tone for error messages, empty states, help text)
+>   (Establishes content tone for error messages, empty states, help text — category: `content`)
 > - How should the app handle being offline or network errors?
->   (Establishes resilience philosophy — skip for server-only apps)
+>   (Establishes resilience philosophy — category: `resilience`. Skip for server-only apps)
 > - What's your testing philosophy? Specific framework? Coverage expectations?
->   (Record in DECISIONS.md — feeds into spec generation)
+>   (Category: `testing` — feeds into spec generation)
 > - Target devices? Desktop only? Mobile? Both? Tablet?
->   (Establishes responsive targets — affects design token breakpoints)
+>   (Establishes responsive targets — category: `responsive`)
 >
 > Not every project needs all of these. Server-side APIs don't need empty state philosophy.
 > Simple tools don't need offline handling. Ask what's relevant to the project type. But
 > **always ask about error handling and accessibility** — these affect every project.
 >
-> Record behavioral and UX decisions in DECISIONS.md as architectural decisions. They
-> constrain the design phase (cl-designer uses them) and the implementation phase
-> (cl-implementer uses them for spec generation).
+> These conversational answers feed into Step 2b (profile detection) and Step 2c (defaults
+> sheet). If the user answered a behavioral question here, the defaults sheet pre-fills that
+> category with source `[from discovery]` instead of `[preset]` or `[research-generated]`.
+> This means the user won't be re-asked the same question in the defaults sheet — their
+> conversational answer takes precedence per the DECISIONS.md precedence rules.
 
-**Dependencies**: None. This change is independent.
+**Dependencies**: None. This change is independent. It integrates naturally with the P0.5
+defaults sheet — behavioral answers from discovery become inputs to the profile system.
 
 ---
 
@@ -526,7 +591,7 @@ Add new item 6:
 
 **Why**: Finding F4 established the behavioral walkthrough produces structured output per screen. Finding F5 showed screen states need a systematic format. Finding F6 showed navigation context is never captured in artifacts. Finding F16 showed every behavioral spec is also a test case — capturing them in UI_SCREENS.md creates a dual-purpose artifact.
 
-**Target file**: `skills/cl-designer/references/mockups-mode.md`
+**Target file**: `skills/cl-designer/references/mockups-mode.md` (the UI_SCREENS.md template in the "All Paths: Generate UI_SCREENS.md" section remains in mockups-mode.md since it's the output format, not the walkthrough process)
 
 **Current** (All Paths: Generate UI_SCREENS.md — the per-screen format in the template):
 > ```markdown
@@ -602,7 +667,7 @@ Add new item 6:
 > [Repeat for each screen]
 > ```
 
-**Dependencies**: Change 1 (behavioral walkthrough) must be applied — the walkthrough produces the data that populates this format.
+**Dependencies**: Change 1/1b (behavioral walkthrough) must be applied — the walkthrough produces the data that populates this format.
 
 ---
 
@@ -753,7 +818,7 @@ Also modify the **Per task, include** section to update acceptance criteria desc
 >   Each behavioral contract documented in the design artifacts becomes an acceptance
 >   criterion in the build plan task.
 
-**Dependencies**: Changes 1, 2, and 6 must be applied first — the build plan references behavioral contracts from DESIGN_SYSTEM.md (Change 2) and UI_SCREENS.md (Changes 1, 6).
+**Dependencies**: Changes 1/1b, 2, and 6 must be applied first — the build plan references behavioral contracts from DESIGN_SYSTEM.md (Change 2) and UI_SCREENS.md (Changes 1/1b, 6).
 
 ---
 
@@ -765,7 +830,7 @@ Also modify the **Per task, include** section to update acceptance criteria desc
 
 **Target file**: `skills/cl-designer/SKILL.md`
 
-**Current** (Mockups Mode section):
+**Current** (Mockups Mode section — post-P0.5, includes review style mention):
 > ## Mockups Mode
 >
 > When running mockups mode, read `references/mockups-mode.md` and follow its process.
@@ -773,8 +838,12 @@ Also modify the **Per task, include** section to update acceptance criteria desc
 > Mockups mode creates screen-level designs using the design system components from tokens mode.
 > Pencil generates layouts, markdown fallback documents layout hierarchy. Both paths produce
 > UI_SCREENS.md.
+>
+> The default review style is **batch**: all screens are generated, then presented as a set.
+> The user flags specific screens for revision. Serial review (one screen at a time) is
+> available via `ux.reviewStyle` config.
 
-**Proposed**:
+**Proposed** (replace the summary paragraph, keep the review style paragraph):
 > ## Mockups Mode
 >
 > When running mockups mode, read `references/mockups-mode.md` and follow its process.
@@ -785,6 +854,10 @@ Also modify the **Per task, include** section to update acceptance criteria desc
 > auth, back behavior, focus), and content decisions (actual copy for non-default states).
 > Pencil generates layouts and state variants, markdown fallback documents everything as
 > structured specs. Both paths produce UI_SCREENS.md with behavioral contracts.
+>
+> The default review style is **batch**: all screens are generated, then presented as a set.
+> The user flags specific screens for revision. Serial review (one screen at a time) is
+> available via `ux.reviewStyle` config.
 
 ---
 
@@ -829,7 +902,7 @@ Also modify the **Per task, include** section to update acceptance criteria desc
 
 **Target file**: `skills/cl-designer/SKILL.md`
 
-**Current** (Tokens Mode section):
+**Current** (Tokens Mode section — post-P0.5, includes review style paragraph):
 > ## Tokens Mode
 >
 > When running tokens mode, read `references/tokens-mode.md` and follow its process.
@@ -839,10 +912,12 @@ Also modify the **Per task, include** section to update acceptance criteria desc
 > markdown fallback documents everything as structured specs. Both paths produce
 > DESIGN_SYSTEM.md.
 >
-> The core loop for Pencil path: generate → screenshot → user feedback → refine. Each component
-> must be visually confirmed before moving on.
+> The default review style is **batch**: all components are generated, then presented as a set
+> for the user to review and flag items for revision. Serial review (one component at a time)
+> is available via the `ux.reviewStyle` config. For Pencil path, the core loop is generate all
+> then batch screenshot then batch feedback then revise flagged items.
 
-**Proposed**:
+**Proposed** (replace both paragraphs, keep review style):
 > ## Tokens Mode
 >
 > When running tokens mode, read `references/tokens-mode.md` and follow its process.
@@ -854,8 +929,10 @@ Also modify the **Per task, include** section to update acceptance criteria desc
 > setup: Pencil generates from scratch, markdown fallback documents everything as structured
 > specs. Both paths produce DESIGN_SYSTEM.md.
 >
-> The core loop for Pencil path: generate → screenshot → user feedback → refine. Each component
-> must be visually and behaviorally confirmed before moving on.
+> The default review style is **batch**: all components are generated, then presented as a set
+> for the user to review and flag items for revision. Serial review (one component at a time)
+> is available via the `ux.reviewStyle` config. For Pencil path, the core loop is generate all
+> then batch screenshot then batch feedback then revise flagged items.
 
 ---
 
@@ -947,7 +1024,7 @@ For projects with completed mockups: the user can re-run `/cl-designer mockups` 
 
 **cl-designer → cl-reviewer**: The design-review mode validates designs against the PRD. With behavioral additions, it can also validate behavioral completeness. This is not changed in this proposal — the reviewer naturally checks whatever content exists in DESIGN_SYSTEM.md and UI_SCREENS.md.
 
-**cl-researcher → cl-designer**: Bootstrap behavioral questions (Change 5) produce DECISIONS.md entries that cl-designer reads during setup mode (already part of the pipeline state check). No new integration needed.
+**cl-researcher → cl-designer**: Bootstrap behavioral questions (Change 5) produce DECISIONS.md entries with standard category tags (`errors`, `accessibility`, `content`, `resilience`, `testing`, `responsive`). cl-designer reads these during setup mode (already part of the pipeline state check — P0.5 added the decision flow guideline). The behavioral entries use the same category tags established in P0.5's DECISIONS.md protocol, so cl-designer's existing decision flow lookup finds them without new integration.
 
 ## Context Budget & Progressive Disclosure (Hard Requirement)
 
@@ -980,6 +1057,7 @@ During merge, the reviewer should verify:
 | Decision | Alternatives Considered | Rationale |
 |---|---|---|
 | Behavioral walkthrough runs after visual approval, not during | Could interleave behavioral and visual feedback in a single loop per screen | Separation keeps the visual feedback loop focused. Users evaluate aesthetics differently from behavior. Mixing them increases cognitive load per screen. Research F2 recommends this ordering. |
+| Batch walkthrough uses generate-confirm (tables), serial uses conversation | Could make the walkthrough always conversational or always table-based | Aligns with P0.5's warmth gradient: mockups stage is "Medium" (batch review, generate-confirm, focused feedback, tables over conversation). The batch walkthrough presents behavioral specs as tables for review, matching the gradient. Serial walkthrough (opt-in) is warmer but appropriate for complex screens where the user needs to think through behavior. |
 | Behavioral states in tokens mode (not deferred to mockups) | Could capture all behavioral specs during mockups mode only | Components are the atoms — their behavioral model constrains screen-level behavior. A Button's loading state is the same whether it's on the Dashboard or Settings page. Capturing it once in tokens mode avoids repetition during mockups. Research F3 recommends this. |
 | Screen states are a table format, not visual mockups for every state | Could generate Pencil variants for every state of every screen | Diminishing returns. Empty, loading, and error get variants when Pencil is available (these are the highest-impact states). Partial, offline, and permission denied are described in text — they're important but generating visual variants for all of them would triple the design time. |
 | Test scenarios in UI_SCREENS.md, not a separate test file | Could generate a separate TEST_SCENARIOS.md from the behavioral walkthrough | Finding F16 (spec-testing duality) shows behavioral specs ARE test cases. Keeping them in UI_SCREENS.md maintains the single-source-of-truth principle. P2 (Testing Pipeline) will formalize how these flow into TEST_SPEC.md. |
@@ -1001,7 +1079,7 @@ During merge, the reviewer should verify:
 
 1. **Content strategy depth**: Change 1 pins down content for non-default states during the walkthrough. Should cl-designer also capture a "content style guide" (tone, voice, terminology) as a separate section in DESIGN_SYSTEM.md, or is the per-screen content sufficient? This could be a future enhancement.
 
-2. **Animation specification**: Finding F12 identified animation as a gap. This proposal captures transition behavior during the walkthrough ("toast enters with slide + fade") but doesn't add systematic animation tokens or specifications. Animation depth could be a Tier 5 addition.
+2. **Animation specification**: Finding F12 identified animation as a gap. This proposal captures transition behavior during the walkthrough ("toast enters with slide + fade") but doesn't add systematic animation tokens or specifications. Animation depth could be a future proposal addition (research priority group 5).
 
 3. **Pencil accessibility validation**: If Pencil MCP adds contrast checking or accessibility analysis tools in the future, the tokens mode could auto-verify contrast ratios during generation. Currently, contrast verification is manual (calculate from token hex values). The checklist item is included but the verification method may evolve.
 

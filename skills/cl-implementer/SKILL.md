@@ -141,11 +141,21 @@ All paths (`docs/system/`, `docs/specs/`, etc.) resolve relative to the configur
 
 Read `references/spec-mode.md` and follow its process.
 
-Generates implementation-ready specs from verified system docs. Enforces the waterfall
-gate — specs are generated only after all system docs are complete and verified. The
-spec format adapts to the content (OpenAPI for APIs, JSON Schema for data, structured
-markdown for general). Uses subagent dispatch to read all system docs in parallel without
-overloading the main context.
+Generates implementation-ready specs from verified system docs, including `TEST_SPEC.md` —
+a parallel artifact defining test architecture, per-module unit test cases, cross-spec
+integration contracts, and contract tests. Enforces the waterfall gate — specs are
+generated only after all system docs are complete and verified. The spec format adapts
+to the content (OpenAPI for APIs, JSON Schema for data, structured markdown for general).
+Uses subagent dispatch to read all system docs in parallel without overloading the main
+context.
+
+In addition to implementation specs, generates cross-cutting specifications:
+- **SECURITY_SPEC.md**: Per-endpoint auth, system security policy, secure UX, dependency governance
+- **Error taxonomy**: Standard error format, code system, propagation chain, per-endpoint catalog
+- **API conventions preamble**: Pagination, naming, filtering, sorting, envelope — inherited by all endpoint specs
+- **Shared types**: Cross-boundary type inventory, serialization contracts, sharing strategy
+- **Edge cases**: Standard edge case section per spec based on component types
+- **Accessibility**: ARIA, keyboard, focus management requirements per UI spec
 
 ---
 
@@ -153,8 +163,8 @@ overloading the main context.
 
 Read `references/spec-consistency-check.md` and follow its process.
 
-Checks five dimensions of cross-spec consistency: type consistency, naming consistency,
-contract consistency, completeness, and traceability.
+Checks six dimensions of cross-spec consistency: type consistency, naming consistency,
+contract consistency, completeness, traceability, and API convention adherence.
 
 ---
 
@@ -162,10 +172,14 @@ contract consistency, completeness, and traceability.
 
 Read `references/start-mode.md` and follow its process.
 
-Generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md if it
-exists). Tasks are organized by implementation area with a cross-area Mermaid dependency
-graph. Creates `IMPLEMENTATION_PROGRESS.md` for session persistence. Populates Claude Code's
-task system via `TaskCreate`.
+Generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md +
+TEST_SPEC.md if they exist). Tasks are organized by implementation area with a cross-area
+Mermaid dependency graph. If TEST_SPEC.md exists, generates test tasks as first-class
+entries: a test infrastructure task (no dependencies, parallel with early impl), per-module
+unit test tasks (follow their implementation task), per-milestone integration test tasks
+(depend on all spanned impl tasks), and contract test tasks. Creates
+`IMPLEMENTATION_PROGRESS.md` for session persistence. Populates Claude Code's task system
+via `TaskCreate`.
 
 ---
 
@@ -183,10 +197,13 @@ gaps, and supports parallel execution for independent task groups.
 
 Read `references/autopilot-mode.md` and follow its process.
 
-Run mode with two additions: **self-testing** and **autonomous progression**. The implementer
-writes tests from acceptance criteria, runs them to verify its own work, commits per task,
-and only stops at user-configured checkpoints or when it hits a genuine blocker. Parallel
-execution where the dependency graph allows.
+Run mode with three additions: **self-testing**, **integration testing**, and **autonomous
+progression**. The implementer writes tests from acceptance criteria (and TEST_SPEC.md when
+available), runs them to verify its own work, commits per task, and only stops at
+user-configured checkpoints or when it hits a genuine blocker. At milestone boundaries
+(area completion or integration boundary completion), runs integration test tasks. Before
+final completion, runs the full test suite as a regression gate. Parallel execution where
+the dependency graph allows.
 
 The checkpoint level is a trust decision — logged to DECISIONS.md with rationale. Users
 start with frequent checkpoints and reduce oversight as confidence builds.
@@ -197,9 +214,10 @@ start with frequent checkpoints and reduce oversight as confidence builds.
 
 Read `references/verify-mode.md` and follow its process.
 
-Post-implementation holistic verification across four dimensions: per-task acceptance
-criteria, per-spec contract compliance, cross-spec integration, and spec-to-doc alignment
-(via cl-reviewer sync).
+Post-implementation holistic verification across six dimensions: per-task acceptance
+criteria, per-spec contract compliance, cross-spec integration, spec-to-doc alignment
+(via cl-reviewer sync), test coverage against test spec (P2), and dependency audit
+(vulnerability scan, license compliance, unused dependency detection).
 
 ---
 
@@ -281,9 +299,16 @@ user-added tasks and manual reorderings.
 - **Spec traceability per task**: Every task links to a spec file and section. If you can't
   trace a task to a spec, something went wrong in generation.
 
-- **Testing is spec-driven**: If testing specs exist, generate testing tasks. If system docs
-  mention testing but no spec exists, nudge the user. Don't decide what to test — that's a
-  research concern.
+- **Testing is spec-driven**: `TEST_SPEC.md` is the authoritative source for testing
+  decisions — mock boundaries, test data strategy, per-module test cases, integration
+  contracts, and contract tests. When TEST_SPEC.md exists, autopilot Step 3c uses it
+  instead of improvising from acceptance criteria. When it doesn't exist, nudge the user:
+  "No TEST_SPEC.md found. Regenerate specs with `/cl-implementer spec` to produce one, or
+  continue with acceptance-criteria-based testing (less consistent)." Test tasks generated
+  from TEST_SPEC.md in start mode are first-class tasks — they have acceptance criteria,
+  dependencies, and status tracking like any implementation task. TEST_SPEC.md consumes
+  decisions with category tag `testing` from DECISIONS.md (per the P0.5 decision flow
+  protocol — check before asking, respect precedence rules).
 
 - **Waterfall is non-negotiable for spec generation.** Don't generate specs from partial
   docs. The user can override gate check warnings, but always warn them. Partial specs are
@@ -295,3 +320,15 @@ user-added tasks and manual reorderings.
   SECURITY_SPEC.md, or API conventions reference DECISIONS.md entries, those decisions are
   already baked in -- don't re-ask. When encountering an L1 spec gap that matches a
   DECISIONS.md category, check if a decision already exists that resolves it.
+
+- **Security is a specification concern, not an afterthought.** If SECURITY_SPEC.md exists,
+  reference it during implementation — check per-endpoint auth requirements before writing
+  route handlers, check input validation rules before accepting user input, check the error
+  taxonomy before writing error responses. If no security spec exists but the system has
+  user-facing features, nudge the user: "No security spec found. Consider running
+  `/cl-implementer spec` to generate one."
+
+- **Verify dependencies before trusting them.** When adding new packages, check the registry
+  first (catch hallucinated packages), audit after install (catch vulnerabilities), and check
+  the license (catch copyleft surprises). Block on critical CVEs. Warn on medium/low. Log
+  all dependency additions.

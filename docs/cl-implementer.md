@@ -15,7 +15,7 @@ The implementation orchestration skill. Owns the full build pipeline — from sp
 | `start` | "start implementation", "generate tasks" | Generate unified TASKS.md from all specs, set up progress tracking |
 | `run` | "run", "implement", "continue", "next task" | Process the task queue — reconcile, implement, verify, handle failures |
 | `autopilot` | "autopilot", "run on autopilot", "autonomous" | Autonomous implementation with self-testing and configurable checkpoints |
-| `verify` | "verify implementation", "are we done" | Post-implementation holistic check across four dimensions |
+| `verify` | "verify implementation", "are we done" | Post-implementation holistic check across six dimensions |
 | `status` | "status", "what's left", "progress" | Progress report from TASKS.md and progress file |
 | `sync` | "sync", "specs changed" | Adjust task queue when specs change mid-implementation |
 
@@ -92,9 +92,41 @@ Creates `{docsRoot}/specs/.spec-manifest.md`:
 - Specs inventory table (file, source docs, source sections, description)
 - Cross-spec dependencies table
 
+### Step 5: Generate Test Spec
+
+Generates `{docsRoot}/specs/TEST_SPEC.md` alongside implementation specs. The test spec
+defines test architecture decisions (mock boundaries, test data strategy, environment
+requirements), per-module unit test cases (function/input/output/edge cases), cross-spec
+integration contracts, and contract tests.
+
+TEST_SPEC.md consumes testing decisions from DECISIONS.md (captured during bootstrap) and
+is consumed by start mode (test task generation) and autopilot (test case specification).
+
+| Section | Content |
+|---------|---------|
+| **Test Architecture** | Mock boundaries per layer, test data factories, environment requirements |
+| **Per-Module Test Cases** | Function → input → expected output → edge cases (table format) |
+| **Cross-Spec Integration Contracts** | Full request lifecycle flows, error propagation chains |
+| **Contract Tests** | Producer/consumer response shape verification |
+
 ### Design Artifact Integration
 
 If [DESIGN_SYSTEM.md](cl-designer.md) and [UI_SCREENS.md](cl-designer.md) exist, the spec generator references them. Tech specs can point to specific design components for implementation guidance.
+
+### Cross-Cutting Specifications
+
+Alongside implementation specs, the spec generator produces:
+
+| Artifact | Content | Source |
+|----------|---------|--------|
+| **SECURITY_SPEC.md** | Per-endpoint auth/authz, input validation, system security policy (CORS, CSP, rate limiting, session management, secrets), secure UX patterns, dependency governance | Architecture, DECISIONS.md, PRD |
+| **Error taxonomy** | Standard error response format, error code system with category prefixes, error propagation chain, per-endpoint error catalog | Architecture, DECISIONS.md |
+| **API conventions** | Pagination style, naming convention, error format, filtering syntax, rate limiting headers, response envelope — inherited by all endpoint specs | Architecture, DECISIONS.md |
+| **Shared types** | Cross-boundary type inventory, serialization contracts, type sharing strategy | All endpoint specs, Architecture |
+| **Edge cases** | Standard edge case section per spec based on component types (text input, numeric, list, file, date, API endpoint, auth) | Spec content analysis |
+| **Accessibility** | ARIA attributes, keyboard interaction, focus management, screen reader requirements per UI spec | Design system, bootstrap accessibility level |
+
+These are generated from the same system doc read as implementation specs — marginal additional cost.
 
 ---
 
@@ -102,7 +134,7 @@ If [DESIGN_SYSTEM.md](cl-designer.md) and [UI_SCREENS.md](cl-designer.md) exist,
 
 Cross-spec consistency check. Catches issues that are invisible within a single spec but emerge when specs are compared.
 
-### Five Consistency Dimensions
+### Six Consistency Dimensions
 
 | Dimension | What It Catches |
 |-----------|----------------|
@@ -111,6 +143,7 @@ Cross-spec consistency check. Catches issues that are invisible within a single 
 | **Contract Consistency** | Request/response shape mismatches between producer and consumer specs. Missing error types. Auth assumption differences. |
 | **Completeness** | System doc sections with no spec coverage. Specs referencing undefined entities. Missing error handling. |
 | **Traceability** | Specs without source references. Stale source references. Orphaned specs. |
+| **API Convention Adherence** | Pagination style inconsistencies. Naming convention violations. Error format deviations. Missing API conventions reference. |
 
 ### Output
 
@@ -159,6 +192,20 @@ flowchart TD
 ```
 
 If DESIGN_TASKS.md exists, its tasks are merged into the appropriate area (usually UI Layer). DESIGN_TASKS.md remains as a design artifact; TASKS.md is the working implementation copy.
+
+### Test Tasks
+
+If TEST_SPEC.md exists, start mode generates four types of test tasks:
+
+| Task Type | Naming | Dependencies | When |
+|-----------|--------|-------------|------|
+| **Test infrastructure** | T-00X | None (parallel with early impl) | Always first |
+| **Unit test** | T-NNNT (suffix of impl task) | Impl task + test infrastructure | After each module |
+| **Integration test** | T-0XX | All spanned impl tasks + infrastructure | After area/boundary completion |
+| **Contract test** | T-0XX | Producer + consumer impl tasks + infrastructure | After both sides implemented |
+
+Test tasks are first-class in TASKS.md — acceptance criteria, spec references, dependencies,
+status tracking. They appear in the dependency graph and are processed by run/autopilot modes.
 
 ### User Control
 
@@ -235,7 +282,7 @@ Independent task groups (no shared dependencies or files) can run in parallel vi
 
 ## Autopilot
 
-Run mode with two additions: **self-testing** and **autonomous progression**. The implementer writes tests from acceptance criteria, runs them to verify its own work, commits per task, and only stops at user-configured checkpoints or when it hits a genuine blocker.
+Run mode with three additions: **self-testing**, **per-milestone integration testing**, and **autonomous progression**. The implementer writes tests from acceptance criteria (and TEST_SPEC.md when available), runs them to verify its own work, commits per task, and only stops at user-configured checkpoints or when it hits a genuine blocker.
 
 ### Checkpoint Levels
 
@@ -251,6 +298,19 @@ Stored in `.clarity-loop.json` under `implementer.checkpoint`. The checkpoint de
 ### Self-Testing
 
 After implementing each task, the implementer translates acceptance criteria into test cases (behavioral -> integration test, structural -> unit test, edge case -> unit test, UI -> component test). Tests run automatically. On failure: three attempts (fix implementation -> re-examine test -> check for context/design gap), then stop and ask the user.
+
+### Integration Testing
+
+At milestone boundaries, autopilot runs integration tests:
+
+| Trigger | What Runs |
+|---------|----------|
+| Last task in an area completes | Integration test tasks depending on that area |
+| Integration boundary tasks all complete | Cross-boundary integration tests |
+| All tasks complete (final gate) | Full test suite — unit + integration + contract |
+
+Integration test failures create fix tasks targeting the specific seam. The full-suite gate
+catches regressions before declaring implementation complete.
 
 ### UI Validation
 
@@ -268,7 +328,7 @@ Autopilot always stops for L2 spec gaps, repeated failures, cascade regressions,
 
 ## Verify
 
-Post-implementation holistic check. Four dimensions:
+Post-implementation holistic check. Six dimensions:
 
 | Dimension | What It Checks | Catches |
 |-----------|---------------|---------|
@@ -276,6 +336,8 @@ Post-implementation holistic check. Four dimensions:
 | **Per-spec** | Full spec contract compliance | Type mismatches, missing constraints |
 | **Cross-spec** | Integration between modules | Shape mismatches, protocol disagreements |
 | **Spec-to-doc** | Code alignment with system docs (via cl-reviewer sync) | Architectural drift |
+| **Test coverage** | Test spec compliance (P2) | Untested behavior, missing test cases |
+| **Dependency audit** | Vulnerability scan, license compliance, unused deps, lockfile integrity | CVEs, copyleft surprises, bloat |
 
 Run verify after all tasks are complete, or after a significant batch.
 

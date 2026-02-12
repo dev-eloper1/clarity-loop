@@ -38,33 +38,60 @@ Build a dependency graph:
 
 Organize tasks bottom-up by dependency. Five phases:
 
-#### Phase 1: Token/Theme Setup
+#### Phase 1: Token/Theme Setup + Accessibility Infrastructure
 - Configure CSS custom properties or Tailwind theme values
 - Set up theme provider (if dark/light mode)
 - Create spacing/typography utility classes or tokens
+- **Set up focus indicator tokens** (outline color, offset, width) as CSS custom properties
+- **Verify contrast ratios** of color token combinations (text on backgrounds: 4.5:1;
+  UI components: 3:1). If any fail, note in the task for user decision.
 - One task per token category unless they're trivially small
 
-#### Phase 2: Atomic Components
+#### Phase 2: Atomic Components (with behavioral states)
 - Individual UI primitives (Button, Input, Select, Checkbox, Badge, etc.)
 - Each component is one task (or split if it has many complex variants)
 - Order by dependency — standalone components first, then ones that use others
+- **Acceptance criteria include behavioral states from DESIGN_SYSTEM.md**: a Button task
+  includes "renders loading state with spinner, disables during loading, shows
+  `aria-busy` attribute" — not just "renders primary/secondary/ghost variants"
+- **Acceptance criteria include accessibility**: keyboard interaction (Enter/Space
+  activates), ARIA attributes (`aria-disabled`, `aria-busy`), focus visible styling
+- **Acceptance criteria include boundary behavior**: truncation, overflow handling,
+  min/max constraints from DESIGN_SYSTEM.md
 
-#### Phase 3: Composite Components
+#### Phase 3: Composite Components (with interaction behavior)
 - Components that compose atomics (Nav/Sidebar, Modal/Dialog, Form groups, etc.)
 - Each composite is one task
 - Dependencies on Phase 2 components are explicit
+- **Acceptance criteria include composite behavioral contracts**: Modal traps focus and
+  returns on close; Form group tracks dirty/pristine/submitting states; Nav highlights
+  active route
+- **Acceptance criteria include accessibility**: focus trap for modals, `aria-expanded`
+  for dropdowns, `aria-current="page"` for active nav
 
-#### Phase 4: Screen Layouts / Pages
+#### Phase 4: Screen Layouts / Pages + Navigation
 - Only generated if UI_SCREENS.md exists
 - Each screen is one task (or split for very complex screens)
 - Assembles components into page layouts
-- Includes routing setup if multiple screens
+- **Acceptance criteria include behavioral contracts from UI_SCREENS.md**: screen states
+  (empty, loading, error), interaction flows (form submission behavior, delete
+  confirmation), content for non-default states
+- **Navigation and routing as a cross-cutting task in this phase**: URL structure, route
+  guards, auth redirects, back behavior, focus management on navigation. If UI_SCREENS.md
+  has navigation context per screen, generate a routing task that covers the full URL
+  structure and auth requirements.
+- **Test scenarios from UI_SCREENS.md** become acceptance criteria: "submit empty form
+  → inline validation" is a verifiable condition
 
-#### Phase 5: Interactive States + Responsive Behavior
-- Hover, focus, active, disabled, loading, error states
-- Responsive breakpoint behavior
-- Animations and transitions
-- Can be one task per screen or grouped by interaction type
+#### Phase 5: Integration Behavior + Responsive
+- **Cross-screen behavioral flows** — interactions that span multiple screens: navigation
+  transitions, state persistence across routes, shared state (badge counts, filters),
+  unsaved changes warnings
+- Responsive breakpoint behavior (layout changes, feature adaptation, touch vs. mouse
+  differences if specified)
+- Animations and transitions (if specified in behavioral walkthrough or design tokens)
+- This phase is for behaviors that can't be verified in isolation — they require multiple
+  screens working together
 
 **Per task, include:**
 - **Task number**: Sequential (T-001, T-002, ...)
@@ -74,7 +101,11 @@ Organize tasks bottom-up by dependency. Five phases:
 - **Design reference**: Component or screen name + design file reference (.pen node ID or
   DESIGN_SYSTEM.md section)
 - **Dependencies**: Which other tasks must complete first (by task number)
-- **Acceptance criteria**: Concrete, verifiable conditions for completion
+- **Acceptance criteria**: Concrete, verifiable conditions for completion. Must include
+  behavioral criteria from DESIGN_SYSTEM.md (component states, accessibility) and
+  UI_SCREENS.md (screen states, interaction flows, content) — not just visual rendering.
+  Each behavioral contract documented in the design artifacts becomes an acceptance
+  criterion in the build plan task.
 - **Estimated complexity**: Simple / Medium / Complex (for prioritization, not time estimates)
 
 ---

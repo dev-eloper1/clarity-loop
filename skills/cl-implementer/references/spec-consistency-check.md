@@ -9,7 +9,7 @@ with the source system docs.
 Run after `/cl-implementer spec` has produced specs in `docs/specs/`. This is the
 final quality gate before the start mode generates implementation tasks.
 
-### Five Consistency Dimensions
+### Six Consistency Dimensions
 
 #### 1. Type Consistency
 
@@ -65,6 +65,22 @@ Check for:
 - Specs that claim to derive from a system doc section but don't match its content
 - System doc sections that were significantly updated since spec generation (staleness)
 - Orphaned specs that no longer correspond to any system doc content
+
+#### 6. API Convention Adherence
+
+All endpoint specs must follow the conventions defined in the API conventions preamble.
+
+Check for:
+- Pagination style inconsistencies (some specs use cursor, others use offset)
+- Naming convention violations (some specs use camelCase, others snake_case in JSON)
+- Error response format deviations (some specs define custom error shapes)
+- Filtering syntax disagreements (some use query params, others use JSON body)
+- Response envelope inconsistencies (some wrap in `{data: ...}`, others return raw)
+- Rate limiting specification gaps (some endpoints specify limits, others don't)
+- Missing API conventions reference (specs that don't declare "Inherits from: API_CONVENTIONS")
+
+If no API conventions preamble exists: skip this dimension but note: "No API conventions
+preamble found. Consider generating one to ensure consistency across endpoint specs."
 
 ### Output Format
 
@@ -128,6 +144,17 @@ If no issues: "All significant system doc concepts have corresponding specs."
 | [spec file] | [doc name] Section X | Traced / Stale / Missing |
 
 If no issues: "All specs trace to current system doc sections."
+
+## API Convention Adherence
+
+| Convention | Expected (from preamble) | Violations |
+|-----------|------------------------|-----------|
+| Pagination | Cursor-based | spec-users.md uses offset pagination |
+| Naming | camelCase JSON | spec-reports.md uses snake_case |
+| Error format | Standard taxonomy | spec-legacy.md uses custom {error: "..."} |
+
+If no violations: "All endpoint specs follow the API conventions preamble."
+If no preamble: "No API conventions preamble found. Dimension skipped."
 
 ## Recommendations
 

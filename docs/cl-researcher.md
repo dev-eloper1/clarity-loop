@@ -10,7 +10,8 @@ The research and proposal generation skill. Takes ideas from vague problem state
 
 | Mode | Trigger | Purpose |
 |------|---------|---------|
-| `bootstrap` | "bootstrap", "set up docs", "initialize docs" | Create initial system docs for new or existing projects |
+| `bootstrap` | "bootstrap", "set up docs", "initialize docs" | Create initial system docs for greenfield projects |
+| `bootstrap-brownfield` | "bootstrap existing", "set up docs for existing project" | Create system docs for existing codebases (reads code first) |
 | `triage` | Implicit on research start | Assess complexity before launching full research |
 | `research` | "research [topic]", "explore", "investigate" | Multi-turn research cycle with system doc context |
 | `structure` | "structure", "plan the docs" | Plan document structure after research approval |
@@ -26,9 +27,16 @@ Creates the initial system doc set. Detects your starting point and adapts.
 ### Three Starting Points
 
 **Greenfield** (no code, no docs):
-1. Discovery conversation about your project — goals, users, tech stack, constraints
-2. Suggests initial doc set based on project type
-3. Generates starting system docs with `[TBD]` markers for areas needing more detail
+1. Discovery conversation about your project — goals, users, tech stack, constraints,
+   security strategy, data sensitivity, compliance requirements
+2. Project profile detection (auto-detect, quick research, or presets) captures error
+   handling, API conventions, dependency policy, and other cross-cutting decisions
+3. Suggests initial doc set based on project type
+4. Generates starting system docs with `[TBD]` markers for areas needing more detail
+
+The discovery conversation includes security-specific depth probing. Most other cross-
+cutting decisions (error handling, API style, accessibility, etc.) are captured by the
+project profile system and defaults sheet.
 
 **Brownfield with existing docs** (project docs, wiki exports, AI-generated research from ChatGPT/Claude):
 1. Discovers existing documentation files

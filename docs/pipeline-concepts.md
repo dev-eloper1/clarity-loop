@@ -104,7 +104,7 @@ Standard categories:
 | `accessibility` | WCAG level, interaction mode | designer, implementer |
 | `security` | Depth, compliance, dependency policy | spec-gen (SECURITY_SPEC.md), implementer |
 | `content` | Tone, empty states | designer (behavioral walkthrough) |
-| `resilience` | Offline, loading, retry | designer, spec-gen |
+| `resilience` | Offline, loading, retry | designer |
 | `type-sharing` | Cross-boundary types | spec-gen, implementer |
 | `dependencies` | Policy, governance | implementer (supply chain) |
 | `responsive` | Viewports, breakpoints | designer |
@@ -288,6 +288,10 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
     "profileMode": "auto",
     "autoDefaults": "tier3",
     "parallelGeneration": true
+  },
+  "testing": {
+    "integrationGate": true,
+    "fullSuiteGate": true
   }
 }
 ```
@@ -301,6 +305,8 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
 | `ux.profileMode` | `"auto"` | Project profile detection mode: `"auto"` (auto-detect from code, research gaps, presets as fallback), `"preset"` (skip auto-detect, go straight to presets), `"off"` (skip profile system, go freeform) |
 | `ux.autoDefaults` | `"tier3"` | Which checkpoint tiers auto-proceed: `"none"` (most conservative), `"tier3"` (default), `"tier2-3"` (most aggressive) |
 | `ux.parallelGeneration` | `true` | Pre-generate downstream work while user reviews current step |
+| `testing.integrationGate` | `true` | Run integration tests at milestone boundaries (Tier 2 checkpoint) |
+| `testing.fullSuiteGate` | `true` | Run full test suite before declaring completion (Tier 1 checkpoint) |
 
 **Invalid or missing values**: If a `ux.*` key is set to an unrecognized value, fall back to
 its default (e.g., unknown `ux.reviewStyle` → `"batch"`, unknown `ux.autoDefaults` → `"tier3"`).
@@ -365,6 +371,7 @@ After initialization, your project has this structure:
     audit/                      Audit reports + sync reports
     design/                     Design review artifacts
   specs/                        Generated specs + design specs
+    SECURITY_SPEC.md            Per-endpoint auth, system security, dependency governance
   designs/                      Design files (.pen, DESIGN_PROGRESS.md)
   context/                      Per-library knowledge files (progressive disclosure)
     .context-manifest.md        Layer 1: library index

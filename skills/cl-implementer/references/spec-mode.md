@@ -105,6 +105,127 @@ Every spec must include:
 - **Dependencies**: Which other specs this one references
 - **Implementability**: Each spec should be implementable in isolation (bounded context)
 
+### Step 4+: Generate Cross-Cutting Specs
+
+For cross-cutting spec generation (security, error handling, API conventions, shared types),
+read `references/cross-cutting-specs.md` and follow its process. This generates:
+- SECURITY_SPEC.md (per-endpoint auth, system security, secure UX, dependency governance)
+- Error taxonomy (standard format, code system, propagation chain, per-endpoint catalog)
+- API conventions preamble (pagination, naming, filtering, envelope -- inherited by all endpoint specs)
+- Shared types inventory (cross-boundary types, serialization contracts, sharing strategy)
+- Per-spec edge cases and accessibility requirements sections
+
+### Step 4b: Generate Test Spec
+
+Generate `{docsRoot}/specs/TEST_SPEC.md` from the same system doc analysis used for
+implementation specs. The test spec is NOT test code — it's a specification that the
+implementer and autopilot use to write tests. It's generated alongside implementation
+specs, not as a separate step.
+
+**Read testing decisions first**: Check `{docsRoot}/DECISIONS.md` for decisions with
+category tag `testing` (framework, mock boundaries, test data approach, coverage
+expectations). These were captured during bootstrap (via the project profile system or
+testing probes) or prior discussion. Respect the P0.5 precedence rules: existing
+DECISIONS.md entries > auto-detected > research-generated > presets. If no testing
+decisions exist, use sensible defaults and note the gap — the user may want to address
+this before implementation.
+
+**TEST_SPEC.md structure**:
+
+```markdown
+# Test Specification
+
+**Generated alongside**: [.spec-manifest.md reference]
+**Testing framework**: [from DECISIONS.md or "not yet decided"]
+**Test data strategy**: [from DECISIONS.md or "not yet decided"]
+**Mock boundaries**: [from DECISIONS.md or default below]
+
+## Test Architecture
+
+### Mock Boundaries
+
+Define the default mock boundary for each layer. These apply to ALL modules in that
+layer unless a per-module override is specified.
+
+| Layer | Unit Tests | Integration Tests | Rationale |
+|-------|-----------|------------------|-----------|
+| Database | Mocked (fixtures/factories) | Real test DB | Unit tests stay fast. Integration tests catch constraint issues. |
+| External APIs | Always mocked | Always mocked | External dependencies are never hit in tests. |
+| Auth | Mocked (helper: `createAuthenticatedContext()`) | Real auth flow | Non-auth unit tests skip auth setup. Auth integration tests use real flow. |
+| File system | Mocked (in-memory or temp dirs) | Real temp dirs | Unit tests don't touch disk. Integration tests use isolated temp dirs. |
+| Time/dates | Mocked (fake timers) | Real time | Unit tests need deterministic time. |
+
+### Test Data Strategy
+
+| Entity | Factory Function | Key Fixtures | Notes |
+|--------|-----------------|-------------|-------|
+| [Entity from data spec] | `create[Entity](overrides?)` | [Named fixtures for common states] | [Any special considerations] |
+
+### Test Environment Requirements
+
+| Requirement | Unit Tests | Integration Tests |
+|-------------|-----------|------------------|
+| Database | Not required | Test DB with migrations applied |
+| Dev server | Not required | Running on test port |
+| External services | Not required | Mock server (MSW/nock) if needed |
+| Browser | Not required (jsdom/happy-dom) | Playwright for E2E |
+
+## Per-Module Test Cases
+
+### [Module Name] (from [spec-file.md])
+
+**Unit Tests**:
+
+| Function/Method | Input | Expected Output | Edge Cases |
+|----------------|-------|-----------------|------------|
+| [function name] | [input description] | [expected return/behavior] | [edge case inputs and expected handling] |
+
+**Mock boundary**: [What's mocked for this module, if different from default]
+**Test data requirements**: [Which factories/fixtures this module needs]
+
+## Cross-Spec Integration Contracts
+
+For every boundary between implementation specs, define the integration test contract.
+
+### [Spec A] ↔ [Spec B] Integration
+
+**Boundary**: [What connects them — API endpoint, shared type, event, etc.]
+
+| Flow | Steps | Assertions |
+|------|-------|------------|
+| [Flow name] | [Step-by-step through the boundary] | [What to verify at each step] |
+
+**Error propagation**: [How errors cross this boundary — what transforms into what]
+
+## Contract Tests
+
+For cross-layer contracts where a producer and consumer must agree on shapes.
+
+| Producer | Consumer | Contract | Verification |
+|----------|----------|----------|-------------|
+| [API endpoint] | [Frontend component] | [Response shape] | Response matches consumer's type expectation |
+```
+
+**Generation rules**:
+
+1. **Per-module unit test cases**: For each implementation spec, generate a companion
+   section in TEST_SPEC.md with function → input → output → edge cases (table format).
+   Extract these from the spec's concrete types, contracts, and edge cases — which were
+   already enumerated in Step 4.
+
+2. **Cross-spec integration contracts**: For every boundary in the cross-spec dependency
+   table (from Step 5), generate explicit integration test cases covering: full request
+   lifecycle flows, error propagation chains, auth flows.
+
+3. **Contract tests**: For every producer/consumer relationship across specs (API returns
+   shape X, frontend consumes shape X), generate a contract test entry.
+
+4. **Mock boundaries**: Use DECISIONS.md testing decisions if available. If not, apply
+   defaults (mock DB in unit tests, real DB in integration; always mock external APIs).
+
+5. **Test data**: For each entity in the data spec, define a factory function signature
+   and key fixtures covering common states (valid, invalid, edge cases).
+
 ### Step 5: Generate Spec Manifest
 
 Create `{docsRoot}/specs/.spec-manifest.md`:
@@ -122,7 +243,17 @@ Create `{docsRoot}/specs/.spec-manifest.md`:
 | Spec File | Source Doc(s) | Source Section(s) | Description |
 |-----------|--------------|-------------------|-------------|
 | [filename] | [doc name] | Section X, Y | [one-line description] |
+| TEST_SPEC.md | [all source docs] | [all sections — derived from implementation specs] | Test architecture, per-module test cases, integration contracts |
 | ... | ... | ... | ... |
+
+## Security & Cross-Cutting Specs
+
+| Spec File | Scope | Source |
+|-----------|-------|--------|
+| SECURITY_SPEC.md | Per-endpoint auth, system security, secure UX, dependency governance | Architecture, DECISIONS.md, PRD |
+| (error taxonomy) | Inline in API specs | Architecture, DECISIONS.md |
+| (API conventions preamble) | Inherited by all endpoint specs | Architecture, DECISIONS.md |
+| (shared types) | Cross-boundary type definitions | Architecture, all endpoint specs |
 
 ## Cross-Spec Dependencies
 

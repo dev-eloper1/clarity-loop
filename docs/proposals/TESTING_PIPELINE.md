@@ -4,7 +4,7 @@
 **Status**: Draft
 **Research**: docs/research/PIPELINE_GAP_ANALYSIS.md (Findings F14-F20, Changes 8-11)
 **Author**: Bhushan + AI Researcher
-**Depends On**: P0 (SKILL_RENAME_AND_FOLD — complete, all skills now use cl-* namespace)
+**Depends On**: P0 (SKILL_RENAME_AND_FOLD — complete, all skills now use cl-* namespace), P0.5 (UX_STREAMLINING — complete, establishes decision flow protocol, tiered checkpoints, review styles, project profile system, warmth gradient, and parallelization hints)
 
 ## Summary
 
@@ -48,10 +48,11 @@ modes are created — testing is woven into existing pipeline stages.
 |----------|----------------------|-------------------|
 | `skills/cl-implementer/references/spec-mode.md` | Generates implementation specs from system docs. No testing output. Steps 1-6: waterfall gate, read docs, suggest format, generate specs, generate manifest, update tracking. | Steps 4-5 (Generate Specs, Generate Spec Manifest) |
 | `skills/cl-implementer/references/start-mode.md` | Generates TASKS.md from spec artifacts. Step 1 pre-checks mention testing only in a coverage gap warning (Step 1.4). Step 3 generates tasks by area. No test-specific task generation. | Steps 1.4 (Spec coverage), 3 (Generate TASKS.md) |
-| `skills/cl-implementer/references/autopilot-mode.md` | Self-testing per task in Step 3c (write tests from acceptance criteria). Step 3d runs tests. No per-milestone integration testing. No full-suite gate. | Steps 3c (Write Tests), 3d (Run Tests), 3h (Checkpoint Evaluation) |
-| `skills/cl-implementer/SKILL.md` | Guidelines mention "Testing is spec-driven" (line 286) but no test spec exists for this to reference. Mode descriptions for spec, start, and autopilot have no testing-specific content. | Guidelines section, Mode Detection section |
-| `skills/cl-researcher/references/bootstrap-guide.md` | Discovery conversation (Step 2) asks "What are the main workflows or user journeys?" — no testing-specific questions. | Greenfield Step 2 (Discovery Conversation) |
-| `skills/cl-researcher/SKILL.md` | Bootstrap mode description references bootstrap-guide.md. No testing-specific content. | Bootstrap Mode section |
+| `skills/cl-implementer/references/autopilot-mode.md` | Self-testing per task in Step 3c (write tests from acceptance criteria). Step 3d runs tests. No per-milestone integration testing. No full-suite gate. P0.5 added tier awareness to Step 3h (checkpoint evaluation categorizes items by Tier 1/2/3). | Steps 3c (Write Tests), 3d (Run Tests), 3h (Checkpoint Evaluation) |
+| `skills/cl-implementer/SKILL.md` | Guidelines mention "Testing is spec-driven" (line 284) but no test spec exists for this to reference. P0.5 added a "Decision flow: read before asking" guideline that references the `testing` category. Mode descriptions for spec, start, and autopilot have no testing-specific content. | Guidelines section, Mode Detection section |
+| `skills/cl-researcher/references/bootstrap-guide.md` | Discovery conversation (Step 2) asks "What are the main workflows or user journeys?" — no testing-specific questions. P0.5 added Step 2b (Project Profile Detection) with three-level system (auto-detect, quick research, presets) and Step 2c (Defaults Sheet). Presets already include testing-related defaults (framework, test data, mock boundaries, coverage) but these are generic preset values, not project-specific testing probes. | Greenfield Step 2 (Discovery Conversation), Step 2b (Project Profile Detection), Step 2c (Defaults Sheet) |
+| `skills/cl-researcher/SKILL.md` | Bootstrap mode description references bootstrap-guide.md. P0.5 added warmth gradient and decision flow guidelines. No testing-specific content. | Bootstrap Mode section |
+| `docs/pipeline-concepts.md` | P0.5 added `ux.*` config keys (`reviewStyle`, `profileMode`, `autoDefaults`, `parallelGeneration`), DECISIONS.md category tags (including `testing`), warmth gradient, and tiered checkpoint definitions. Configuration section now has the full `.clarity-loop.json` schema. | Configuration section, DECISIONS.md section |
 | `docs/cl-implementer.md` | Public-facing docs describe spec mode, start mode, autopilot. Autopilot section mentions "self-testing" from acceptance criteria. No test spec, no test tasks, no integration testing. | Spec, Start, Autopilot sections |
 | `docs/cl-researcher.md` | Public-facing docs describe bootstrap. Discovery conversation has no testing questions. | Bootstrap section |
 
@@ -90,7 +91,7 @@ After this proposal is applied:
 | 4 | Add per-milestone integration testing and full-suite gate to autopilot | `skills/cl-implementer/references/autopilot-mode.md` | Step 3d (Run Tests), Step 3h (Checkpoint Evaluation), new Step 3d-int | Add | F18, F19 |
 | 5 | Update autopilot Step 3c to reference TEST_SPEC.md for test cases | `skills/cl-implementer/references/autopilot-mode.md` | Step 3c (Write Tests) | Modify | F17, F20 |
 | 6 | Add per-milestone integration testing to autopilot summary | `skills/cl-implementer/references/autopilot-mode.md` | Step 4 (Summary Report) | Modify | F18 |
-| 7 | Update verify mode to include test coverage as a verification dimension | `skills/cl-implementer/references/verify-mode.md` | Four Verification Dimensions | Add | F19 |
+| 7 | Update verify mode to include test coverage as a verification dimension (Dimension 5: Test Coverage Against Test Spec). Note: P3 also adds a new dimension (Dependency Audit) — P2 claims Dimension 5, P3 should use Dimension 6. After both P2 and P3 merge, verify mode will have six dimensions total. | `skills/cl-implementer/references/verify-mode.md` | Four Verification Dimensions | Add | F19 |
 | 8 | Update run mode Step 3c to reference TEST_SPEC.md when writing tests | `skills/cl-implementer/references/run-mode.md` | Step 3 (Queue Processing), substep 3c | Add | F20 |
 | 9 | Update SKILL.md guidelines to reference TEST_SPEC.md | `skills/cl-implementer/SKILL.md` | Guidelines section | Modify | F15, F20 |
 | 10 | Update SKILL.md spec mode description to mention TEST_SPEC.md | `skills/cl-implementer/SKILL.md` | Spec Mode section | Modify | F20 |
@@ -110,8 +111,8 @@ cl-designer (behavioral test scenarios from walkthrough), browser validation too
 
 | Conflict With | Overlapping Sections | Resolution |
 |--------------|---------------------|-----------|
-| P1 (Behavioral Foundation) | autopilot-mode.md Step 3e (UI Validation) | P1 modifies Step 3e for browser tooling. P2 adds Step 3d-int and modifies Step 3d. No overlap — P1 handles browser validation, P2 handles test execution. Can merge in either order. |
-| P3 (Security & Error Taxonomy) | spec-mode.md Step 4 (Generate Specs) | P3 adds SECURITY_SPEC.md generation. P2 adds TEST_SPEC.md generation. Both extend the same step but produce different artifacts. No content overlap — can merge in either order. |
+| P1 (Behavioral Foundation) | autopilot-mode.md Step 3e (UI Validation); bootstrap-guide.md Step 2 (Discovery Conversation) | P1 modifies Step 3e for browser tooling. P2 adds Step 3d-int and modifies Step 3d. No overlap — P1 handles browser validation, P2 handles test execution. Can merge in either order. **Bootstrap-guide.md overlap**: Both P1 and P2 add discovery questions to bootstrap-guide.md Step 2. P1 adds behavioral, accessibility, resilience, and content probing questions. P2 adds testing strategy probes. Both additions are complementary — P1's behavioral questions and P2's testing questions target different subsections. Merge both in either order; the reviewer should ensure questions from both proposals appear without duplication. |
+| P3 (Security & Error Taxonomy) | spec-mode.md Step 4 (Generate Specs); verify-mode.md Verification Dimensions | P3 adds SECURITY_SPEC.md generation to spec-mode.md. P2 adds TEST_SPEC.md generation. Both extend the same step but produce different artifacts. No content overlap — can merge in either order. **Verify mode dimension numbering**: Both P2 and P3 add a new dimension after Dimension 4. P2 claims Dimension 5 (Test Coverage Against Test Spec). P3 should use Dimension 6 (Dependency Audit). After both merge, verify mode will have six dimensions total. SKILL.md and docs/cl-implementer.md dimension count references must reflect the total after both merge (six dimensions, not five). |
 
 ## Detailed Design
 
@@ -147,10 +148,13 @@ implementation specs. The test spec is NOT test code — it's a specification th
 implementer and autopilot use to write tests. It's generated alongside implementation
 specs, not as a separate step.
 
-**Read testing decisions first**: Check `{docsRoot}/DECISIONS.md` for testing-related
-decisions (framework, mock boundaries, test data approach, coverage expectations). These
-were captured during bootstrap or prior discussion. If no testing decisions exist, use
-sensible defaults and note the gap — the user may want to address this before implementation.
+**Read testing decisions first**: Check `{docsRoot}/DECISIONS.md` for decisions with
+category tag `testing` (framework, mock boundaries, test data approach, coverage
+expectations). These were captured during bootstrap (via the project profile system or
+testing probes) or prior discussion. Respect the P0.5 precedence rules: existing
+DECISIONS.md entries > auto-detected > research-generated > presets. If no testing
+decisions exist, use sensible defaults and note the gap — the user may want to address
+this before implementation.
 
 **TEST_SPEC.md structure**:
 
@@ -265,7 +269,7 @@ For cross-layer contracts where a producer and consumer must agree on shapes.
 
 **Target**: `skills/cl-implementer/SKILL.md`
 
-**Current** (Spec Mode section, line 142-148):
+**Current** (Spec Mode section, line 144-148):
 > Generates implementation-ready specs from verified system docs. Enforces the waterfall
 > gate — specs are generated only after all system docs are complete and verified. The
 > spec format adapts to the content...
@@ -431,7 +435,7 @@ verification as implementation tasks.
 
 **Target**: `skills/cl-implementer/SKILL.md`
 
-**Current** (Start Mode section, line 161-168):
+**Current** (Start Mode section, line 163-168):
 > Generates a unified `TASKS.md` from ALL spec artifacts (tech specs + DESIGN_TASKS.md if it
 > exists). Tasks are organized by implementation area with a cross-area Mermaid dependency
 > graph. Creates `IMPLEMENTATION_PROGRESS.md` for session persistence. Populates Claude Code's
@@ -501,7 +505,7 @@ validate the task's acceptance criteria:
 5. If no testing framework exists, ask user once: "No test framework detected. Options:
    a) Set one up (I'll add vitest/jest/pytest), b) Skip self-testing (reduces autopilot
    reliability), c) Use assertion-based checks only (no framework needed)."
-   Log the choice to DECISIONS.md.
+   Log the choice to DECISIONS.md with category `testing`.
 
 **Test file convention**: Place tests adjacent to implementation files or in the project's
 existing test directory. Follow existing conventions if tests already exist. Follow
@@ -522,7 +526,12 @@ TEST_SPEC.md conventions if specified.
 **Proposed** — Keep existing Step 3d unchanged but add new Step 3d-int after it:
 
 ```markdown
-#### 3d-int: Integration Test Check (Milestone Gate)
+#### 3d-int: Integration Test Check (Milestone Gate) — Tier 2
+
+This step is classified as **Tier 2 (Batch Review)**: integration test results are
+presented as a summary at the next checkpoint. The user reviews the batch and flags
+issues. Respects `ux.autoDefaults` — if set to `"tier2-3"`, integration gate results
+auto-proceed (logged with `[auto-default]` tag).
 
 After completing a task, check if it triggers a milestone integration test:
 
@@ -562,7 +571,9 @@ After completing a task, check if it triggers a milestone integration test:
 > - `checkpoint: N` → if N tasks completed since last stop, stop and report
 > - `checkpoint: every` → stop and report
 
-**Proposed** — Add full-suite gate:
+**Proposed** — Add full-suite gate. Note: P0.5 already added tier awareness to Step 3h
+(categorizing checkpoint items by Tier 1/2/3). The full-suite gate is an addition that
+does not modify the existing checkpoint or tier logic:
 
 ```markdown
 #### 3h: Checkpoint Evaluation
@@ -574,9 +585,11 @@ After the task (or parallel group) completes:
 - `checkpoint: N` → if N tasks completed since last stop, stop and report
 - `checkpoint: every` → stop and report
 
-**Full-Suite Gate**: Before reporting "all tasks complete" (when the last pending task
-finishes), run the ENTIRE test suite — all unit tests, all integration tests, all
-contract tests:
+[P0.5 tier awareness remains unchanged — Tier 1/2/3 categorization of checkpoint items.]
+
+**Full-Suite Gate** (Tier 1 — must confirm): Before reporting "all tasks complete"
+(when the last pending task finishes), run the ENTIRE test suite — all unit tests, all
+integration tests, all contract tests:
 
 1. Run `npm test` (or equivalent) to execute the full suite
 2. If all pass → proceed to summary report
@@ -608,6 +621,13 @@ spot-check (if the files don't overlap).
 **Proposed**:
 ```markdown
 ### Step 4: Summary Report
+
+**Review style compatibility**: Test result presentation in the summary respects
+`ux.reviewStyle` from `.clarity-loop.json`:
+- `"batch"` (default): Present all test results in the summary table below
+- `"serial"`: Present test results one area at a time (integration gate results,
+  then unit test results, then contract test results)
+- `"minimal"`: Auto-approve test results with a condensed one-line summary
 
 At checkpoints and at the end of the run, present:
 
@@ -642,7 +662,7 @@ Regressions found:    [R] (all resolved)
 
 **Target**: `skills/cl-implementer/SKILL.md`
 
-**Current** (Autopilot Mode section, line 184-193):
+**Current** (Autopilot Mode section, line 186-189):
 > Run mode with two additions: **self-testing** and **autonomous progression**. The implementer
 > writes tests from acceptance criteria, runs them to verify its own work, commits per task,
 > and only stops at user-configured checkpoints or when it hits a genuine blocker. Parallel
@@ -759,15 +779,21 @@ Update the Output section to include Dimension 5:
 
 ### Change Area 6: Bootstrap Testing Probes
 
-**What**: Add testing-specific questions to the bootstrap discovery conversation. These
-capture architecture-level testing decisions in DECISIONS.md, which are consumed by spec
-generation when producing TEST_SPEC.md.
+**What**: Enhance the bootstrap testing probes to integrate with the P0.5 project profile
+system. The profile system (Level 1 auto-detect, Level 2 quick research, Level 3 presets)
+already captures generic testing defaults (framework, test data, mock boundaries, coverage)
+via presets and auto-detection. This change adds a deeper testing strategy probe to Step 2
+that captures integration-specific decisions not covered by the profile system, and ensures
+all testing decisions use the `testing` category tag in DECISIONS.md.
 
 **Why**: F15 found that testing strategy has no home in the pipeline. F19 found that test
 architecture decisions (framework, mock boundaries, test data approach) are project-wide
-decisions that must be made before implementation, not per-task. Bootstrap is the natural
-place to capture these — alongside other architecture-level decisions like tech stack and
-deployment strategy.
+decisions that must be made before implementation, not per-task. P0.5's profile system
+partially addresses this — auto-detect finds existing test frameworks, and presets provide
+defaults for mock boundaries and coverage. But the profile system captures generic testing
+decisions, not project-specific testing architecture (integration boundaries, priority
+areas, test data relationships). The testing probes complement the profile system by filling
+these deeper gaps.
 
 **Applies to Change Manifest rows**: 13, 15
 
@@ -788,26 +814,26 @@ deployment strategy.
 **Testing strategy (probe when project type warrants it — skip for pure documentation
 or simple scripts):**
 
-- "What testing framework do you plan to use? (vitest, jest, pytest, etc.)"
-  → Record in DECISIONS.md
-- "How should test data be managed? (factories that generate data dynamically,
-  fixtures as static JSON, database seeds, or a mix?)"
-  → Record in DECISIONS.md
-- "What should be mocked in tests? (In-memory DB for unit tests? Real test DB?
-  External API mocking with MSW/nock?)"
-  → Record in DECISIONS.md
-- "What's your coverage expectation? (Critical paths only? High coverage on
-  business logic? Comprehensive across all layers?)"
-  → Record in DECISIONS.md
+The project profile system (Step 2b) already captures basic testing decisions via
+auto-detect and presets (framework, mock boundaries, test data approach, coverage
+expectations). These probes go deeper into project-specific testing architecture:
+
 - "What integration boundaries matter most? (API contracts? Database operations?
   Full user flows? Authentication chain?)"
-  → Record in DECISIONS.md
+  → Record in DECISIONS.md with category `testing`
+- "Are there any testing constraints? (CI time budget, specific test environments,
+  external service dependencies that can't be mocked?)"
+  → Record in DECISIONS.md with category `testing`
+
+If the profile system already resolved framework, mock boundaries, test data, and
+coverage via auto-detect or presets, don't re-ask those. Only probe for gaps.
 
 These are ARCHITECTURE-LEVEL decisions. Don't ask for implementation details — ask for
-strategy and philosophy. The answers go into DECISIONS.md and are consumed by spec
-generation when producing TEST_SPEC.md.
+strategy and philosophy. The answers go into DECISIONS.md with category tag `testing`
+and are consumed by spec generation when producing TEST_SPEC.md.
 
-**If the user doesn't have strong opinions**: Use sensible defaults:
+**If the user doesn't have strong opinions and the profile system provided no
+testing defaults**: Use sensible defaults:
 - Framework: vitest (for JS/TS projects) or pytest (for Python)
 - Test data: factories for entities, fixtures for API responses
 - Mocking: mock DB in unit tests, real test DB in integration tests, always mock
@@ -815,7 +841,7 @@ generation when producing TEST_SPEC.md.
 - Coverage: focus on business logic and integration boundaries
 - Integration priority: API contracts and auth flows
 
-Record the defaults in DECISIONS.md with a note that they can be overridden.
+Record the defaults in DECISIONS.md with source `[auto-default]` and category `testing`.
 ```
 
 ---
@@ -846,7 +872,7 @@ proposal, TEST_SPEC.md will exist, making the guideline concrete.
 
 **Target**: `skills/cl-implementer/SKILL.md`
 
-**Current** (Guidelines, line 286):
+**Current** (Guidelines, line 284):
 > - **Testing is spec-driven**: If testing specs exist, generate testing tasks. If system docs
 >   mention testing but no spec exists, nudge the user. Don't decide what to test — that's a
 >   research concern.
@@ -860,7 +886,9 @@ proposal, TEST_SPEC.md will exist, making the guideline concrete.
   "No TEST_SPEC.md found. Regenerate specs with `/cl-implementer spec` to produce one, or
   continue with acceptance-criteria-based testing (less consistent)." Test tasks generated
   from TEST_SPEC.md in start mode are first-class tasks — they have acceptance criteria,
-  dependencies, and status tracking like any implementation task.
+  dependencies, and status tracking like any implementation task. TEST_SPEC.md consumes
+  decisions with category tag `testing` from DECISIONS.md (per the P0.5 decision flow
+  protocol — check before asking, respect precedence rules).
 ```
 
 ---
@@ -951,18 +979,24 @@ catches regressions before declaring implementation complete.
 
 **Target**: `docs/pipeline-concepts.md`
 
-**Current** (Configuration section, `.clarity-loop.json`):
+**Current** (Configuration section, `.clarity-loop.json` — post-P0.5):
 > ```json
 > {
 >   "version": 1,
 >   "docsRoot": "docs",
 >   "implementer": {
 >     "checkpoint": "every"
+>   },
+>   "ux": {
+>     "reviewStyle": "batch",
+>     "profileMode": "auto",
+>     "autoDefaults": "tier3",
+>     "parallelGeneration": true
 >   }
 > }
 > ```
 
-**Proposed** — Add `testing` config key:
+**Proposed** — Add `testing` config key alongside existing `ux` section:
 
 ```markdown
 ```json
@@ -971,6 +1005,12 @@ catches regressions before declaring implementation complete.
   "docsRoot": "docs",
   "implementer": {
     "checkpoint": "every"
+  },
+  "ux": {
+    "reviewStyle": "batch",
+    "profileMode": "auto",
+    "autoDefaults": "tier3",
+    "parallelGeneration": true
   },
   "testing": {
     "integrationGate": true,
@@ -981,8 +1021,8 @@ catches regressions before declaring implementation complete.
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `testing.integrationGate` | `true` | Run integration tests at milestone boundaries |
-| `testing.fullSuiteGate` | `true` | Run full test suite before declaring completion |
+| `testing.integrationGate` | `true` | Run integration tests at milestone boundaries (Tier 2 checkpoint) |
+| `testing.fullSuiteGate` | `true` | Run full test suite before declaring completion (Tier 1 checkpoint) |
 ```
 
 ---
@@ -995,8 +1035,8 @@ catches regressions before declaring implementation complete.
 |------|-----------|-----------|
 | **TEST_SPEC.md** | Test specification artifact generated alongside implementation specs. Defines test architecture, per-module test cases, integration contracts, and contract tests. NOT test code. | spec-mode.md, start-mode.md, autopilot-mode.md, run-mode.md, verify-mode.md, SKILL.md, docs/cl-implementer.md |
 | **Test task** | First-class task in TASKS.md derived from TEST_SPEC.md. Four types: infrastructure, unit (T-NNNT), integration, contract. | start-mode.md, autopilot-mode.md, SKILL.md, docs/cl-implementer.md |
-| **Milestone gate** | Integration test execution triggered when the last task in an area or integration boundary completes. | autopilot-mode.md, docs/cl-implementer.md |
-| **Full-suite gate** | Complete test suite execution before reporting all tasks complete. Catches regressions. | autopilot-mode.md, docs/cl-implementer.md |
+| **Milestone gate** | Integration test execution triggered when the last task in an area or integration boundary completes. Tier 2 checkpoint — presented as batch review, respects `ux.autoDefaults`. | autopilot-mode.md, docs/cl-implementer.md |
+| **Full-suite gate** | Complete test suite execution before reporting all tasks complete. Catches regressions. Tier 1 checkpoint — always requires explicit confirmation. | autopilot-mode.md, docs/cl-implementer.md |
 | **T-NNNT suffix** | Naming convention for unit test tasks — the `T` suffix ties them to their implementation task (e.g., T-005 → T-005T). | start-mode.md, docs/cl-implementer.md |
 
 ### Migration
@@ -1010,8 +1050,9 @@ This proposal adds new capabilities without changing existing behavior:
 - **Autopilot Step 3c**: Existing acceptance-criteria-based testing is the FALLBACK. When
   TEST_SPEC.md exists, it takes precedence. When it doesn't, behavior is unchanged.
 - **Autopilot Step 3d-int**: New step. Does not modify existing Step 3d.
-- **Full-suite gate**: New addition to Step 3h. Does not modify existing checkpoint logic.
-- **Verify Dimension 5**: New dimension. Does not modify existing Dimensions 1-4.
+- **Full-suite gate**: New addition to Step 3h. Does not modify existing checkpoint logic
+  or P0.5's tier awareness (Tier 1/2/3 categorization of checkpoint items).
+- **Verify Dimension 5**: New dimension. Does not modify existing Dimensions 1-4. Note: P3 also adds a new dimension (Dependency Audit) which should become Dimension 6. After both P2 and P3 merge, verify mode will have six dimensions total. SKILL.md and docs/cl-implementer.md references to dimension counts should reflect six dimensions after both proposals merge.
 
 No backward compatibility concerns. Projects without TEST_SPEC.md see no behavioral change.
 
@@ -1019,12 +1060,12 @@ No backward compatibility concerns. Projects without TEST_SPEC.md see no behavio
 
 | Component | Interaction |
 |-----------|------------|
-| **DECISIONS.md** | Bootstrap testing probes write here. Spec generation reads from here for TEST_SPEC.md defaults. |
+| **DECISIONS.md** | Bootstrap testing probes write here with category tag `testing`. Spec generation reads decisions with category `testing` for TEST_SPEC.md defaults. Uses P0.5 precedence rules (DECISIONS.md > auto-detect > research > presets) and supersession protocol for overrides. |
 | **TEST_SPEC.md** | Generated by spec mode. Read by start mode (task generation), autopilot (test case source), run mode (verification), verify mode (coverage check). |
 | **TASKS.md** | Test tasks are first-class entries alongside implementation tasks. Same dependency graph, same status tracking. |
 | **.spec-manifest.md** | TEST_SPEC.md is listed in the manifest. Same staleness detection and hash-based sync as implementation specs. |
 | **IMPLEMENTATION_PROGRESS.md** | Test task statuses tracked alongside implementation task statuses. Integration gate results recorded. |
-| **.clarity-loop.json** | New `testing` config section controls integration gate and full-suite gate behavior. |
+| **.clarity-loop.json** | New `testing` config section controls integration gate and full-suite gate behavior. Test result presentation respects existing `ux.reviewStyle`. Milestone gate respects `ux.autoDefaults` (Tier 2). Full-suite gate is Tier 1 (always requires confirmation regardless of `ux.autoDefaults`). |
 
 ## Context Budget & Progressive Disclosure (Hard Requirement)
 
@@ -1060,9 +1101,9 @@ During merge, the reviewer should verify:
 | **T-NNNT suffix for unit test task IDs** | Sequential IDs (T-020, T-021...), separate numbering (UT-001, UT-002...) | The suffix makes the implementation↔test relationship immediately visible. T-005 and T-005T are obviously paired. Sequential IDs lose this connection. Separate numbering creates two parallel tracking systems. |
 | **Integration tests as TASKS.md entries** | Integration tests as autopilot-only behavior (not tracked) | First-class tasks get dependency tracking, acceptance criteria, status tracking, and sync-mode support. Untracked tests would be invisible to the rest of the pipeline. |
 | **Full-suite gate in autopilot** | Full-suite only in verify mode | Catching regressions DURING autopilot prevents compounding. Waiting for verify mode means regressions accumulate across all tasks. The cost of running the full suite once before completion is minimal compared to fixing cascading regressions. |
-| **Bootstrap probes → DECISIONS.md → TEST_SPEC.md** | Ask testing questions during spec generation | Testing decisions are architecture-level (like tech stack choices). They belong in bootstrap/DECISIONS.md, not in a per-spec-generation conversation. This also means testing decisions persist across spec regenerations. |
+| **Bootstrap probes → DECISIONS.md → TEST_SPEC.md** | Ask testing questions during spec generation | Testing decisions are architecture-level (like tech stack choices). They belong in bootstrap/DECISIONS.md, not in a per-spec-generation conversation. This also means testing decisions persist across spec regenerations. P0.5's profile system already captures generic testing defaults (framework, mock boundaries, coverage) via auto-detect and presets — the bootstrap probes complement this by capturing project-specific testing architecture (integration boundaries, constraints) that the profile system doesn't cover. |
 | **Milestone gate triggered by area/boundary completion** | Integration tests only after ALL tasks complete | Per-milestone catches integration issues early, when the relevant code is fresh in context. Waiting until all tasks complete means debugging integration failures in code written many tasks ago. |
-| **Testing config in .clarity-loop.json** | Always-on, no config | Some projects (prototypes, spikes) don't need integration gates. Config provides an escape hatch without removing the feature. Defaults are on — testing is opt-out, not opt-in. |
+| **Testing config in .clarity-loop.json** | Always-on, no config | Some projects (prototypes, spikes) don't need integration gates. Config provides an escape hatch without removing the feature. Defaults are on — testing is opt-out, not opt-in. The `testing.*` config section sits alongside P0.5's `ux.*` section. Gate behavior also interacts with `ux.autoDefaults` via tier classification (integration gate is Tier 2, full-suite gate is Tier 1). |
 
 ## Risks
 
@@ -1071,7 +1112,7 @@ During merge, the reviewer should verify:
 | TEST_SPEC.md increases spec generation time | Medium | Low | Test spec is a parallel output from the same system doc read. Marginal cost — the heavy work (reading all system docs) is already done. |
 | Test specs become stale when impl specs change | Medium | Medium | Same staleness detection as impl specs — hash-based, in .spec-manifest.md. When specs are regenerated, TEST_SPEC.md regenerates too. Sync mode detects hash mismatches for test tasks. |
 | Integration test tasks slow down autopilot | Low | Low | Integration tests run per-milestone, not per-task. Amortized cost is low. Users can disable via `testing.integrationGate: false`. |
-| Test architecture decisions feel premature at bootstrap | Medium | Medium | Use sensible defaults (mock DB in unit, real in integration). Record defaults in DECISIONS.md — user can override at any time. Bootstrap questions are skip-able for project types that don't warrant them. |
+| Test architecture decisions feel premature at bootstrap | Medium | Medium | P0.5's profile system already provides sensible defaults via presets and auto-detect (mock DB in unit, real in integration). Bootstrap testing probes only ask about project-specific gaps the profile system can't cover. Record defaults in DECISIONS.md with category `testing` and source `[auto-default]` — user can override at any time. |
 | T-NNNT suffix convention conflicts with user-added tasks | Low | Low | The suffix is a convention, not enforced. User-added test tasks can use any ID. The convention only applies to spec-derived test tasks. |
 | Full-suite gate adds time before completion | Low | Low | Only runs once — after the last task. Benefits (catching regressions) far outweigh the one-time cost. Users can disable via `testing.fullSuiteGate: false`. |
 | Too many test tasks inflate TASKS.md | Medium | Low | Test tasks are proportional to implementation tasks and integration boundaries. For a typical project with 20 impl tasks: ~1 infrastructure + ~20 unit test + ~3-5 integration + ~2-3 contract = ~26-29 test tasks. The dependency graph keeps them organized. |
@@ -1134,3 +1175,9 @@ The research recommends addressing testing through Changes 8-11, which this prop
 implements. These changes are in Tier 1b (parallel to Tier 1 behavioral changes and
 Tier 1c security changes) because they primarily affect cl-implementer's spec generation,
 start mode, and autopilot — different pipeline stages than the design-phase changes in Tier 1.
+
+This proposal builds on P0.5 (UX_STREAMLINING) infrastructure: the decision flow protocol
+with `testing` category tags, the project profile system (which provides generic testing
+defaults via auto-detect and presets), tiered checkpoints (used to classify the milestone
+gate as Tier 2 and full-suite gate as Tier 1), and review style compatibility (test results
+respect `ux.reviewStyle`).

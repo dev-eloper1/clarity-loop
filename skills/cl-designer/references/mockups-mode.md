@@ -158,6 +158,11 @@ can parallelize screen generation — but carefully:
    feedback loop is inherently sequential per screen anyway. Parallelization helps most
    when you can batch the generation and then review sequentially.
 
+#### Step 3: Behavioral Walkthrough (Per Screen)
+
+After visual approval, run the behavioral walkthrough for each screen. For the full
+walkthrough process, read `references/behavioral-walkthrough.md`.
+
 ---
 
 ### Markdown Fallback
@@ -196,32 +201,19 @@ Present all screen specs as a set with a summary table. The user flags items nee
 changes rather than reviewing each screen sequentially. Same batch/serial/minimal review
 pattern as the Pencil path above applies here.
 
+#### Step 3: Behavioral Walkthrough (Per Screen)
+
+Same behavioral walkthrough process as the Pencil path. For the full walkthrough process,
+read `references/behavioral-walkthrough.md`. The only difference is that all states are
+described in structured text rather than generated as visual variants.
+
 ---
 
-#### Behavioral Walkthrough: Batch Mode
+#### Behavioral Walkthrough
 
-When `ux.reviewStyle` is `"batch"` (default), the behavioral walkthrough runs in
-generate-confirm mode instead of per-screen conversational mode:
-
-1. **Generate behavioral specs for all screens at once.** Use DECISIONS.md entries
-   to inform defaults (e.g., "error handling: toast notifications" becomes the default
-   error state for all screens).
-
-2. **Present the batch as a review table:**
-
-   | Screen | States Defined | Key Interactions | Nav Context | Content Notes |
-   |--------|---------------|------------------|-------------|---------------|
-   | Dashboard | default, empty, loading, error | View task, filter | `/dashboard`, auth | Empty: "Create your first task" |
-   | Task List | default, empty (filtered), loading | Add, edit, delete, bulk | `/tasks`, auth | Filtered empty: "No tasks match" |
-   | Settings | default, saving, error | Edit prefs, toggle theme | `/settings`, auth | -- |
-
-3. **Gather batch feedback:** "Dashboard empty state should have an illustration.
-   Task List needs an offline state. Rest looks good."
-
-4. **Revise flagged items.** Update the behavioral spec for specific screens.
-
-**When `ux.reviewStyle` is `"serial"`**: Run the full conversational walkthrough per
-screen. **Hybrid**: batch-approve most, serial walkthrough for 1-2 complex screens.
+After screen review, run the behavioral walkthrough. Read
+`references/behavioral-walkthrough.md` for the full process, including batch mode
+(generate-confirm, default), serial mode (conversational, opt-in), and hybrid approaches.
 
 ---
 
@@ -274,7 +266,9 @@ flowchart TD
 ### [Screen Name]
 
 - **Features**: [PRD feature list]
-- **Route**: [URL path]
+- **Route**: [URL path] — **Auth**: [required | optional | none] — **Back**: [browser back to previous | in-app to parent]
+- **Focus on arrival**: [element that receives focus, e.g., page heading, search input, first list item]
+- **State persistence**: [what's preserved when navigating away and returning: scroll position, filter state, form data, etc.]
 - **Design reference**: [.pen node ID | "markdown"]
 
 **Component Usage**:
@@ -284,6 +278,28 @@ flowchart TD
 
 **Layout Structure**:
 [Brief description of layout hierarchy]
+
+**Screen States**:
+| State | Trigger | Visual | Content | Components Used |
+|-------|---------|--------|---------|-----------------|
+| Default | Data loaded | [default mockup ref] | — | [primary components] |
+| Empty (first-use) | No data | [variant ref or "described"] | "[actual copy, e.g., Create your first task]" | EmptyState, Button |
+| Empty (filtered) | No filter matches | [variant ref or "described"] | "[actual copy, e.g., No tasks match your filters]" | EmptyState |
+| Loading | Fetch in progress | [variant ref or "described"] | — | Skeleton |
+| Error | Fetch failed | [variant ref or "described"] | "[actual copy, e.g., Couldn't load tasks. Try again?]" | ErrorBanner, Button |
+
+States that don't apply to this screen are omitted (not marked N/A).
+
+**Interaction Flows**:
+| User Action | Expected Behavior | Error Case | Accessibility |
+|-------------|-------------------|------------|---------------|
+| [action] | [what happens — be specific] | [what happens on failure] | [focus, ARIA, keyboard notes] |
+| [action] | [behavior] | [error behavior] | [a11y notes] |
+
+**Test Scenarios** (derived from screen states and interactions):
+- [scenario: expected outcome]
+- [scenario: expected outcome]
+- [scenario: expected outcome]
 
 **Responsive Behavior** (if applicable):
 | Breakpoint | Changes |
