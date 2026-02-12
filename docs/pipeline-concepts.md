@@ -89,6 +89,91 @@ Two entry formats: **full** (for complex decisions with options analysis) and **
 
 **Relationship to other decision surfaces**: Research docs and proposals have lightweight local decision tables. Those capture decisions in context. DECISIONS.md is the system-wide index — decisions propagate here when they could affect other skills, future research, or implementation.
 
+#### Category Tags
+
+Every decision logged to DECISIONS.md includes a category tag for cross-skill lookup.
+Standard categories:
+
+| Category | Scope | Consumed By |
+|----------|-------|-------------|
+| `auth` | Authentication strategy | spec-gen, implementer |
+| `authorization` | Authorization model | spec-gen, implementer |
+| `errors` | Error handling, display, format | designer (behavioral), spec-gen, implementer |
+| `testing` | Framework, boundaries, coverage | spec-gen (TEST_SPEC.md), implementer |
+| `api-style` | Conventions, pagination, naming | spec-gen, implementer |
+| `accessibility` | WCAG level, interaction mode | designer, implementer |
+| `security` | Depth, compliance, dependency policy | spec-gen (SECURITY_SPEC.md), implementer |
+| `content` | Tone, empty states | designer (behavioral walkthrough) |
+| `resilience` | Offline, loading, retry | designer, spec-gen |
+| `type-sharing` | Cross-boundary types | spec-gen, implementer |
+| `dependencies` | Policy, governance | implementer (supply chain) |
+| `responsive` | Viewports, breakpoints | designer |
+| `design-direction` | Aesthetic, colors, typography | designer (all modes) |
+| `spec-format` | Spec output format | spec-gen |
+| `checkpoint-level` | Autopilot oversight | implementer |
+
+Skills read DECISIONS.md at session start. Before asking any question that maps to a
+category, check for an existing decision. If found, use it as the default. If the
+context has genuinely changed, reference the existing decision when asking.
+
+Categories are convention, not schema -- new categories can be added. The standard
+list covers the cross-cutting concerns identified across all four skills.
+
+**Multi-category decisions**: Many decisions span multiple categories (e.g., "JWT for
+API authentication" is both `auth` and `api-style`). The Category field supports
+comma-separated values. Cross-skill lookup matches on ANY category in the list, so
+a decision tagged `auth, api-style` is found whether a skill searches for `auth` or
+`api-style`.
+
+**Decision entry format with category tag:**
+
+```markdown
+### D-NNN: [Decision Title]
+**Category**: [category tag, category tag, ...]
+**Date**: YYYY-MM-DD
+**Source**: [auto-detected | research-generated | preset:Web Application | user override | auto-default | from discovery | bootstrap | research:R-NNN | implementation:T-NNN]
+**Decision**: [What was decided]
+**Rationale**: [Why -- one sentence is fine for compact entries]
+```
+
+The `Source` field enables audit: filter by `auto-default` to review all automated
+decisions, filter by `preset:*` to see which defaults came from a preset, or
+`auto-detected` to see what was derived from the codebase.
+
+**Precedence rules for conflicting sources:**
+
+When generating the defaults sheet during bootstrap, multiple sources may produce
+conflicting values for the same category (e.g., auto-detect finds Vitest but an
+existing DECISIONS.md entry says Jest). Resolution order:
+
+1. **Existing DECISIONS.md entries** (explicit prior human decisions) -- always win
+2. **Auto-detected from code** (Level 1) -- wins over research and presets
+3. **Research-generated** (Level 2) -- wins over presets
+4. **Preset defaults** (Level 3) -- lowest priority
+
+When a higher-priority source overrides a lower one, the defaults sheet shows both:
+`"Testing: Vitest [auto-detected] | Prior decision D-012: Jest [CONFLICT — resolve?]"`
+The user resolves conflicts during defaults sheet review.
+
+When an existing DECISIONS.md entry conflicts with auto-detect, the existing entry
+wins (it represents a deliberate prior choice), but auto-detect flags the conflict
+so the user can update the decision if circumstances changed.
+
+**Decision conflict resolution (supersession):**
+
+When a later decision overrides an earlier one in the same category:
+1. The new entry is written with a supersession note: `**Supersedes**: D-NNN`
+2. The original entry is marked: `**Status**: Superseded by D-MMM`
+3. The user is notified at the point of override: "Overriding D-NNN ([category]:
+   [old value]) with [new value]. Reason: [context]."
+
+This ensures the decision log is auditable -- no silent overwrites. The original
+rationale is preserved for future reference.
+
+**Cold start (no DECISIONS.md):** If DECISIONS.md doesn't exist, decision flow
+lookups return empty (all decisions are new). The defaults sheet becomes the first
+bulk write to DECISIONS.md. This is the expected path for new projects.
+
 ### RESEARCH_LEDGER.md
 
 Tracks all research cycles.
@@ -197,6 +282,12 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
   "docsRoot": "docs",
   "implementer": {
     "checkpoint": "every"
+  },
+  "ux": {
+    "reviewStyle": "batch",
+    "profileMode": "auto",
+    "autoDefaults": "tier3",
+    "parallelGeneration": true
   }
 }
 ```
@@ -206,6 +297,19 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
 | `version` | `1` | Config format version |
 | `docsRoot` | `"docs"` | Base path for all documentation directories |
 | `implementer.checkpoint` | `"every"` | Autopilot oversight level: `"none"`, `"phase"`, a number (every N tasks), or `"every"` (task-by-task) |
+| `ux.reviewStyle` | `"batch"` | How artifacts are presented for review: `"batch"` (generate all, review set), `"serial"` (one at a time), `"minimal"` (auto-approve with summary) |
+| `ux.profileMode` | `"auto"` | Project profile detection mode: `"auto"` (auto-detect from code, research gaps, presets as fallback), `"preset"` (skip auto-detect, go straight to presets), `"off"` (skip profile system, go freeform) |
+| `ux.autoDefaults` | `"tier3"` | Which checkpoint tiers auto-proceed: `"none"` (most conservative), `"tier3"` (default), `"tier2-3"` (most aggressive) |
+| `ux.parallelGeneration` | `true` | Pre-generate downstream work while user reviews current step |
+
+**Invalid or missing values**: If a `ux.*` key is set to an unrecognized value, fall back to
+its default (e.g., unknown `ux.reviewStyle` → `"batch"`, unknown `ux.autoDefaults` → `"tier3"`).
+Log a warning: "Unrecognized value '[value]' for [key]. Using default '[default]'."
+
+**Tier threshold logic for `ux.autoDefaults`**: `"none"` = all tiers require explicit review.
+`"tier3"` = Tier 3 items auto-proceed, Tiers 1-2 require review. `"tier2-3"` = Tiers 2 and 3
+auto-proceed, only Tier 1 requires review. The comparison is: if an item's tier number ≥ the
+threshold implied by the setting, it auto-proceeds.
 
 All paths derive from `docsRoot`:
 - `{docsRoot}/system/` — protected system docs
@@ -221,6 +325,28 @@ All paths derive from `docsRoot`:
 If your project already uses `docs/system/` for other purposes. The [init script](hooks.md#init-script) detects collisions and prompts you automatically.
 
 Commit `.clarity-loop.json` to git so all team members use the same docs root.
+
+---
+
+## Warmth Gradient
+
+The pipeline's interaction style shifts gradually from warm to efficient:
+
+| Pipeline Stage | Warmth | Interaction Style |
+|---------------|--------|-------------------|
+| Bootstrap, Research | Warm | Open-ended questions, exploration, summarize understanding. The user is discovering what they want. Don't rush. |
+| Design Setup | Warm-Medium | Conversational discovery with generate-confirm for preferences when prior input is sufficient |
+| Tokens, Mockups | Medium | Batch review, generate-confirm, focused feedback. Tables over conversation. |
+| Spec Generation | Medium-Cool | Generate-confirm for format, batch gate checks. Minimal conversation. |
+| Implementation | Cool | Task-by-task or autopilot, tiered checkpoints, no exploratory conversation |
+| Verification, Review | Cool | Report output, pass/fail, decision-only interaction |
+
+Early stages are exploratory -- the user is figuring out what they want. Later stages
+are deterministic -- the user knows what they want and wants it built. Match the
+interaction style to the decision-making mode.
+
+**This is a guideline, not a constraint.** If a user wants to have a detailed discussion
+during implementation, have one. The gradient describes the default energy, not a rule.
 
 ---
 

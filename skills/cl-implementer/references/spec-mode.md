@@ -46,6 +46,22 @@ Before generating anything, verify the pipeline is clear:
 If all clear, proceed. If warnings were issued and the user confirms, proceed with a note
 in the spec manifest about the caveat.
 
+**Batch presentation**: Present all gate check results as a single status table rather
+than sequential warnings:
+
+| Check | Status | Details |
+|-------|--------|---------|
+| Active research | Clear / Warning | [details if warning] |
+| In-flight proposals | Clear / Warning | [details] |
+| Unverified merges | Clear / Warning | [details] |
+| Context freshness | Clear / Advisory | [details] |
+
+"Gate check complete. [N issues found / All clear]. Proceed?"
+
+The user makes one go/no-go decision for the batch. If any check is a hard blocker
+(e.g., unverified merge), call it out prominently: "1 blocker: unverified merge for
+P-003 must be resolved before spec generation. 2 advisories: context staleness."
+
 ### Step 2: Read All System Docs
 
 This is a heavy read — dispatch subagents in parallel to avoid context pressure:
@@ -122,6 +138,12 @@ After generating specs:
 1. Update `{docsRoot}/STATUS.md` — set "Specs generated" to "Yes" with date
 2. Tell the user: "Specs generated in `{docsRoot}/specs/`. Run `/cl-implementer spec-review`
    for a cross-spec consistency check before starting implementation."
+
+**Parallelization hint**: While the user reviews the spec format suggestion (Step 3),
+pre-read all system docs in parallel (Step 2) using subagent dispatch. If the user
+confirms the format, spec generation begins immediately with docs already loaded.
+Invalidation risk: Low -- format change only affects output structure, not content
+gathering.
 
 ### Guidance
 

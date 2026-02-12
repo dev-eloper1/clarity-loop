@@ -300,6 +300,24 @@ For both:
 - Clarify scope boundaries. Research without boundaries produces unfocused docs.
 - Summarize your understanding periodically so the user can correct course.
 
+**Generate-confirm for scope**: After enough conversation to understand the problem,
+generate a scope summary table (in-scope, out-of-scope, constraints, key questions to
+answer) pre-populated from system doc analysis + triage context. Present it for the user
+to confirm or adjust, rather than asking each scope boundary as a separate question. The
+conversation leading up to scope definition should remain warm and exploratory; the scope
+summary itself is a generate-confirm checkpoint.
+
+| Scope Dimension | Proposed | Source | Confirm? |
+|-----------------|----------|--------|----------|
+| In scope | [inferred from conversation] | Discussion | |
+| Out of scope | [inferred from constraints] | System docs + discussion | |
+| Constraints | [from system doc analysis] | Manifest read | |
+| Key questions | [from problem analysis] | Discussion | |
+| Success criteria | [from user goals] | Discussion | |
+
+The user reviews and adjusts: "In-scope is right, but add X to out-of-scope and remove
+constraint Y." One response instead of 5+ question-answer pairs.
+
 **Don't move to Phase 3 until the user confirms:**
 - The research scope is clear
 - The questions to answer are well-defined
@@ -498,3 +516,26 @@ version, updates or versions the context files, and the cl-implementer retries.
   headings with line ranges, and cross-references. Read it first, then do targeted reads
   of only the sections you need. Don't read every system doc in full unless you're doing
   a Level 3 exploratory deep-dive.
+
+- **Decision flow: read before asking.** Before asking the user any question, check
+  DECISIONS.md for an existing decision in the same category. If found, use it. If the
+  existing decision doesn't fully answer your question, reference it: "DECISIONS.md says
+  error handling uses toast notifications (from bootstrap). For this specific context, should
+  I use the same pattern or something different?" Only re-ask if the context is genuinely
+  different from when the original decision was made.
+
+  Decision categories: `auth`, `authorization`, `errors`, `testing`, `api-style`,
+  `accessibility`, `security`, `content`, `resilience`, `type-sharing`, `dependencies`,
+  `responsive`, `design-direction`, `spec-format`, `checkpoint-level`.
+
+  Each decision in DECISIONS.md has a category tag. When logging new decisions, always
+  include the category so downstream modes can find them.
+
+- **Warmth gradient.** Early in the pipeline (bootstrap, research, design setup), the
+  interaction should be warm and conversational -- the user is figuring out what they want.
+  Ask open-ended questions, explore together, summarize understanding. Later in the
+  pipeline (spec generation, implementation, verification), the interaction should be
+  efficient and mechanical -- the user knows what they want and wants it built. Use
+  generate-confirm, present tables, minimize conversational overhead. The transition is
+  gradual: bootstrap is the warmest, implementation is the coolest. Design sits in the
+  middle -- warm during setup discovery, efficient during tokens and mockups review.

@@ -56,6 +56,23 @@ Run these checks before generating anything:
      library knowledge during implementation. Run `/cl-researcher context` to create them,
      or continue without. [Continue/Create context]"
 
+**Batch presentation**: Present all pre-check results as a single status table:
+
+| Check | Status | Action Needed |
+|-------|--------|--------------|
+| Specs exist | Pass | -- |
+| Spec review | Advisory | Not reviewed yet (recommend `/cl-implementer spec-review`) |
+| Git repository | Pass / Action | [init or skip] |
+| Spec coverage | Pass / Gaps | [list gaps with recommended action per gap] |
+| Context freshness | Pass / Stale | [list stale libraries with recommended action] |
+
+"Pre-checks complete. [N items need attention]. Address now or proceed?"
+
+For each gap or stale item, include a recommended action inline so the user can approve
+the batch in one response: "Specs not reviewed: recommend running spec-review first but
+not blocking. Git repo: initialized. Context for drizzle-orm: stale (7 days), recommend
+refresh. Proceed with these defaults, or adjust?"
+
 ---
 
 ### Step 2: Read All Spec Artifacts
@@ -267,6 +284,11 @@ Set up `blockedBy` relationships matching the dependency graph.
 This is the dual-write pattern: TASKS.md is the persistent source of truth (survives
 sessions, crashes, context compression). Claude Code tasks are the active session view
 (progress spinner, status display). Every state change must update both.
+
+**Parallelization hint**: While the user reviews the task list (Step 5), pre-populate
+Claude Code tasks (Step 7) for tasks that are dependency-free. If the user reorders,
+update the task dependencies but the basic task entries are already created.
+Invalidation risk: Medium -- user may split/merge/reorder tasks.
 
 ---
 

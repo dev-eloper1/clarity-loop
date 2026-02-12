@@ -90,19 +90,42 @@ Wait for user confirmation.
    - Brief walkthrough of the layout: "Top bar with nav, sidebar with filters, main area
      showing a card grid of tasks"
 
-**Feedback loop per screen:**
-- **Approved**: Record in DESIGN_PROGRESS.md with screenshot reference, move to next
-- **Needs changes**: Note specific feedback, apply updates via `batch_design`, re-screenshot
-- **Major rework**: Discuss layout direction before regenerating
-- Record all iterations in DESIGN_PROGRESS.md
+#### Screen Review
 
-**Don't overwhelm the user.** Present one screen at a time. Explain the layout choices
-briefly — why things are positioned where they are, what the user flow looks like. The user
-can't evaluate a screen they don't understand.
+**Check the review style** from `.clarity-loop.json` (`ux.reviewStyle`). Default is
+`"batch"`. If `"serial"`, use the serial path below. If the value is unrecognized, fall
+back to `"batch"` and warn the user.
 
-**Batch efficiency**: For screens that share a layout pattern (e.g., list views, form pages),
-generate one, get approval on the pattern, then apply it to similar screens with less
-iteration.
+##### Batch Review (Default)
+
+Generate ALL screens before presenting any for review:
+
+1. **Generate all screens** (Step 2 per-screen generation above). Run `snapshot_layout`
+   after each `batch_design` call. Fix overlaps immediately but don't stop for user
+   feedback.
+
+2. **Present the batch.** Take one screenshot per screen group (feature area), or a
+   grid if the screen count is small (<=6). Present with a summary:
+
+   | Screen | PRD Features | Components Used | Screenshots |
+   |--------|-------------|-----------------|-------------|
+   | Dashboard | Task overview, metrics | Card, Badge, Nav | [screenshot link] |
+   | Task List | CRUD, filtering, bulk | Card, Button, Select, Input | [screenshot link] |
+   | Settings | User prefs, theme | Input, Select, Toggle | [screenshot link] |
+
+   "Here are all [N] screens. Review the layouts and flag any that need changes."
+
+3. **Gather batch feedback.** User responds: "Dashboard card layout is wrong, Settings
+   page needs more spacing, rest looks good."
+
+4. **Revise flagged screens.** Discuss the specific issue, apply updates, re-screenshot.
+
+5. **Record** batch-approved and revised screens in DESIGN_PROGRESS.md.
+
+##### Serial Review (Opt-in)
+
+When `ux.reviewStyle` is `"serial"`: present one screen at a time with the existing
+feedback loop (Approved / Needs changes / Major rework).
 
 **Parallel screen generation** (for projects with many screens):
 
@@ -169,7 +192,36 @@ For each screen, produce a structured description:
 2. [User action] → [result]
 ```
 
-Present each screen spec to the user for feedback.
+Present all screen specs as a set with a summary table. The user flags items needing
+changes rather than reviewing each screen sequentially. Same batch/serial/minimal review
+pattern as the Pencil path above applies here.
+
+---
+
+#### Behavioral Walkthrough: Batch Mode
+
+When `ux.reviewStyle` is `"batch"` (default), the behavioral walkthrough runs in
+generate-confirm mode instead of per-screen conversational mode:
+
+1. **Generate behavioral specs for all screens at once.** Use DECISIONS.md entries
+   to inform defaults (e.g., "error handling: toast notifications" becomes the default
+   error state for all screens).
+
+2. **Present the batch as a review table:**
+
+   | Screen | States Defined | Key Interactions | Nav Context | Content Notes |
+   |--------|---------------|------------------|-------------|---------------|
+   | Dashboard | default, empty, loading, error | View task, filter | `/dashboard`, auth | Empty: "Create your first task" |
+   | Task List | default, empty (filtered), loading | Add, edit, delete, bulk | `/tasks`, auth | Filtered empty: "No tasks match" |
+   | Settings | default, saving, error | Edit prefs, toggle theme | `/settings`, auth | -- |
+
+3. **Gather batch feedback:** "Dashboard empty state should have an illustration.
+   Task List needs an offline state. Rest looks good."
+
+4. **Revise flagged items.** Update the behavioral spec for specific screens.
+
+**When `ux.reviewStyle` is `"serial"`**: Run the full conversational walkthrough per
+screen. **Hybrid**: batch-approve most, serial walkthrough for 1-2 complex screens.
 
 ---
 
@@ -249,6 +301,21 @@ flowchart TD
 | Card | Dashboard, Task List | — |
 | [unused component] | — | Not used in any screen |
 ```
+
+### Parallelization Hints
+
+When `ux.parallelGeneration` is `true` (default):
+
+| User is reviewing... | Skill can pre-generate... | Invalidation risk |
+|---------------------|--------------------------|-------------------|
+| Screen inventory confirmation | Start generating confirmed screens | Low -- inventory is usually approved as-is |
+| Screen batch (visual review) | Behavioral specs for all screens | Medium -- screen changes may affect behavioral specs |
+| Behavioral spec batch review | UI_SCREENS.md output file | Low |
+| Build plan review | Spec generation prep (read all system docs) | Medium -- build plan changes may affect spec approach |
+
+**Key opportunity**: While the user reviews the visual mockup batch, pre-generate ALL
+behavioral specs. This is the highest-value parallelization -- behavioral specs are
+derived from DECISIONS.md + PRD + mockups, and the mockup batch is rarely rejected wholesale.
 
 ### Checklist Gate
 

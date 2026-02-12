@@ -152,6 +152,18 @@ After the task (or parallel group) completes:
 
 When stopping at a checkpoint, present a summary (see Step 4).
 
+**Tier awareness at checkpoints**: When presenting a checkpoint summary (Step 4),
+categorize items by tier:
+- **Tier 1 items** (must-confirm): Always present prominently. These are the items
+  that justify the checkpoint stop.
+- **Tier 2 items** (batch review): Present as a summary table. The user reviews the
+  batch and flags specific items.
+- **Tier 3 items** (auto-proceeded): Listed in a collapsed "auto-decisions" section.
+  The user can expand to review but doesn't need to.
+
+This prevents checkpoint summaries from being overwhelmed by low-importance items
+when the user really needs to focus on the 1-2 decisions that matter.
+
 ---
 
 ### Step 4: Summary Report

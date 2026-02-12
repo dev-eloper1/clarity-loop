@@ -151,8 +151,10 @@ library. Two paths based on the MCP detected during setup: Pencil generates from
 markdown fallback documents everything as structured specs. Both paths produce
 DESIGN_SYSTEM.md.
 
-The core loop for Pencil path: generate → screenshot → user feedback → refine. Each component
-must be visually confirmed before moving on.
+The default review style is **batch**: all components are generated, then presented as a set
+for the user to review and flag items for revision. Serial review (one component at a time)
+is available via the `ux.reviewStyle` config. For Pencil path, the core loop is generate all
+then batch screenshot then batch feedback then revise flagged items.
 
 ---
 
@@ -163,6 +165,10 @@ When running mockups mode, read `references/mockups-mode.md` and follow its proc
 Mockups mode creates screen-level designs using the design system components from tokens mode.
 Pencil generates layouts, markdown fallback documents layout hierarchy. Both paths produce
 UI_SCREENS.md.
+
+The default review style is **batch**: all screens are generated, then presented as a set.
+The user flags specific screens for revision. Serial review (one screen at a time) is
+available via `ux.reviewStyle` config.
 
 ---
 
@@ -289,3 +295,9 @@ Produces DESIGN_TASKS.md.
 
 - **Design review is separate.** This skill creates; `/cl-reviewer design-review` validates.
   Don't self-review — the separation of creation and validation is intentional.
+
+- **Decision flow: read before asking.** Before asking the user any design question,
+  check DECISIONS.md for existing decisions in the relevant category (`design-direction`,
+  `accessibility`, `errors`, `content`, `responsive`). Use existing decisions as defaults.
+  When generating batch behavioral specs, use DECISIONS.md entries to derive defaults for
+  all screens simultaneously rather than asking per-screen questions.

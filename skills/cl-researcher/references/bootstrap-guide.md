@@ -55,17 +55,188 @@ Have a genuine conversation with the user to understand the project:
 - What are the key components or subsystems?
 - What's the tech stack?
 
-**Then dig deeper:**
+**Then dig deeper (conversational):**
 - What are the main workflows or user journeys?
 - Are there external integrations or dependencies?
 - What are the key architectural decisions already made?
-- Are there performance, security, or compliance requirements?
 - What's the scope? What's explicitly out of scope?
 
-**Throughout:**
-- Summarize your understanding periodically
-- Surface any contradictions or gaps
-- Don't rush — the quality of initial docs depends on getting the picture right
+Continue the conversation naturally. These questions establish the project's identity.
+Don't rush -- the quality of initial docs depends on getting the picture right.
+
+#### Step 2b: Project Profile Detection
+
+After you have a solid understanding of the project fundamentals (typically after 3-5
+exchanges), generate a project profile using the three-level system. The
+`ux.profileMode` config controls behavior (default: `"auto"`).
+
+##### Level 1: Auto-Detect (brownfield / existing codebase)
+
+If the project has existing code, scan it to derive a profile automatically. No
+questions needed for decisions already made in code:
+
+| Signal | Detection Method | Example |
+|--------|-----------------|---------|
+| Package manager | `package.json`, `requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`, `build.gradle`, `Gemfile`, `composer.json`, `pyproject.toml` | Node.js, Python, Rust, Go, Java, Ruby, PHP |
+| Framework | Dependencies in manifest (Next.js, FastAPI, Gin, Actix, Spring Boot, Django, Rails, Laravel, etc.) | Next.js 14 detected from package.json |
+| Testing | Test runner config (`vitest.config`, `jest.config`, `pytest.ini`, `.rspec`), test directories, test file patterns | Vitest with existing test suite |
+| Auth | Auth middleware, JWT libraries, session config, OAuth setup, passport config | JWT via `jsonwebtoken` package |
+| Error handling | Existing error classes, error middleware, error response shapes | Custom AppError class with structured responses |
+| API style | Route patterns, REST conventions, GraphQL schema, tRPC routers | REST with `/api/v1/` prefix |
+| Linting/formatting | ESLint, Prettier, Black, Rustfmt, gofmt configs | ESLint + Prettier configured |
+| Database | ORM config, migration directories, schema files | Drizzle ORM with PostgreSQL |
+| UI framework | React, Vue, Svelte, Angular from dependencies | React 18 with Next.js |
+| Styling | Tailwind config, CSS modules, styled-components, Sass | Tailwind CSS v4 |
+| CI/CD | `.github/workflows`, `Jenkinsfile`, `.gitlab-ci.yml` | GitHub Actions |
+| Containerization | `Dockerfile`, `docker-compose.yml` | Docker with compose |
+
+Present the detected profile as a **Project Profile** table:
+
+"I scanned your codebase and detected the following. Confirm or override:"
+
+| Detected | Value | Confidence | Override? |
+|----------|-------|------------|-----------|
+| Language | TypeScript (Node.js) | High -- package.json | |
+| Framework | Next.js 14 | High -- dependency | |
+| Testing | Vitest | High -- vitest.config.ts exists | |
+| Auth | JWT (jsonwebtoken) | Medium -- package present, no middleware found | |
+| Database | PostgreSQL via Drizzle | High -- drizzle.config.ts + migrations/ | |
+| API style | REST, /api/ routes | Medium -- inferred from route files | |
+| Linting | ESLint + Prettier | High -- configs exist | |
+| UI | React 18 | High -- dependency | |
+| Styling | Tailwind CSS v4 | High -- tailwind.config exists | |
+
+Auto-detect produces decisions with source: `[auto-detected]` in DECISIONS.md.
+
+**Conflicting signals within a category**: When auto-detect finds multiple values for the
+same category (e.g., both React and Vue in dependencies, both Jest and Vitest configs),
+present all detected values with their confidence levels and let the user resolve:
+
+| Category | Conflict | Value A | Value B | Recommendation |
+|----------|----------|---------|---------|----------------|
+| Framework | Two frameworks detected | React 18 (High -- package.json) | Vue 3 (Medium -- vue.config.js) | Pick primary; note secondary if used in specific routes |
+
+Do not silently pick one. Surface the conflict in the defaults sheet so the user makes the
+call. If confidence levels differ significantly (High vs Low), recommend the higher-confidence
+value but still show both.
+
+After showing the detected profile, check for **gaps** -- categories the pipeline needs
+that auto-detect couldn't determine (error handling strategy, security depth, content
+tone, accessibility level, etc.). If gaps exist, fill them via Level 2 (quick research)
+or ask the user directly.
+
+##### Level 2: Quick Research (new or complex projects)
+
+When auto-detect finds little (new project) or the project is complex, run a mini
+research cycle:
+
+1. Analyze the PRD, architecture doc, and tech stack constraints
+2. Generate a custom profile based on what the project actually needs
+3. Not limited to predefined categories -- if the project needs something unusual
+   (HIPAA compliance, real-time processing, embedded constraints, ML pipeline stages,
+   data governance), the profile captures it
+
+"Based on your PRD and architecture docs, here's the project profile I'd recommend:"
+
+| Category | Decision | Value | Source | Override? |
+|----------|----------|-------|--------|-----------|
+| Error handling | Display style | Toast notifications + inline for forms | PRD: "user-friendly error messages" | |
+| Auth | Strategy | OAuth 2.0 + JWT | Architecture doc: "SSO required" | |
+| Testing | Framework | Vitest | Tech stack: Node.js + TypeScript | |
+| Security | Depth | High (HIPAA) | PRD: "healthcare data" | |
+| ... | ... | ... | ... | |
+
+Quick research produces decisions with source: `[research-generated]` in DECISIONS.md.
+
+##### Level 3: Presets (quick start, optional)
+
+For brand-new projects without a PRD or existing code, or when the user wants a fast
+start, offer language/framework-agnostic presets:
+
+"Want to start from a preset? Pick one and I'll pre-fill defaults you can customize:"
+
+- **Web Application** -- full-stack, any framework (auth, responsive UI, data management)
+- **API / Backend Service** -- any language (no UI, structured errors, API conventions)
+- **CLI / Desktop Tool** -- any language (no auth, stderr errors, focused functionality)
+- **Library / Package** -- any language (no UI, comprehensive testing, API design)
+- **Prototype / Experiment** -- minimal everything (speed over rigor)
+
+See the Project Profile Presets section at the end of this file for preset details.
+
+Presets produce decisions with source: `[preset: Web Application]` (or whichever
+preset) in DECISIONS.md.
+
+##### Freeform (always available)
+
+At any point, the user can:
+- Skip all profile generation entirely ("I'll answer questions manually")
+- Override any individual decision in the detected/generated/preset profile
+- Mix auto-detected values with manual overrides or preset defaults
+
+If `ux.profileMode` is `"off"`, skip profile detection entirely and go straight to
+freeform. The user fills in decisions through conversation.
+
+#### Step 2c: Defaults Sheet (Generate-Confirm Pattern)
+
+Whether using auto-detect, quick research, a preset, or going freeform, generate a
+**defaults sheet** -- a table of all cross-cutting decisions the pipeline needs.
+Present it for batch review:
+
+"Here's the proposed configuration for your project. Review and mark anything you want
+to change:"
+
+| Category | Decision | Value | Source | Override? |
+|----------|----------|-------|--------|-----------|
+| Error handling | Error display style | Toast notifications | [auto-detected] | |
+| Error handling | Error format | Structured `{code, message, details}` | [research-generated] | |
+| Auth | Strategy | JWT with refresh tokens | [auto-detected] | |
+| Auth | Authorization model | Role-based | [research-generated] | |
+| Testing | Framework | Vitest | [auto-detected] | |
+| Testing | Test data approach | Factories | [preset: Web Application] | |
+| Testing | Mock boundaries | Mock DB in unit, real in integration | [research-generated] | |
+| Testing | Coverage expectation | Business logic + integration boundaries | [preset: Web Application] | |
+| API style | Convention | REST, cursor pagination | [auto-detected] | |
+| API style | Response envelope | `{data, pagination}` | [research-generated] | |
+| API style | Naming | camelCase JSON, kebab-case URLs | [auto-detected] | |
+| Security | Depth | Standard (generates SECURITY_SPEC.md) | [research-generated] | |
+| Security | Compliance | None specified | [confirm or specify] | |
+| Security | Dependency policy | Advisory (warn on CVEs, don't block) | [research-generated] | |
+| Accessibility | Level | WCAG 2.1 AA | [preset: Web Application] | |
+| Accessibility | Interaction mode | Mouse-first with keyboard support | [auto-detected] | |
+| Content | Tone | Professional, concise | [research-generated] | |
+| Content | Empty states | Onboarding CTAs | [preset: Web Application] | |
+| Resilience | Offline handling | Not applicable (server-rendered) | [research-generated] | |
+| Resilience | Loading states | Show loading indicators | [preset: Web Application] | |
+| Type sharing | Strategy | Generated from API spec | [research-generated] | |
+| Target devices | Viewports | Desktop + mobile responsive | [auto-detected] | |
+
+**Source column shows provenance.** Each value traces back to its origin:
+`[auto-detected]`, `[research-generated]`, `[preset: X]`, `[user override]`, or
+`[from discovery]`. This transparency lets the user know which defaults are
+evidence-based (auto-detected from code) vs inferred (research-generated) vs
+generic (preset).
+
+**Not every row applies to every project.** Omit rows that don't apply (a CLI tool
+doesn't need accessibility level or empty state strategy). The profile determines
+which rows appear; freeform includes all potentially relevant rows.
+
+**The user reviews and responds.** Typical responses:
+- "Looks good" -- all defaults accepted. Record all in DECISIONS.md.
+- "Change pagination to offset-based, bump security to strict, rest is fine" -- update
+  the specified rows, record all in DECISIONS.md.
+- "Let me think about auth -- proceed with everything else" -- record decided items,
+  mark auth as `[DEFERRED]` in DECISIONS.md. The pipeline proceeds; auth decisions
+  will be asked again when needed (during spec generation).
+
+**After confirmation**, record all decisions to `docs/DECISIONS.md` with source
+attribution (`[auto-detected]`, `[research-generated]`, `[preset: X]`, `[user override]`,
+`[from discovery]`, or `[DEFERRED]`) and the appropriate category tag. Use compact
+Decision entries -- the defaults sheet IS the rationale.
+
+**Warmth note**: This step should feel like reviewing a menu, not filling out a tax
+form. Present the table with brief explanations: "I've pre-filled based on what I
+detected in your codebase and PRD. The important ones to look at are auth strategy
+and security depth -- the rest are sensible defaults you can always change later."
 
 #### Step 3: Suggest Initial Doc Set
 
@@ -276,3 +447,200 @@ provides concrete details that a pure greenfield bootstrap wouldn't have:
   Existing docs might be outdated, wrong, or reflect abandoned plans.
 - **Don't over-document.** 3-5 well-written system docs are better than 15 stubs. Start
   small, expand through the pipeline.
+
+---
+
+### Project Profile System Reference
+
+The project profile system has three levels that work together. Auto-detect runs first
+(if there's code), quick research fills gaps, and presets offer a starting point for
+greenfield projects. All three are optional -- the user can always go freeform.
+
+#### Auto-Detect Signal Reference
+
+When scanning an existing codebase, look for these signals. Each detection produces
+a decision with source `[auto-detected]` and the specific evidence (e.g., "detected
+from package.json dependency: next@14.2.0").
+
+| Signal Category | Files to Scan | What to Extract |
+|----------------|--------------|-----------------|
+| **Language / Runtime** | `package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pom.xml`, `build.gradle`, `Gemfile`, `composer.json`, `*.csproj` | Primary language, runtime version, module system |
+| **Framework** | Dependency manifests, import statements, config files | Framework name and version (Next.js, FastAPI, Gin, Actix, Spring Boot, Django, Rails, Laravel, Phoenix, etc.) |
+| **Testing** | `vitest.config.*`, `jest.config.*`, `pytest.ini`, `setup.cfg [tool:pytest]`, `.rspec`, `*_test.go`, `**/*.test.*`, `**/*.spec.*`, `test/`, `tests/`, `__tests__/` | Test runner, test file patterns, existing test count, coverage config |
+| **Auth** | Auth middleware files, JWT/session/OAuth libraries in deps, passport config, auth route handlers | Auth strategy, token type, session management |
+| **Error handling** | Custom error classes, error middleware, global error handlers, error response shapes in route handlers | Error format, display strategy, error hierarchy |
+| **API style** | Route files, controller patterns, GraphQL schema, tRPC router, OpenAPI spec, REST conventions | API paradigm, URL patterns, response shapes, pagination style |
+| **Linting / Formatting** | `.eslintrc*`, `.prettierrc*`, `pyproject.toml [tool.black]`, `rustfmt.toml`, `.editorconfig`, `biome.json` | Code style rules, formatting config |
+| **Database** | ORM config, migration directories, schema files, connection strings in config | Database type, ORM/query builder, migration tool |
+| **UI framework** | Framework-specific imports/components in source files, dependencies | React, Vue, Svelte, Angular, Solid, etc. + version |
+| **Styling** | `tailwind.config.*`, CSS module files, styled-components usage, Sass/SCSS files, `postcss.config.*` | Styling approach, design token system |
+| **CI/CD** | `.github/workflows/`, `Jenkinsfile`, `.gitlab-ci.yml`, `.circleci/`, `bitbucket-pipelines.yml` | CI provider, pipeline stages, deploy targets |
+| **Containerization** | `Dockerfile`, `docker-compose.yml`, `.dockerignore` | Container setup, service topology |
+| **Monorepo** | `pnpm-workspace.yaml`, `lerna.json`, `nx.json`, `turbo.json`, `packages/`, `apps/` | Monorepo tool, workspace layout |
+
+**Confidence levels**: High (config file exists with explicit values), Medium (inferred
+from patterns or indirect evidence), Low (guessed from conventions). Show confidence
+in the profile table so the user knows which detections to verify.
+
+**What auto-detect CANNOT determine**: Business logic decisions (error display
+strategy for new features, auth model for new user types), quality targets (coverage
+expectations, security depth), and design preferences (content tone, accessibility
+level). These gaps are filled by Level 2 (quick research) or direct user input.
+
+#### Quick Research Profile Generation
+
+When auto-detect produces an incomplete profile (new project, or existing project
+with gaps), run a mini research cycle:
+
+1. **Read available context**: PRD, architecture doc, tech stack decisions in
+   DECISIONS.md, any existing system docs
+2. **Analyze requirements**: Extract implicit decisions from requirements (e.g.,
+   "healthcare data" implies HIPAA compliance, "real-time collaboration" implies
+   WebSocket/SSE, "offline-first" implies service workers + sync)
+3. **Generate custom profile**: Create profile entries for categories relevant to
+   THIS specific project -- not limited to predefined lists
+4. **Present with rationale**: Each generated value includes the source document
+   and reasoning so the user can evaluate the recommendation
+
+Quick research is particularly valuable for:
+- **Domain-specific requirements**: HIPAA, PCI-DSS, GDPR, SOC2, FedRAMP
+- **Unusual architectures**: Event sourcing, CQRS, microservices, serverless, edge
+- **Non-web projects**: ML pipelines, data engineering, embedded systems, game dev
+- **Complex integrations**: Multi-service auth, federated GraphQL, message queues
+
+Generated decisions use source: `[research-generated]` with the specific doc and
+reasoning referenced.
+
+#### Preset Definitions
+
+Presets are language/framework-agnostic starting points focused on PROJECT TYPE.
+They provide reasonable defaults that auto-detect and quick research can refine.
+Every default can be overridden.
+
+##### Web Application
+
+**Profile**: Full-stack web application with auth, data management, and responsive UI.
+Any framework (Next.js, Django, Rails, Laravel, Spring Boot, Phoenix, etc.).
+
+| Category | Default Value |
+|----------|--------------|
+| Error handling | Toast notifications for actions, inline for forms, error pages for navigation |
+| Error format | Structured `{code, message, details, requestId}` |
+| Auth | Session or token-based (framework convention) |
+| Authorization | Role-based (admin, user) |
+| Testing | Framework-conventional test runner |
+| Test data | Factories for entities, fixtures for API responses |
+| Mock boundaries | Mock DB in unit tests, real test DB in integration |
+| Coverage | Business logic + integration boundaries |
+| API style | REST or framework convention, cursor pagination |
+| Security depth | Standard (generates SECURITY_SPEC.md) |
+| Dependency policy | Advisory (warn on CVEs, block critical) |
+| Accessibility | WCAG 2.1 AA |
+| Content tone | Professional, concise |
+| Empty states | Onboarding CTAs for first-use, "no results" for filtered |
+| Loading states | Skeleton loading for pages, spinners for actions |
+| Resilience | Retry with exponential backoff for API calls |
+| Target devices | Desktop primary, mobile responsive |
+
+##### API / Backend Service
+
+**Profile**: Backend service consumed by other applications. No user-facing UI.
+Any language (Node.js, Python, Go, Rust, Java, C#, etc.).
+
+| Category | Default Value |
+|----------|--------------|
+| Error handling | Structured JSON error responses |
+| Error format | Structured `{code, message, details, requestId}` |
+| Auth | API keys or JWT (depends on consumer type) |
+| Authorization | Scope-based or resource-based |
+| Testing | Framework-conventional test runner |
+| Test data | Factories for entities, fixtures for payloads |
+| Mock boundaries | Mock DB in unit, real test DB in integration, mock external APIs |
+| Coverage | High coverage on business logic, comprehensive integration |
+| API style | REST or gRPC, strict versioning |
+| Security depth | High (full SECURITY_SPEC.md, rate limiting, input validation) |
+| Dependency policy | Strict (block critical + high CVEs) |
+| Accessibility | N/A |
+| Content tone | N/A (no user-facing content) |
+| Resilience | Circuit breaker for upstream dependencies, retry with backoff |
+| Target devices | N/A |
+
+##### CLI / Desktop Tool
+
+**Profile**: Command-line application or desktop tool. Any language.
+
+| Category | Default Value |
+|----------|--------------|
+| Error handling | stderr messages with exit codes |
+| Error format | Plain text with error codes |
+| Auth | None (or OS-level credentials if needed) |
+| Authorization | None (file system permissions) |
+| Testing | Framework-conventional test runner |
+| Test data | Fixtures (static test files) |
+| Mock boundaries | Mock file system and network in unit tests |
+| Coverage | Critical paths |
+| API style | N/A |
+| Security depth | Minimal (input validation only) |
+| Dependency policy | Advisory |
+| Content tone | Technical, terse |
+| Loading states | Progress bars or spinners for long operations |
+| Resilience | Retry for network operations, graceful degradation |
+| Target devices | N/A |
+
+##### Library / Package
+
+**Profile**: Reusable library or package published for others to consume. Any language.
+
+| Category | Default Value |
+|----------|--------------|
+| Error handling | Typed errors / exceptions with clear messages |
+| Error format | Language-idiomatic error types |
+| Auth | N/A (consumer handles auth) |
+| Authorization | N/A |
+| Testing | Framework-conventional test runner, emphasis on edge cases |
+| Test data | Fixtures and property-based testing |
+| Mock boundaries | Mock external dependencies, test public API surface |
+| Coverage | High (public API 100%, internals critical paths) |
+| API style | N/A (library API, not HTTP) |
+| Security depth | Standard (input validation, no unsafe operations) |
+| Dependency policy | Minimal dependencies (fewer = better for consumers) |
+| Content tone | Technical, precise (API docs) |
+| Resilience | Defensive programming, clear error messages |
+| Target devices | N/A |
+
+##### Prototype / Experiment
+
+**Profile**: Side project, prototype, learning exercise, hackathon. Speed over rigor.
+
+| Category | Default Value |
+|----------|--------------|
+| Error handling | Console output + basic try/catch |
+| Error format | Simple `{error: "message"}` |
+| Auth | None or basic (hardcoded credentials OK for prototyping) |
+| Authorization | None |
+| Testing | None or minimal |
+| Coverage | None required |
+| API style | Simple REST (no pagination needed for small datasets) |
+| Security depth | Skip (no SECURITY_SPEC.md generated) |
+| Dependency policy | None (no audit) |
+| Accessibility | None specified |
+| Content tone | Casual |
+| Loading states | Basic spinner |
+| Resilience | Skip |
+| Target devices | Desktop only |
+
+#### Mixing and Overriding
+
+The three levels are complementary, not exclusive. Common patterns:
+
+- **Brownfield**: Auto-detect fills most decisions, user overrides 2-3, research
+  generates the rest. Most efficient path.
+- **Greenfield with PRD**: Quick research generates a full profile from requirements.
+  User reviews and overrides.
+- **Quick start**: User picks a preset, auto-detect refines when code exists later.
+- **Custom mix**: "Use the API Service preset but with Web Application's auth and
+  the Library preset's testing approach" -- generate the defaults sheet with the
+  specified mix and let them review.
+
+The profile is a starting point, not a package deal. Every decision can be
+individually overridden regardless of its source.

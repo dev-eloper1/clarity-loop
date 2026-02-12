@@ -164,6 +164,16 @@ NOT write to disk. You must create the file on the filesystem first, then open i
      is your primary blue in 5 shades from light to dark. Below that are neutrals for
      text and backgrounds, then semantic colors for status indicators."
    - If the user wants changes to a section, apply them before moving to the next
+
+   **Batch option for token sections**: When `ux.reviewStyle` is `"batch"`, present all
+   three token sections (colors, typography, spacing) together with a summary table before
+   individual screenshots. "Here's your design token overview: [summary]. Want to see each
+   section in detail, or does the summary cover it?" If the user wants details, show
+   section-by-section screenshots. If the summary is sufficient, proceed to components.
+   Default for token sections is still sectional (colors then typography then spacing) because
+   the feedback on these tends to be substantive. The batch option is for experienced users
+   who know what they want.
+
 8. Record in DESIGN_PROGRESS.md: tokens generated, file reference, user approval per section
 
 #### Step 3: Generate Reusable Components
@@ -205,26 +215,72 @@ these components: [list with variants]. Add or remove any?"
    on the root canvas. If a component doesn't fit existing categories, create a new
    category frame for it.
 
-#### Step 4: Visual Validation Loop
+#### Step 4: Component Validation
+
+**Check the review style** from `.clarity-loop.json` (`ux.reviewStyle`). Default is
+`"batch"`. If `"serial"`, use the serial path below. If the value is unrecognized, fall
+back to `"batch"` and warn the user.
+
+##### Batch Review (Default)
+
+Generate ALL components first (Steps 3.1-3.5 above), then present them as a set:
+
+1. **Generate all components** before presenting any for review. Use `snapshot_layout`
+   after each `batch_design` call to catch overlaps -- fix layout issues immediately, but
+   don't stop for user feedback yet.
+
+2. **Present the batch.** Two presentation options depending on path:
+
+   **Pencil path**: Take a grid screenshot showing all component categories
+   (or one screenshot per category if the grid is too dense). Present with a summary table:
+
+   | Component | Variants | PRD Feature | Tokens Used | Status |
+   |-----------|----------|-------------|-------------|--------|
+   | Button | primary, secondary, ghost | Task actions, forms | primary-500, space-3 | Review |
+   | Input | text, email, password | Forms, search | neutral-200, space-2 | Review |
+   | Card | default, compact | Task list, dashboard | neutral-50, shadow-md | Review |
+   | ... | ... | ... | ... | Review |
+
+   "Here are all [N] components. Review the summary and screenshots. Flag any that need
+   changes -- I'll revise those and leave the rest as-is."
+
+   **Markdown fallback path**: Present the full component spec table. Same summary format.
+
+3. **Gather batch feedback.** The user responds with specific items to revise:
+   - "Button loading state needs work, Card padding too tight, rest looks good"
+   - "All approved"
+   - "I want to review Input and Modal more closely" (switches to serial for those items)
+
+4. **Revise flagged items.** For each flagged component:
+   - Apply the feedback
+   - Re-screenshot the specific component (zoomed in)
+   - Present the revision: "Updated Button loading state. Here's the before and after."
+   - If Pencil: re-run `snapshot_layout` to verify no new overlaps
+
+5. **Record all decisions** in DESIGN_PROGRESS.md -- both batch-approved and individually
+   revised components.
+
+**Efficiency note**: Most components are approved without changes. Batch review turns
+N interruptions into 1 + K (where K is the number flagged for revision, typically 2-3).
+
+##### Serial Review (Opt-in)
+
+When `ux.reviewStyle` is `"serial"`, or when the user requests "I want to review each
+component individually":
 
 For each component (or small batches of related components):
-1. Call `get_screenshot` of the specific component group (not the full canvas — zoom in
-   so the user can see details)
+1. Call `get_screenshot` of the specific component group
 2. Call `snapshot_layout` to check for layout issues
-3. Present screenshot to user with:
-   - Component name and which PRD feature it serves
-   - Variants shown and what each is for
-   - Brief note on tokens used (e.g., "Uses primary-500 for fill, space-3 for padding")
-4. Gather feedback:
-   - **Approved**: Record in DESIGN_PROGRESS.md, move to next
-   - **Needs changes**: Note feedback, call `batch_design` to update, re-screenshot
-   - **Rejected**: Discuss direction, redesign from scratch
+3. Present screenshot to user with component name, PRD feature, variants, tokens used
+4. Gather feedback: Approved / Needs changes / Rejected
 5. Record all decisions and iterations in DESIGN_PROGRESS.md
 
-**Don't overwhelm the user.** Show one component group at a time (e.g., all form controls,
-then all layout components). Give brief context for each — the user isn't a designer, so
-explain why things look the way they do. "Buttons use your primary blue with rounded
-corners for a friendly feel. The ghost variant is for secondary actions."
+##### Minimal Review (Opt-in)
+
+When `ux.reviewStyle` is `"minimal"`:
+
+Generate all components, present a one-line summary per component, and auto-approve
+unless the user speaks up. Record with `[auto-approved]` tag in DESIGN_PROGRESS.md.
 
 ---
 
@@ -322,6 +378,20 @@ After tokens and components are complete (any path), generate
 | [feature name] | [component list] | [key tokens used] |
 | ... | ... | ... |
 ```
+
+### Parallelization Hints
+
+When `ux.parallelGeneration` is `true` (default):
+
+| User is reviewing... | Skill can pre-generate... | Invalidation risk |
+|---------------------|--------------------------|-------------------|
+| Color token values | Typography and spacing sections | Low -- colors rarely affect type/spacing |
+| Typography screenshot | Spacing section | Low |
+| Component plan confirmation | Start generating minimum-set components | Medium -- user may add/remove from plan |
+| Component batch review | DESIGN_SYSTEM.md output file | Low -- output is derived from approved tokens + components |
+
+**Implementation**: Subagent dispatch for pre-generation. Main context handles user
+interaction. Discard pre-generated work if user feedback invalidates it.
 
 ### Checklist Gate
 

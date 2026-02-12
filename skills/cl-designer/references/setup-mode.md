@@ -93,28 +93,49 @@ Ask (in this order — stop as soon as you have enough to work with):
    - Ask follow-up: "What specifically do you like about [app]? The layout? Colors?
      How it feels to use?"
 
-#### Step 2: Design Preferences
+#### Step 2: Design Preferences (Generate-Confirm)
 
-Fill in gaps not covered by visual references or component library research. Skip questions
-that are already answered. Don't dump all questions at once — have a conversation.
+**Read DECISIONS.md first.** Check for existing decisions in categories `design-direction`,
+`accessibility`, `responsive`. Use existing decisions as defaults in the table below.
 
-1. **Overall aesthetic / mood** (skip if screenshots or library made this clear):
-   "What overall feel are you going for? Minimal and clean? Playful and colorful?
-   Corporate and polished? Something else?"
+If Step 1 provided substantial input (component library researched, screenshots analyzed,
+or inspiration sites noted), switch to generate-confirm: present a design defaults table
+derived from the research, and let the user review and override.
 
-2. **Color preferences** (skip if library defaults are accepted):
-   "Any color preferences? Specific brand colors, or a general direction like warm earth
-   tones, cool blues, bold primaries?"
+**Generate-confirm path** (when Step 1 gave enough input):
 
-3. **Typography** (skip if library defaults are accepted):
-   "Typography preference? Clean sans-serif (like Inter, Geist), more distinctive (like
-   Lexend, Space Grotesk), or monospace accents for a dev-tool feel?"
+"Based on [component library / screenshots / inspiration], here are the design defaults
+I'll use. Review and mark anything you want to change:"
 
-4. **Interaction patterns**: "Is this keyboard-first, mouse-first, or touch-first?"
+| Category | Value | Source | Override? |
+|----------|-------|--------|-----------|
+| Aesthetic | Minimal, clean | shadcn/ui defaults | |
+| Primary color | Blue (oklch scale) | shadcn/ui defaults | |
+| Neutral palette | Zinc gray | shadcn/ui defaults | |
+| Semantic colors | Green/amber/red/blue | shadcn/ui defaults | |
+| Typography | Geist Sans | shadcn/ui convention | |
+| Spacing | 4px base, Tailwind scale | shadcn/ui convention | |
+| Border radius | 0.5rem (md) | shadcn/ui defaults | |
+| Interaction mode | Mouse-first + keyboard | DECISIONS.md | |
+| Theme | Light + dark | User preference | |
+| Constraints | [any from conversation] | User stated | |
 
+The user reviews: "Change primary to indigo, bump border radius to lg, rest looks good."
+
+**Freeform path** (when Step 1 didn't provide enough input):
+
+Fall back to conversational discovery. Don't dump all questions at once -- have a
+conversation:
+
+1. **Overall aesthetic / mood**: "What overall feel are you going for?"
+2. **Color preferences**: "Any color preferences?"
+3. **Typography**: "Typography preference?"
+4. **Interaction patterns**: "Keyboard-first, mouse-first, or touch-first?"
 5. **Theme support**: "Dark mode, light mode, or both?"
+6. **Constraints**: "Any existing brand guidelines or constraints?"
 
-6. **Constraints**: "Any existing brand guidelines or constraints I should work within?"
+After the freeform conversation, still generate the summary table (Step 4: Confirm
+Design Direction) for explicit confirmation.
 
 #### Step 3: Style Guide (Pencil path only)
 

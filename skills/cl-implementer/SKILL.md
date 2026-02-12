@@ -288,3 +288,10 @@ user-added tasks and manual reorderings.
 - **Waterfall is non-negotiable for spec generation.** Don't generate specs from partial
   docs. The user can override gate check warnings, but always warn them. Partial specs are
   worse than no specs — they create false confidence.
+
+- **Decision flow: read before asking.** Before making implementation decisions, check
+  DECISIONS.md for existing decisions in the relevant category (`testing`, `api-style`,
+  `errors`, `security`, `dependencies`, `type-sharing`, `spec-format`). When TEST_SPEC.md,
+  SECURITY_SPEC.md, or API conventions reference DECISIONS.md entries, those decisions are
+  already baked in -- don't re-ask. When encountering an L1 spec gap that matches a
+  DECISIONS.md category, check if a decision already exists that resolves it.

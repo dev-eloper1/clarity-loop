@@ -42,11 +42,19 @@ If `{docsRoot}/context/.context-manifest.md` already exists, compare against it:
 - **Removed libraries** (in manifest, not in Architecture): flag for cleanup
 - **Version mismatches** (Architecture says v4, manifest says v3): flag for update
 
-Present to user: "Your tech stack includes [N] libraries. Context status:
-- [library A] v[X]: No context exists — create?
-- [library B] v[Y]: Context exists, version matches — skip or refresh?
-- [library C] v[Z]: Context exists but covers v[old] — update needed?
-Select which to process, or 'all' for everything."
+Present to user: "Your tech stack includes [N] libraries. Here's my recommendation:
+
+| Library | Version | Status | Recommendation | Action |
+|---------|---------|--------|---------------|--------|
+| [A] | v[X] | No context | Create | **Create** |
+| [B] | v[Y] | Current | Skip | Skip |
+| [C] | v[Z] | Stale (v[old]) | Update | **Update** |
+| [D] | v[W] | Current, fresh | Skip | Skip |
+
+I'll process the bolded items. Change any actions, or proceed?"
+
+The user can confirm ("proceed"), adjust ("skip C, add B"), or expand ("process all").
+Default: process recommended items only.
 
 ---
 
