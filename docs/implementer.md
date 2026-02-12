@@ -104,9 +104,14 @@ When runtime errors or regressions are detected:
 - **Cascade re-verification**: all tasks that transitively depend on the fixed task are checked
 - Multiple fix task cascades are **deduplicated** before re-verification
 
+Issue types: `runtime-error`, `regression`, `integration-failure`, `context-gap`, `design-gap`.
+
+- **Context gaps** route to `/doc-researcher context` — stale library knowledge
+- **Design gaps** route to `/ui-designer` — detected automatically (spec references a component or state that doesn't exist in the design system) or triggered by user visual feedback ("this doesn't look right"). On user feedback, the implementer first verifies the code matches the design spec — if it doesn't, that's a code fix, not a design gap. Only if the code faithfully matches the spec and the user still isn't satisfied does it classify as a design gap.
+
 ### Spec Gap Triage
 
-When implementation reveals spec gaps:
+When implementation reveals spec gaps (missing information, not visual/design issues):
 
 | Level | Action |
 |-------|--------|
@@ -114,7 +119,11 @@ When implementation reveals spec gaps:
 | **L1 — Contained** | Log gap, state assumption, ask user |
 | **L2 — Significant** | Pause task, suggest research cycle |
 
-L2 gaps pause the affected task but NOT the whole queue — other unblocked tasks continue.
+L2 gaps pause the affected task but NOT the whole queue — other unblocked tasks continue. If the gap is visual/UI (how it looks, not what it does), classify as `design-gap` and route to `/ui-designer` instead.
+
+### Emergent Bugs
+
+Bugs that couldn't have been predicted during research or spec generation (race conditions, state interactions, library conflicts) are handled entirely within the implementer — no pipeline loop required. Most are fix tasks or L0/L1 spec gaps. The full pipeline loop only triggers when a bug proves the *system documentation itself* is wrong. Behavioral decisions forced by emergent bugs (debounce vs. throttle, retry strategy) are logged to DECISIONS.md.
 
 ### Parallel Execution
 
@@ -192,7 +201,7 @@ Queue semantics: process front-to-back, validity-check before each task, pop/rep
 ## Related
 
 - [doc-spec-gen](doc-spec-gen.md) — Generates the specs that the implementer consumes
-- [ui-designer](ui-designer.md) — Generates DESIGN_TASKS.md consumed by start mode
+- [ui-designer](ui-designer.md) — Generates DESIGN_TASKS.md consumed by start mode; design gaps route here during implementation
 - [doc-reviewer](doc-reviewer.md) — Sync mode used during verify for spec-to-doc alignment
 - [doc-researcher](doc-researcher.md) — L2 spec gaps may trigger research cycles
 - [Pipeline Concepts](pipeline-concepts.md) — Pipeline depth (L0-L2) used for gap triage

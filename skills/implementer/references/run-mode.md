@@ -166,6 +166,33 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
    - `context-gap`: Error traced to stale or missing library knowledge (wrong import path,
      deprecated API, incorrect method signature). Distinguished from `runtime-error` by
      checking whether the error matches a known library API mismatch pattern.
+   - `design-gap`: A visual/UI design element is missing or inadequate. Two detection paths:
+
+     **Automatic** (structural): During implementation, the implementer checks task
+     requirements against design artifacts. If a task references a component, state, or
+     variant that doesn't exist in DESIGN_SYSTEM.md or the design files, that's a structural
+     design gap. Examples: spec says "show loading spinner" but no LoadingSpinner component
+     was designed; spec says "error state" but the component has no error variant.
+
+     **User-triggered** (visual): The user sees the implemented result and gives feedback
+     like "this doesn't look right", "the layout is wrong", "the spacing is off", "I don't
+     like how this looks", "this needs a hover state", or any visual quality complaint.
+     The implementer can't judge visual quality — only the user can.
+
+     **Important: verify implementation matches spec first.** When the user reports a visual
+     issue, do NOT immediately classify as design-gap. First check whether the code
+     faithfully implements the design spec:
+     1. Read the relevant DESIGN_SYSTEM.md / UI_SCREENS.md sections
+     2. Compare the implemented code against the spec (tokens, spacing, colors, layout)
+     3. If the code DOESN'T match the spec → this is a `runtime-error` or `regression`,
+        not a design gap. Fix the code to match the spec first.
+     4. Show the user the fix. If they're now satisfied → done.
+     5. If the code DOES match the spec and the user still doesn't like it → NOW it's a
+        `design-gap`. The design itself needs to change.
+     This prevents changing the design to accommodate buggy implementations.
+
+     Distinguished from `spec-gap` by asking: "Is this a *what to build* question (spec
+     gap) or a *how it should look/behave visually* question (design gap)?"
 
    For `context-gap` issues:
    - Check if context files exist for the library in question
@@ -176,10 +203,34 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
      will version the context, not replace it. [Y/n]"
    - If user approves: researcher updates/versions context, implementer retries the task
 
-2. **Distinguish from spec gaps**: A fix task means "the spec is right, the code is wrong."
-   If the issue is that the spec is incomplete or wrong, use gap triage (Step 5) instead.
-   A `context-gap` means "the spec is right, but the library knowledge used to implement
-   it is wrong or missing."
+   For `design-gap` issues:
+   - Check if design artifacts exist (`{docsRoot}/designs/`, `{docsRoot}/specs/DESIGN_SYSTEM.md`)
+   - Determine scope:
+     - **Component-level** (missing state, variant, or new component): "Implementation needs
+       a [loading state / error variant / new component] that isn't in the design system.
+       Run `/ui-designer tokens` to add it? [Y/n]"
+     - **Screen-level** (layout broken, flow doesn't work): "The [screen] layout doesn't
+       work for [reason]. Run `/ui-designer mockups` to revise it? [Y/n]"
+     - **Visual quality** (user says "this doesn't look right", "spacing is off", etc.):
+       First verify the code matches the design spec (see detection paths above). If the
+       code is faithful to the spec: "The implementation matches the design spec, but I
+       hear you — the design itself needs work. Options: a) Run `/ui-designer mockups` to
+       revise the screen design, b) Run `/ui-designer tokens` to adjust the design system,
+       c) Make a quick visual call now and continue."
+     - **Requirements-level** (the whole interaction pattern is wrong): This is actually a
+       spec gap or research need, not a design gap. Reclassify as L2 spec gap and route to
+       `/doc-researcher research`.
+   - If user approves: ui-designer updates design artifacts, implementer retries the task
+   - If no design artifacts exist at all: "No design system found. Options: a) Run
+     `/ui-designer setup` to create one, b) Make a visual call now and continue."
+
+2. **Distinguish fix tasks, spec gaps, context gaps, and design gaps**:
+   - **Fix task**: The spec is right, the code is wrong. Fix the code.
+   - **Spec gap** (Step 5): The spec is incomplete or wrong. A *what to build* question.
+   - **Context gap**: The spec is right, but the library knowledge used to implement it is
+     wrong or missing. A *how to build it with this library* question.
+   - **Design gap**: The spec is right, but the visual design is missing or inadequate.
+     A *how it should look or behave visually* question. Routes to ui-designer, not research.
 
 3. **Create the fix task**:
    ```
@@ -187,7 +238,7 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
    - Source task: T-[NNN] (the task whose code has the bug)
    - Discovered during: T-[MMM] (the task being worked on when the bug surfaced)
    - Files affected: [list]
-   - Type: runtime-error | regression | integration-failure
+   - Type: runtime-error | regression | integration-failure | design-gap
    ```
 
 4. **Implement the fix**: Prioritize over new tasks. Fix the code.
@@ -211,6 +262,31 @@ the current task (missing import, wrong variable name, obvious typo) are fixed i
 separate fix task needed. Fix tasks are for issues that affect OTHER tasks' code or that
 require significant debugging.
 
+#### Behavioral bugs and emergent issues
+
+Some bugs can't be predicted during research, design, or spec generation — they emerge only
+when code runs: race conditions, unexpected state interactions, browser quirks, memory leaks
+from a specific pattern, two libraries conflicting. These do NOT require a pipeline loop.
+
+**Triage by what the bug reveals, not by how hard it is to fix:**
+
+| What the bug reveals | Classification | Action |
+|---|---|---|
+| The code is wrong, the spec is fine | Fix task (`runtime-error` / `regression`) | Fix the code. No pipeline. |
+| An edge case the spec didn't cover | L0/L1 spec gap | Patch spec inline (L0) or log assumption and ask user (L1). Continue. |
+| A behavioral decision is needed (e.g., "should we debounce or throttle?") | L1 spec gap | State assumption, ask user. Log decision to DECISIONS.md. Continue. |
+| The approach described in system docs fundamentally doesn't work | L2 spec gap | Pause task. Offer: make a call now, or research cycle. Only this triggers the pipeline. |
+
+Most emergent bugs land in the first three rows — handled entirely within the implementer.
+The full pipeline loop (research → proposal → review → merge) is only for the rare case
+where a bug proves the *documentation itself* is wrong, not just the code. Even then, the
+user can choose to make a quick call and continue instead.
+
+**Always log behavioral decisions.** When a bug forces a decision that the spec didn't
+anticipate (debounce vs. throttle, retry strategy, error recovery approach), log it to
+DECISIONS.md regardless of severity. These decisions become constraints for future tasks
+and future research — they're implementation knowledge that shouldn't be lost.
+
 ---
 
 ### Step 5: Spec Gap Triage
@@ -222,7 +298,7 @@ requirement):
 |-----------|---------|--------|
 | **L0 — Trivial** | Typo in spec, obvious default missing | Patch spec inline, log in progress file, continue |
 | **L1 — Contained** | Edge case not covered, minor ambiguity | Log gap, flag to user: "Spec doesn't cover [X]. I'll continue with assumption [Y] unless you disagree." |
-| **L2 — Significant** | Design-level gap, conflicting constraints | Pause this task. "This task requires [X] but no spec covers it. This is a design decision. Options: a) Make a call now and I'll implement it, b) Run `/doc-researcher research '[topic]'` to resolve properly." |
+| **L2 — Significant** | Conflicting constraints, missing requirements | Pause this task. "This task requires [X] but no spec covers it. Options: a) Make a call now and I'll implement it, b) Run `/doc-researcher research '[topic]'` to resolve properly." Note: if the gap is visual/UI (how it looks, not what it does), classify as `design-gap` in Step 4 instead — route to `/ui-designer`, not research. |
 
 L0 and L1 gaps don't block the queue — the current task continues (L0 silently, L1 with
 a stated assumption). L2 gaps pause the affected task but NOT the whole queue — other

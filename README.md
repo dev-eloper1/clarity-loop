@@ -34,7 +34,9 @@ Clarity Loop manages five stages between "I have an idea" and "I have working co
 
 **4. Generate implementation specs.** Once all documentation is stable and verified, the plugin generates structured, implementation-ready specs — concrete types, enumerated edge cases, acceptance criteria. These are the bridge between "what to build" and "how to build it."
 
-**5. Implement with tracking.** The plugin generates a unified task queue from specs, processes tasks front-to-back with acceptance criteria verification, handles runtime failures, reconciles external code changes on resume, and feeds spec gaps back into the documentation pipeline.
+**5. Implement with tracking.** This is the payoff. Because your docs are precise, your specs are concrete, and your library knowledge is current — the implementer runs on near-autopilot. It generates a task queue from specs, processes tasks front-to-back, verifies each against acceptance criteria, handles runtime bugs, triages emergent issues on the fly, and picks up exactly where it left off across sessions. You steer and approve; it does the rest.
+
+Stages 1-4 are the investment. Stage 5 is where it pays off — implementation that *just works* because the inputs were right.
 
 At every stage, the pattern is the same: **AI generates, human reviews, feedback refines, human approves.** Nothing advances without your judgment. And when implementation reveals that something upstream was wrong — a spec gap, a stale library pattern, an incomplete design — the pipeline loops back to fix the source, not paper over the symptom.
 
@@ -141,7 +143,7 @@ Updates never touch your project's docs — only the plugin's skills, hooks, and
 It's called Clarity **Loop** because problems flow backward, not just forward:
 
 - **Every stage loops internally.** Generate → review → feedback → refine → approve. Nothing advances until you're satisfied.
-- **Implementation loops back to the source.** Spec gaps route to research. Context gaps route to library knowledge. Fixes happen where the mistake originated, not in the code.
+- **Implementation loops back to the source.** Spec gaps route to research. Context gaps route to library knowledge. Design gaps route to the ui-designer. Fixes happen where the mistake originated, not in the code.
 - **Audits catch cumulative drift.** Each proposal is fine alone — but 10 proposals can silently move the system off course. Periodic audits check the full doc set and feed findings back into research.
 
 ### What else it handles
@@ -151,6 +153,7 @@ It's called Clarity **Loop** because problems flow backward, not just forward:
 | **Ideas at the wrong time** | Every concept captured automatically in a parking lot. Scope it later, defer to V2, or discard. No FOMO. |
 | **Coming back after a break** | All state lives in markdown. On resume, the implementer diffs what changed, re-verifies affected tasks, picks up where it left off. |
 | **Editing code outside the pipeline** | External changes detected via git, mapped to tasks, manually-completed work marked as done. |
+| **Design issues found during build** | Design gaps route directly to `/ui-designer` — missing component states, layout issues, new components. No research cycle needed for visual fixes. |
 | **Fixes breaking other things** | Fix tasks trigger automatic re-verification of all downstream completed tasks. |
 | **Docs drifting from code** | Code-doc sync extracts claims from docs and checks them against the actual codebase. |
 | **Full ceremony for trivial changes** | Triage routes typos to direct fixes. Correction mode handles audit findings without research cycles. |
