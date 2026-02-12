@@ -158,6 +158,9 @@ It's called Clarity **Loop** because problems flow backward, not just forward:
 | **Full ceremony for trivial changes** | Triage routes typos to direct fixes. Correction mode handles audit findings without research cycles. |
 | **Decisions evaporating** | Every decision is logged to a system-wide journal (DECISIONS.md) with rationale. Every skill reads it at session start. Prior decisions constrain future work — no contradicting what was already settled. |
 | **Half-stale specs** | Waterfall gate blocks spec generation until all system docs are verified. |
+| **Governance drift** | Post-implementation verification checks 10 governance dimensions — config completeness, observability, architecture alignment, DECISIONS.md reconciliation, and more. |
+| **L1 assumption accumulation** | Periodic scans detect when the same spec gap category keeps generating assumptions — a signal that system docs need a research cycle, not more workarounds. |
+| **Operational specs missing** | Spec generation produces CONFIG_SPEC, migration notes, observability requirements, backend policies, data modeling specs, and code conventions alongside implementation specs. |
 
 ---
 
@@ -199,6 +202,7 @@ For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md)
 
 | Document | Covers |
 |----------|--------|
+| **[System Design](docs/SYSTEM_DESIGN.md)** | **Full architecture reference — pipeline flow, state management, protection model, spec generation, implementation tracking, verification, all feedback loops** |
 | [cl-researcher](docs/cl-researcher.md) | Bootstrap, triage, research, structure, proposal, context modes |
 | [cl-reviewer](docs/cl-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
 | [cl-designer](docs/cl-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
@@ -223,53 +227,61 @@ clarity-loop/
     cl-researcher/                  Research, proposals, library context
       SKILL.md
       references/
-        bootstrap-guide.md
-        research-template.md
-        proposal-template.md
-        document-plan-template.md
-        context-mode.md
+        bootstrap-guide.md          Greenfield/brownfield paths, profile system, defaults sheet
+        operational-bootstrap.md    Security, config, observability, data lifecycle decisions
+        research-template.md        Research doc template (R-NNN format)
+        proposal-template.md        Proposal template with Change Manifest
+        document-plan-template.md   Structure planning template
+        context-mode.md             Three-layer context, staleness model, loading protocol
     cl-reviewer/                    Review, merge, verify, audit
       SKILL.md
       references/
-        re-review-mode.md
-        verify-mode.md
-        audit-mode.md
-        correction-mode.md
-        merge-mode.md
-        fix-mode.md
-        sync-mode.md
-        design-review-mode.md
+        review-mode.md              6-dimension review, cross-proposal conflict detection
+        re-review-mode.md           Cumulative issue ledger, regression detection
+        fix-mode.md                 Walk through blocking issues, apply edits
+        merge-mode.md               Authorization marker lifecycle, Change Manifest execution
+        verify-mode.md              4-part post-merge verification, design nudge
+        audit-mode.md               8-dimension analysis, drift analysis, web search verification
+        correction-mode.md          Corrections manifest, spot-check, lightweight bypass
+        sync-mode.md                Claim extraction, code verification, DECISIONS.md reconciliation
+        design-review-mode.md       3-dimension design validation, Pencil MCP integration
     cl-implementer/                 Spec generation, task queue, implementation tracking
       SKILL.md
       references/
-        spec-consistency-check.md
-        start-mode.md
-        run-mode.md
-        autopilot-mode.md
-        verify-mode.md
-        sync-mode.md
+        spec-mode.md                Waterfall gate, format selection, parallel generation
+        spec-consistency-check.md   6-dimension cross-spec consistency check
+        cross-cutting-specs.md      SECURITY_SPEC, error taxonomy, API conventions, shared types
+        operational-specs.md        CONFIG_SPEC, migrations, observability, backend policies
+        governance-checks.md        10 sub-checks for verify dimension 7
+        start-mode.md               Task generation rules, dependency graph, test + operational tasks
+        run-mode.md                 Reconciliation, queue processing, fix tasks, spec gap triage
+        autopilot-mode.md           Self-testing, checkpoint tiers, integration gates
+        verify-mode.md              7 dimensions, dependency audit, governance checks
+        sync-mode.md                Spec hash comparison, queue adjustment, cascade handling
     cl-designer/                    Design system, mockups
       SKILL.md
       references/
-        setup-mode.md
-        tokens-mode.md
-        mockups-mode.md
-        build-plan-mode.md
-        design-checklist.md
+        setup-mode.md               MCP detection, visual references, design discovery
+        tokens-mode.md              Token derivation, component generation, behavioral states
+        mockups-mode.md             Screen inventory, ref nodes, responsive states
+        behavioral-walkthrough.md   Screen states, interaction flows, navigation, content
+        build-plan-mode.md          5-phase task breakdown, dependency graph
+        design-checklist.md         Tokens checklist (14 items), mockups checklist (11 items)
   hooks/
-    hooks.json
-    config.js
-    protect-system-docs.js
-    generate-manifest.js
+    hooks.json                      Hook registration (PreToolUse + PostToolUse)
+    config.js                       Shared config loader (.clarity-loop.json)
+    protect-system-docs.js          PreToolUse: blocks unauthorized system doc writes
+    generate-manifest.js            PostToolUse: regenerates manifest after system doc changes
   scripts/
-    init.js
-    init.sh
+    init.js                         Directory scaffolding, collision detection, templates
+    init.sh                         Bash wrapper for cross-platform init
   templates/
-    decisions.md
-    research-ledger.md
-    proposal-tracker.md
-    status.md
+    decisions.md                    DECISIONS.md template
+    research-ledger.md              RESEARCH_LEDGER.md template
+    proposal-tracker.md             PROPOSAL_TRACKER.md template
+    status.md                       STATUS.md template
   docs/                             Detailed documentation
+    SYSTEM_DESIGN.md                Full architecture reference
 ```
 
 ---
