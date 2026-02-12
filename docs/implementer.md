@@ -12,6 +12,7 @@ The implementation orchestration skill. Bridges the gap between generated specs 
 |------|---------|---------|
 | `start` | "start implementation", "generate tasks" | Generate unified TASKS.md from all specs, set up progress tracking |
 | `run` | "run", "implement", "continue", "next task" | Process the task queue — reconcile, implement, verify, handle failures |
+| `autopilot` | "autopilot", "run on autopilot", "autonomous" | Autonomous implementation with self-testing and configurable checkpoints |
 | `verify` | "verify implementation", "are we done" | Post-implementation holistic check across four dimensions |
 | `status` | "status", "what's left", "progress" | Progress report from TASKS.md and progress file |
 | `sync` | "sync", "specs changed" | Adjust task queue when specs change mid-implementation |
@@ -128,6 +129,39 @@ Bugs that couldn't have been predicted during research or spec generation (race 
 ### Parallel Execution
 
 Independent task groups (no shared dependencies or files) can run in parallel via Claude Code's fork capability. User approval required. Post-merge file conflict check in main context. Sequential fallback if conflicts arise.
+
+---
+
+## Autopilot
+
+Run mode with two additions: **self-testing** and **autonomous progression**. The implementer writes tests from acceptance criteria, runs them to verify its own work, commits per task, and only stops at user-configured checkpoints or when it hits a genuine blocker.
+
+### Checkpoint Levels
+
+| Setting | Behavior |
+|---|---|
+| `checkpoint: none` | Full autopilot — only stops on genuine blockers |
+| `checkpoint: phase` | Stops after each implementation area (data layer, API, UI, etc.) |
+| `checkpoint: N` | Stops every N tasks for a progress review |
+| `checkpoint: every` | Task-by-task approval (same as run mode, but with self-testing) |
+
+Stored in `.clarity-loop.json` under `implementer.checkpoint`. The checkpoint decision is logged to DECISIONS.md — it's a trust decision that evolves over the project. Users start with frequent checkpoints and reduce oversight as confidence builds.
+
+### Self-Testing
+
+After implementing each task, the implementer translates acceptance criteria into test cases (behavioral → integration test, structural → unit test, edge case → unit test, UI → component test). Tests run automatically. On failure: three attempts (fix implementation → re-examine test → check for context/design gap), then stop and ask the user.
+
+### UI Validation
+
+For UI tasks, the implementer starts the dev server, navigates to the relevant page, takes a screenshot, and compares against the design spec. Structural correctness (right components, right tokens) is checked automatically. Visual/aesthetic judgment is always deferred to the user at the next checkpoint.
+
+### Parallel Execution
+
+When the dependency graph allows, independent task groups run in parallel via subagents (max 3). Each subagent runs the full autonomous loop independently. Main context collects results and checks for file conflicts.
+
+### Hard Stops
+
+Autopilot always stops for L2 spec gaps, repeated failures, cascade regressions, and user interrupts. It never stops for L0/L1 gaps, minor self-resolving test failures, or external changes (handled by reconciliation).
 
 ---
 

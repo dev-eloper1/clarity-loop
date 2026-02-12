@@ -7,9 +7,9 @@ description: >
   changes, feeds spec gaps back into the pipeline, and routes design gaps to ui-designer. Trigger on "implement",
   "start implementation", "run tasks", "implementation status", "sync specs",
   "verify implementation", "what's left to build", "continue implementing",
-  "resume implementation", or any request to track or execute implementation work
-  from specs.
-argument-hint: "[start|run|verify|status|sync]"
+  "resume implementation", "autopilot", "run on autopilot", "autonomous mode",
+  or any request to track or execute implementation work from specs.
+argument-hint: "[start|run|autopilot|verify|status|sync]"
 ---
 
 # Implementer
@@ -100,6 +100,10 @@ All paths (`docs/system/`, `docs/specs/`, etc.) resolve relative to the configur
 - **run**: Process the task queue. Trigger: "run", "implement", "continue", "next task",
   "resume", or default when TASKS.md exists and tasks remain. Gate: TASKS.md must exist.
 
+- **autopilot**: Autonomous implementation with self-testing. Trigger: "autopilot",
+  "run on autopilot", "autonomous", "let it run", "hands-off mode". Gate: TASKS.md must
+  exist, specs must be verified.
+
 - **verify**: Post-implementation holistic check. Trigger: "verify implementation", "check
   everything", "are we done", or when all tasks are complete. Gate: at least one completed
   task.
@@ -131,6 +135,20 @@ Read `references/run-mode.md` and follow its process.
 The core implementation loop. Reconciles external changes on resume, processes the task queue
 front-to-back with validity checks, handles runtime failures via fix tasks, triages spec
 gaps, and supports parallel execution for independent task groups.
+
+---
+
+## Autopilot Mode
+
+Read `references/autopilot-mode.md` and follow its process.
+
+Run mode with two additions: **self-testing** and **autonomous progression**. The implementer
+writes tests from acceptance criteria, runs them to verify its own work, commits per task,
+and only stops at user-configured checkpoints or when it hits a genuine blocker. Parallel
+execution where the dependency graph allows.
+
+The checkpoint level is a trust decision — logged to DECISIONS.md with rationale. Users
+start with frequent checkpoints and reduce oversight as confidence builds.
 
 ---
 

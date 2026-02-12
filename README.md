@@ -204,7 +204,7 @@ For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md)
 | [doc-reviewer](docs/doc-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
 | [doc-spec-gen](docs/doc-spec-gen.md) | Spec generation, waterfall gate, cross-spec consistency review |
 | [ui-designer](docs/ui-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
-| [implementer](docs/implementer.md) | Start, run, verify, status, sync modes, task queue, fix tasks, reconciliation |
+| [implementer](docs/implementer.md) | Start, run, autopilot, verify, status, sync modes, task queue, fix tasks, reconciliation |
 | [Pipeline Concepts](docs/pipeline-concepts.md) | System doc protection, manifest, tracking files, context files, configuration |
 | [Hooks](docs/hooks.md) | PreToolUse protection, PostToolUse manifest generation |
 
@@ -250,6 +250,7 @@ clarity-loop/
       references/
         start-mode.md
         run-mode.md
+        autopilot-mode.md
         verify-mode.md
         sync-mode.md
     ui-designer/                    Design system, mockups

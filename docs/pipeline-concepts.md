@@ -194,7 +194,10 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
 ```json
 {
   "version": 1,
-  "docsRoot": "docs"
+  "docsRoot": "docs",
+  "implementer": {
+    "checkpoint": "every"
+  }
 }
 ```
 
@@ -202,6 +205,7 @@ Clarity Loop stores configuration in `.clarity-loop.json` at the project root.
 |-------|---------|-------------|
 | `version` | `1` | Config format version |
 | `docsRoot` | `"docs"` | Base path for all documentation directories |
+| `implementer.checkpoint` | `"every"` | Autopilot oversight level: `"none"`, `"phase"`, a number (every N tasks), or `"every"` (task-by-task) |
 
 All paths derive from `docsRoot`:
 - `{docsRoot}/system/` — protected system docs
