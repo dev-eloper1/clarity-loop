@@ -144,7 +144,9 @@ always the first mode to run.
 
 ## Tokens Mode
 
-When running tokens mode, read `references/tokens-mode.md` and follow its process.
+When running tokens mode, read `references/tokens-mode.md` and `references/visual-quality-rules.md`,
+then follow the tokens-mode process. The visual quality rules define hard constraints for
+accessibility and visual consistency that apply during component generation.
 
 Tokens mode generates design tokens (colors, typography, spacing) and a reusable component
 library with **behavioral states** (idle, loading, error, disabled), **accessibility
@@ -162,7 +164,10 @@ then batch screenshot then batch feedback then revise flagged items.
 
 ## Mockups Mode
 
-When running mockups mode, read `references/mockups-mode.md` and follow its process.
+When running mockups mode, read `references/mockups-mode.md` and `references/visual-quality-rules.md`,
+then follow the mockups-mode process. The visual quality rules define Gestalt constraints,
+accessibility hard constraints, and the visual verification protocol that apply during
+screen composition.
 
 Mockups mode creates screen-level designs using the design system components from tokens mode,
 then runs a **behavioral walkthrough** per screen — capturing screen states (empty, loading,
@@ -244,6 +249,21 @@ DESIGN_TASKS.md.
   - **If overlap is detected, fix it immediately.** Don't proceed to the next section or
     present a screenshot with overlapping elements. Adjust positions, increase gaps, or
     resize containers until `snapshot_layout` shows clean separation.
+
+### Visual Quality
+
+- **Visual quality rules are hard constraints, not aspirational.** Read
+  `references/visual-quality-rules.md` during tokens and mockups modes. The rules codify
+  Gestalt principles (proximity, similarity, closure, simplicity), WCAG 2.2 accessibility
+  constraints (contrast ratios, target sizes, heading hierarchy, focus indicators, labels),
+  and spatial hierarchy requirements. These are enforced during generation, not checked
+  after the fact.
+
+- **Run the visual verification protocol after `batch_design` calls that produce visual
+  content.** The protocol extends the existing overlap detection with Gestalt compliance,
+  accessibility spot checks, and visual hierarchy confirmation. The "When to Apply" table
+  in `references/visual-quality-rules.md` scopes which checks apply in which mode — not
+  every step runs on every call.
 
 ### General
 

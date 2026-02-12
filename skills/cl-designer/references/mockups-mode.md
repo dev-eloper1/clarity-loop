@@ -74,17 +74,52 @@ Wait for user confirmation.
    - Add real-ish content (not "Lorem ipsum" — use plausible text that reflects the feature)
    - **Keep every element inside its screen frame.** No floating elements on the canvas.
    - Keep `batch_design` calls to ~25 operations each
+   - **Apply Gestalt constraints during layout composition** (see
+     `references/visual-quality-rules.md`):
+     - **Proximity**: Use smaller gaps within groups (8–12px), larger gaps between groups
+       (24–32px). A form label and its input use 4–8px gap; adjacent form groups use 16–24px.
+       Related actions (Save + Cancel) share a tight container; unrelated sections have ≥32px.
+     - **Similarity**: Same-function elements share visual treatment. All nav items use the
+       same font size + weight. All cards at the same level share shadow + radius + padding.
+       If you're placing three feature cards side by side, they must be visually identical
+       in structure — only content differs.
+     - **Closure**: Group related content inside container frames. A form section gets its own
+       frame with padding. A metrics row gets its own frame. Don't scatter related elements
+       as siblings of a flat parent — add intermediate grouping frames.
+     - **Hierarchy**: One focal point per section. The page title is the largest text. The
+       primary CTA is the most visually prominent button. Section headings are visibly larger
+       than body text (see spatial hierarchy rules in visual-quality-rules.md).
 
-4. **Call `snapshot_layout` immediately after `batch_design` — before screenshotting.**
-   Check computed bounding boxes for any elements that overlap. Common issues:
+4. **Run the visual verification protocol after each `batch_design` call** (see
+   `references/visual-quality-rules.md` for the full protocol):
+
+   **Step 1 — Layout integrity**: Call `snapshot_layout`. Check for overlapping bounding
+   boxes, elements escaping containers, zero-size elements. Common issues:
    - Text labels overlapping adjacent components (especially with long text content)
    - Nav items packed too tightly with no gap
    - Form labels overlapping input fields below them
    - Cards or list items stacked without adequate vertical gap
-   If overlaps are found, fix them with another `batch_design` call before proceeding.
-   Use auto-layout (`layoutMode` + `gap`) on all container elements to prevent this.
-5. Call `get_screenshot` of the individual screen (zoomed in, not the full canvas)
-6. Present to user with:
+   Fix overlaps with another `batch_design` call before proceeding.
+
+   **Step 2 — Gestalt compliance**: Review the layout structure:
+   - Are related elements grouped with tight spacing, unrelated ones separated wider?
+   - Do same-function elements share visual attributes?
+   - Are related groups contained in bounded parent frames?
+   - Is there one clear focal point per section?
+
+   **Step 3 — Accessibility spot check**:
+   - Text contrast against backgrounds (especially secondary text, disabled states, text
+     on colored cards or banners)
+   - Interactive element sizes ≥ 24×24px
+   - Every input has a visible label
+   - Heading sizes descend correctly (H1 > H2 > H3)
+
+   **Step 4 — Visual confirmation**: Call `get_screenshot` and self-check before presenting.
+
+   If any step reveals issues, fix before proceeding to the next screen or presenting to
+   the user. Don't accumulate quality debt across screens.
+
+5. Present the screenshot from Step 4 to user with:
    - Screen name and which PRD features it covers
    - Which design system components are used and where
    - Brief walkthrough of the layout: "Top bar with nav, sidebar with filters, main area

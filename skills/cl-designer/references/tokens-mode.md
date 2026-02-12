@@ -155,6 +155,15 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    **Always `snapshot_layout` after each section before moving on.** Fix any overlaps
    immediately — don't accumulate layout issues across sections.
 
+   **Accessibility during token visualization:**
+   - When generating color swatches, note which foreground colors meet 4.5:1 contrast
+     against which background colors. Document safe pairings (e.g., "primary-900 text on
+     primary-50 background: ✓ 4.5:1") in the swatch labels or as a summary after the
+     color section. This prevents downstream contrast failures in components and screens.
+   - If any primary text/background combination fails 4.5:1, flag it to the user during
+     token review: "Warning: [token pair] has insufficient contrast ([ratio]). Adjust the
+     shade or plan to use it only for large text (3:1 threshold)."
+
 7. **Show tokens to the user one section at a time.** Don't screenshot the entire design
    system frame — it will be too dense to evaluate.
    - `get_screenshot` of the Color Tokens section → present, gather feedback
@@ -224,6 +233,24 @@ these components: [list with variants]. Add or remove any?"
      - **Toast/Alert**: visible state with variants (success, error, warning, info).
      Place behavioral state variants in a separate row below the visual variants within
      the component group, labeled "States". Use `snapshot_layout` to prevent overlap.
+   - **Enforce accessibility hard constraints during generation** (see
+     `references/visual-quality-rules.md`):
+     - **Target sizes**: Button height ≥ 36px, icon buttons ≥ 32×32px, checkbox/radio/toggle
+       controls ≥ 20×20px with padding to reach 24×24px interactive area.
+     - **Contrast**: Text color on component backgrounds must meet 4.5:1 (regular) or 3:1
+       (large text ≥ 24px). Check especially: disabled state text, placeholder text, error
+       state text on colored backgrounds.
+     - **Labels**: Input, Select, TextArea components must include a label element in their
+       reusable structure (or be documented as requiring an external label). Placeholder text
+       alone is never sufficient.
+     - **Focus indicators**: Include a "focused" state variant for every interactive component
+       showing the design system's focus outline (color, offset, width from tokens). This
+       variant doesn't need to be a full behavioral state — a visual annotation showing the
+       focus ring is sufficient.
+     - **Similarity within component families**: All buttons share fill + font weight + corner
+       radius across variants (only the specific values change). All inputs share border style
+       + padding + label positioning. Use `search_all_unique_properties` after generating a
+       component category to detect unintended inconsistencies.
 5. **Every element must be inside its category frame.** Never create floating elements
    on the root canvas. If a component doesn't fit existing categories, create a new
    category frame for it.

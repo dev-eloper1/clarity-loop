@@ -47,7 +47,7 @@ setup). Available MCPs determine which verification tools you can use:
 
 ---
 
-### Step 2: Three-Dimension Analysis
+### Step 2: Four-Dimension Analysis
 
 #### Dimension 1: Design vs. System Docs
 
@@ -94,7 +94,49 @@ If a codebase exists, does the design align with code conventions?
 If no codebase exists yet (pure docs phase), skip this dimension and note: "No codebase
 to compare against. Design-to-code alignment will be checked after implementation begins."
 
-#### Dimension 3: Internal Consistency
+#### Dimension 3: Visual Quality (Gestalt + Accessibility)
+
+Does the design follow established visual perception principles and accessibility standards?
+See `skills/cl-designer/references/visual-quality-rules.md` for the full rule set.
+
+**Gestalt compliance:**
+- **Proximity**: Are related elements grouped with tight spacing, separated from unrelated
+  elements with wider spacing? Within-group gaps should be ≤ half between-group gaps.
+- **Similarity**: Do same-function elements share visual treatment across the design system?
+  All buttons of same type styled identically. All cards at same hierarchy share shadow,
+  radius, padding.
+- **Closure**: Are related content groups contained in bounded parent frames? No scattered
+  related elements at flat hierarchy levels.
+- **Hierarchy**: One focal point per section. Page title is the largest text per screen.
+  Primary CTA visually dominant over secondary actions.
+
+**Accessibility constraints (WCAG 2.2):**
+- Color contrast: text on backgrounds meets 4.5:1 (regular) or 3:1 (large ≥ 24px).
+  Check especially: disabled states, placeholder text, text on colored backgrounds,
+  error/warning banner text.
+- Target sizes: interactive elements ≥ 24×24px. Button height ≥ 36px.
+- Label association: every input has a visible label (not placeholder-only).
+- Heading hierarchy: one H1 per screen, no skipped levels, sizes descend correctly.
+- Focus indicators: interactive components have visible focus state variants.
+
+**MCP-specific checks:**
+- *Pencil*: Call `get_screenshot` of key screens and spot-check contrast, hierarchy,
+  and grouping visually. Use `search_all_unique_properties` to detect hardcoded values
+  that break similarity within component families.
+
+| Check | Status |
+|-------|--------|
+| Gestalt proximity | Compliant / [specific violation] |
+| Gestalt similarity | Compliant / [specific violation] |
+| Gestalt closure | Compliant / [specific violation] |
+| Spatial hierarchy | Compliant / [specific violation] |
+| Contrast ratios | Compliant / [specific violation] |
+| Target sizes | Compliant / [specific violation] |
+| Label association | Compliant / [specific violation] |
+| Heading hierarchy | Compliant / [specific violation] |
+| Focus indicators | Compliant / [specific violation] |
+
+#### Dimension 4: Internal Consistency
 
 Is the design system consistent with itself?
 
@@ -194,7 +236,23 @@ One paragraph: overall design quality and alignment with system docs.
 
 [List issues, or "No issues — design conventions match code conventions."]
 
-## Dimension 3: Internal Consistency
+## Dimension 3: Visual Quality
+
+### Gestalt Compliance
+
+[Are related elements properly grouped? Do same-function elements share visual treatment?
+Is there clear hierarchy per section?]
+
+### Accessibility Compliance
+
+[Do contrast ratios meet WCAG 2.2? Are target sizes sufficient? Are labels present?
+Is heading hierarchy logical? Are focus indicators defined?]
+
+### Issues
+
+[List issues, or "No issues — visual quality rules are met."]
+
+## Dimension 4: Internal Consistency
 
 ### Token Discipline
 
