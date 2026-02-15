@@ -56,7 +56,7 @@ Report: budgets met / budgets specified / budgets not measurable.
 
 ### Sub-Check 7f: L1 Assumption Scan
 
-Scan IMPLEMENTATION_PROGRESS.md for all L1 assumptions:
+Scan TASKS.md for all L1 assumptions:
 1. Group by category
 2. Count total and per-category
 3. Flag categories with 5+ assumptions as systemic gaps

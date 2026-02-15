@@ -217,7 +217,6 @@ Apply adjustments and regenerate DESIGN_TASKS.md if needed.
    - Set `Build Plan` status to `Complete`
    - Record task count per phase
    - Add `Last updated` date
-2. Update `{docsRoot}/STATUS.md` if it tracks design state
 
 Tell the user: "Build plan complete. DESIGN_TASKS.md generated at
 `{docsRoot}/specs/DESIGN_TASKS.md` with [N] tasks across [M] phases. Run

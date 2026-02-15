@@ -127,7 +127,7 @@ Sync summary (specs changed from [old-hash] to [new-hash]):
 Apply these changes? [Y/n]
 ```
 
-If user approves: apply all changes to TASKS.md, update IMPLEMENTATION_PROGRESS.md sync
+If user approves: apply all changes to TASKS.md, update TASKS.md sync
 history, update Claude Code tasks.
 
 If user wants adjustments: process their feedback before applying.
@@ -137,7 +137,7 @@ If user wants adjustments: process their feedback before applying.
 ### Step 8: Update Tracking
 
 1. Update TASKS.md header with new spec version hash.
-2. Add entry to IMPLEMENTATION_PROGRESS.md Spec Sync History:
+2. Add entry to TASKS.md Spec Sync History:
    ```
    | [date] | [old-hash] | [new-hash] | [summary of impact] | [actions taken] |
    ```

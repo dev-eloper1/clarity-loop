@@ -58,6 +58,11 @@ Run these checks before generating anything:
      library knowledge during implementation. Run `/cl-researcher context` to create them,
      or continue without. [Continue/Create context]"
 
+6. **Transition advisory** — Read PARKING.md Active section. If any `architectural` items
+   exist, surface them:
+   "There are [N] architectural items parked: [list]. These may affect implementation tasks."
+   Never block. The user can always say "proceed."
+
 **Batch presentation**: Present all pre-check results as a single status table:
 
 | Check | Status | Action Needed |
@@ -67,6 +72,7 @@ Run these checks before generating anything:
 | Git repository | Pass / Action | [init or skip] |
 | Spec coverage | Pass / Gaps | [list gaps with recommended action per gap] |
 | Context freshness | Pass / Stale | [list stale libraries with recommended action] |
+| Transition advisory | Pass / Advisory | [architectural items if any] |
 
 "Pre-checks complete. [N items need attention]. Address now or proceed?"
 
@@ -153,6 +159,10 @@ flowchart TD
 
 ## Area: UI Layer
 ...
+
+## Session Log
+| Date | Session | Tasks Touched | Spec Gaps Found | Files Modified |
+|------|---------|--------------|-----------------|----------------|
 ```
 
 **Task generation rules:**
@@ -360,7 +370,7 @@ Present identified groups:
   Group B: T-005, T-006 (UI tokens + components)
 Parallel execution uses Claude Code's fork capability. Approve? [Y/n/disable]"
 
-If user disables: note in IMPLEMENTATION_PROGRESS.md that parallel execution is off.
+If user disables: note in TASKS.md Session Log that parallel execution is off.
 
 ---
 
@@ -391,48 +401,20 @@ After adjustments, regenerate the dependency graph if it changed.
 
 ---
 
-### Step 6: Create IMPLEMENTATION_PROGRESS.md
+### Step 6: Initialize TASKS.md Session Log
 
-Write `{docsRoot}/specs/IMPLEMENTATION_PROGRESS.md`:
+Add the Session Log section to `{docsRoot}/specs/TASKS.md` (generated in Step 3) with
+initial metadata:
 
 ```markdown
-# Implementation Progress
-
-**Spec version**: [content hash from .spec-manifest.md]
-**Started**: [date]
-**Last session**: [date]
-**Status**: In Progress
-**Git tracking**: [yes/no — based on git check in Step 1]
-**Parallel execution**: [enabled/disabled — based on Step 4]
-
-## Task Status
-
-| Task | Status | Completed | Files Modified | Notes |
-|------|--------|-----------|----------------|-------|
-| T-001 | pending | — | — | — |
-| T-002 | pending | — | — | — |
-...
-
-## Spec Gaps
-
-| ID | Task | Gap | Level | Status | Resolution |
-|----|------|-----|-------|--------|------------|
-
-## Fix Tasks
-
-| ID | Type | Source Task | Discovered During | Status | Files Modified |
-|----|------|-----------|-------------------|--------|----------------|
-
-## External Changes
-
-| Date | Files Changed | Task Impact | Action Taken |
-|------|--------------|-------------|--------------|
-
-## Spec Sync History
-
-| Date | Old Hash | New Hash | Impact | Action Taken |
-|------|----------|----------|--------|--------------|
+## Session Log
+| Date | Session | Tasks Touched | Spec Gaps Found | Files Modified |
+|------|---------|--------------|-----------------|----------------|
+| [date] | start | — | — | TASKS.md |
 ```
+
+Record the spec version, git tracking status (from Step 1), and parallel execution
+setting (from Step 4) as the first session entry.
 
 ---
 

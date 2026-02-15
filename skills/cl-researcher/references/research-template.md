@@ -6,11 +6,11 @@ a major architectural exploration deserves full detail.
 
 ## Filename Convention
 
-Use `R-NNN-slug.md` format: `docs/research/R-NNN-slug.md`
+Use `R-NNN-TOPIC.md` format: `docs/research/R-NNN-TOPIC.md`
 
-The NNN is a sequential number. The slug is a lowercase, hyphen-separated descriptor.
+The NNN is a sequential number. The TOPIC is a SCREAMING_SNAKE_CASE descriptor.
 
-Examples: `R-001-memory-layer.md`, `R-002-event-bus-scaling.md`, `R-003-auth-strategy.md`
+Examples: `R-001-MEMORY_LAYER.md`, `R-002-EVENT_BUS_SCALING.md`, `R-003-AUTH_STRATEGY.md`
 
 To determine the next ID, check `docs/RESEARCH_LEDGER.md` for the highest existing ID
 and increment.
@@ -178,7 +178,7 @@ reasoning later.
 ## Emerged Concepts
 
 Ideas that surfaced during this research that aren't the main topic but should be
-tracked. These get added to STATUS.md's emerged concepts table.
+tracked. These get added to PARKING.md with appropriate classification (architectural, incremental, or scope-expansion).
 
 | Concept | Why It Matters | Suggested Action |
 |---------|---------------|-----------------|

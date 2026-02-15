@@ -290,11 +290,10 @@ What the design does well — helps the designer know what to preserve.
 ### Step 4: Update Tracking
 
 After writing the review:
-1. Update `{docsRoot}/STATUS.md` — note the design review date and verdict
-2. If the review reveals design gaps that trace to missing PRD content, flag it:
+1. If the review reveals design gaps that trace to missing PRD content, flag it:
    "The design review found gaps that may need PRD updates. Consider a research cycle
    for: [list]."
-3. If the review resulted in design-to-PRD misalignment decisions, naming conflict
+2. If the review resulted in design-to-PRD misalignment decisions, naming conflict
    resolutions, or component pattern choices constrained by architecture, log Decision
    entries in `docs/DECISIONS.md` with Pipeline Phase `design`
 

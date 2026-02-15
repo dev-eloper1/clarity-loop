@@ -101,7 +101,7 @@ document) and ask: do the system docs as a whole still serve these goals?
   the original goals?
 - **Principle violations**: Do the goals state design principles that the current system
   docs no longer reflect?
-- **L1 assumption trend**: If `{docsRoot}/specs/IMPLEMENTATION_PROGRESS.md` exists, read
+- **L1 assumption trend**: If `{docsRoot}/specs/TASKS.md` exists, read
   the Spec Gaps table. Count L1 assumptions by category. Compare against previous audits:
   - Are the same categories accumulating assumptions across audit periods?
   - Are L1 assumptions being promoted to DECISIONS.md, or are they piling up?
@@ -170,6 +170,13 @@ Are there parts of the docs that appear to be outdated?
 - Sections that describe "planned" or "future" features that should have been resolved
 - Content that predates major architectural decisions and hasn't been updated
 - Dates, version numbers, or status fields that are clearly stale
+
+#### 9. Parking Lot Health
+
+1. Count active items. 0-14: healthy. 15-24: suggest triage. 25+: flag.
+2. Architectural items older than 3 days: re-surface with emphasis.
+3. Items not referenced since parking: flag as potentially stale.
+4. Pull-based check: any active items that a completed mode could have addressed?
 
 ### Step 3: Produce the Audit Report
 
@@ -313,9 +320,8 @@ List any unresolved recommendations from the previous audit.
 ### Step 4: Update Tracking
 
 After writing the audit report:
-1. Update `docs/STATUS.md` — set "Last audit" to today's date, note key findings
-2. If the audit reveals emerged concepts, add them to STATUS.md's emerged concepts table
-3. **Log audit decisions to DECISIONS.md** — For each finding that required a judgment
+1. If the audit reveals emerged concepts, add them to PARKING.md per the parking protocol
+2. **Log audit decisions to DECISIONS.md** — For each finding that required a judgment
    call, log a Decision entry:
    - Fix-vs-research: "This drift needs a correction" vs. "This needs a full research cycle"
    - Severity assessment: "This is critical and blocks implementation" vs. "This is cosmetic"

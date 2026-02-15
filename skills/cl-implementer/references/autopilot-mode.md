@@ -308,7 +308,7 @@ When the dependency graph allows parallel work:
 3. Each subagent runs the autonomous loop (implement → test → commit) independently
 4. Main context collects results and checks for file conflicts
 5. If conflicts: re-run conflicting tasks sequentially
-6. Merge results into IMPLEMENTATION_PROGRESS.md
+6. Merge results into TASKS.md
 
 **Limit**: Maximum 3 parallel groups to avoid resource contention. User can adjust.
 

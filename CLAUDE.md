@@ -1,0 +1,142 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**Clarity Loop** is a Claude Code plugin that manages a structured documentation pipeline — from vague idea to working code through research, reviewed documentation, visual design, and tracked implementation. It is NOT a standalone application; it runs inside Claude Code sessions as a set of skills, hooks, scripts, and templates.
+
+**Core principle**: AI does the work. Humans make the calls. Files hold the truth.
+
+## Architecture
+
+### Plugin Structure
+
+The plugin is registered via `.claude-plugin/plugin.json`. Skills are loaded from `skills/` at session start. Hooks run on every Edit/Write tool call.
+
+**Four skills** (each is a SKILL.md + references/ directory):
+
+| Skill | Modes | Role |
+|-------|-------|------|
+| `cl-researcher` | bootstrap, brownfield, triage, research, structure, proposal, context | Creates and evolves documentation |
+| `cl-reviewer` | review, re-review, fix, merge, verify, audit, correct, sync, design-review | Gates and validates changes |
+| `cl-designer` | setup, tokens, mockups, build-plan | UI/UX design generation |
+| `cl-implementer` | spec, spec-review, start, run, autopilot, verify, status, sync | Spec generation and implementation tracking |
+
+**Two hooks** (registered in `hooks/hooks.json`):
+
+- **PreToolUse** (`protect-system-docs.js`): Blocks Edit/Write to `{docsRoot}/system/` unless a `.pipeline-authorized` marker exists with a valid operation (bootstrap, merge, correct). This is the protection model — system docs are pipeline-managed only.
+- **PostToolUse** (`generate-manifest.js`): Auto-regenerates `{docsRoot}/system/.manifest.md` after any system doc is modified. The manifest contains section indexes, line ranges, cross-references, and a content hash.
+
+### Configuration
+
+`.clarity-loop.json` in the project root configures the docs path. Default: `{ "version": 1, "docsRoot": "docs" }`. All hooks and skills resolve paths through `hooks/config.js` → `loadConfig()` / `resolveDocPath()`.
+
+### Skill Architecture (Progressive Disclosure)
+
+Each skill uses a two-level loading pattern:
+- **SKILL.md**: Loaded at session start. Contains mode detection, gates, guidelines, and the overall process. The frontmatter `description` field controls auto-triggering.
+- **references/*.md**: Loaded on-demand when a specific mode runs. Contains detailed step-by-step instructions. Skills explicitly say "read `references/X-mode.md` and follow its process."
+
+This keeps context window usage low — only the relevant reference is loaded for the active mode.
+
+### System Doc Protection Model
+
+```
+User tries to edit docs/system/ARCHITECTURE.md
+  → PreToolUse hook fires
+  → Checks for {docsRoot}/system/.pipeline-authorized
+  → No marker → DENY with message explaining authorized paths
+  → Marker exists with valid operation → ALLOW
+```
+
+Three operations can create the marker: `/cl-researcher bootstrap`, `/cl-reviewer merge`, `/cl-reviewer correct`. The marker is deleted after the operation completes.
+
+### Per-Project Directory Structure (created by init.js)
+
+When bootstrap runs, `scripts/init.js` scaffolds inside the user's project:
+
+```
+{docsRoot}/
+  system/          # Protected system docs (PRD, ARCHITECTURE, TDD, etc.)
+    .manifest.md   # Auto-generated index (gitignored)
+  research/        # Research documents (R-NNN format)
+  proposals/       # Proposals with Change Manifests (P-NNN format)
+  reviews/
+    proposals/     # Review artifacts (REVIEW_*, VERIFY_*)
+    audit/         # System audit reports (AUDIT_*)
+    design/        # Design review artifacts
+  specs/           # Implementation specs and design specs
+  designs/         # Design files (.pen, DESIGN_PROGRESS.md)
+  context/         # Per-library context files (three-layer progressive disclosure)
+  DECISIONS.md     # System-wide decision journal
+  PARKING.md       # Parked findings, gaps, and ideas
+  RESEARCH_LEDGER.md
+  PROPOSAL_TRACKER.md
+```
+
+### Key Pipeline Flows
+
+**Research → Proposal → Review → Merge**:
+Research doc created → user approves → proposal generated with Change Manifest → reviewer checks 6 dimensions → fix cycle until APPROVE → merge to system docs with authorization marker → post-merge verify → manifest regenerated.
+
+**Design flow**: Setup (MCP detection + discovery) → Tokens (design system) → Mockups (screen-level) → Build Plan (task breakdown). Each stage has a generate → screenshot → feedback → refine loop.
+
+**Implementation flow**: Waterfall gate (all system docs must be verified) → Spec generation (parallel, format-selected) → Cross-spec consistency check → Task queue generation (TASKS.md) → Run mode (reconcile → process → verify). Fix tasks trigger automatic re-verification of downstream completed tasks.
+
+## Development
+
+### No Build Step
+
+This is a Claude Code plugin — pure markdown skills, Node.js hooks/scripts, and templates. No compilation, no dependencies to install, no test suite.
+
+### Running Hooks Locally
+
+```bash
+# Test the protection hook (simulates a tool call)
+echo '{"tool_name":"Edit","tool_input":{"file_path":"/path/to/docs/system/ARCHITECTURE.md"}}' | \
+  node hooks/protect-system-docs.js
+
+# Generate manifest manually
+CLARITY_LOOP_PROJECT_ROOT=/path/to/project node hooks/generate-manifest.js --init
+
+# Run init with custom project root
+CLARITY_LOOP_PROJECT_ROOT=/path/to/project node scripts/init.js
+```
+
+### Environment Variables
+
+| Variable | Used By | Purpose |
+|----------|---------|---------|
+| `CLAUDE_PLUGIN_ROOT` | hooks.json | Resolves hook script paths (set by Claude Code) |
+| `CLARITY_LOOP_PROJECT_ROOT` | init.js, generate-manifest.js | Override project root (defaults to cwd) |
+
+## Key Design Decisions
+
+- **Skills use markdown, not code.** SKILL.md files are prompts, not programs. They instruct Claude Code how to behave. References are loaded lazily to minimize context usage.
+- **System docs are NEVER edited directly.** The PreToolUse hook enforces this. All changes go through the pipeline: research → proposal → review → merge. Even typo fixes.
+- **The manifest is the index.** Skills read `.manifest.md` to understand what system docs exist, their section structure, and cross-references — avoiding full reads of every doc.
+- **Decisions persist across sessions.** DECISIONS.md is read at session start by every skill. Decisions constrain future work and prevent contradictions across context compressions.
+- **Context files bridge LLM training gaps.** Per-library context in `{docsRoot}/context/` provides version-pinned, curated knowledge (correct imports, breaking changes, gotchas) that the LLM's training data gets wrong.
+
+## Working on This Codebase
+
+When modifying skills:
+- Edit the SKILL.md for changes to mode detection, gates, or guidelines that apply across modes
+- Edit specific `references/*.md` files for mode-specific behavior changes
+- The frontmatter `description` field in SKILL.md controls auto-triggering — changes here affect when the skill activates
+- The `argument-hint` field shows available modes in autocomplete
+
+When modifying hooks:
+- Both hooks read from stdin (JSON with `tool_name` and `tool_input`) and must exit cleanly
+- `protect-system-docs.js` outputs a JSON `permissionDecision: "deny"` to block; silent exit = allow
+- `generate-manifest.js` writes directly to `{docsRoot}/system/.manifest.md`; it's idempotent
+- Both use `hooks/config.js` for path resolution — always go through `loadConfig()`, never hardcode `docs/`
+
+When modifying templates:
+- Templates in `templates/` are copied once during init. Changes to templates don't affect existing projects.
+- Templates include `<!-- clarity-loop-managed -->` markers used by collision detection.
+
+### docs/ in This Repo vs docs/ in User Projects
+
+This repo's `docs/` contains the plugin's own documentation (SYSTEM_DESIGN.md, per-skill docs, research artifacts). This is NOT the same as the `{docsRoot}/` created in user projects. Don't confuse them — this repo's docs describe the plugin; user project docs are managed by the plugin.

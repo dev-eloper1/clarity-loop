@@ -135,7 +135,7 @@ Research docs are living documents until approved:
 - Refined in-place based on your feedback
 - Open questions resolved through continued discussion
 - When you're satisfied, status changes to `approved`
-- [Emerged concepts](pipeline-concepts.md#emerged-concepts) captured in STATUS.md
+- [Emerged concepts](pipeline-concepts.md#emerged-concepts) parked in PARKING.md
 
 ---
 

@@ -84,22 +84,28 @@ All paths (`docs/system/`, `docs/specs/`, etc.) resolve relative to the configur
    tasks should be implemented. Surface relevant decisions when implementing tasks in
    the same area.
 
-3. **Check spec staleness** — If `{docsRoot}/specs/.spec-manifest.md` exists:
+3. **Read parking lot** — If `{docsRoot}/PARKING.md` exists, check the Active section for
+   any parked findings or architectural items that may affect implementation.
+
+4. **Check spec staleness** — If `{docsRoot}/specs/.spec-manifest.md` exists:
    - Read the `Generated` date and `Source docs` list from the manifest
    - Check each source doc's last-modified date (via file system or git)
    - If any system doc has been modified since the spec generation date, warn:
      "Specs were generated on [date] but these system docs have changed since:
      [list]. Consider regenerating specs with `/cl-implementer spec`."
 
-4. **Implementation state check** — If `{docsRoot}/specs/IMPLEMENTATION_PROGRESS.md` exists:
-   - Read it. Resume from the last recorded state.
+5. **Implementation state check** — If `{docsRoot}/specs/TASKS.md` exists:
+   - Read the Session Log section. Resume from the last recorded state.
    - Tell the user: "Found existing implementation progress. [Summary of status — N tasks
      done, M remaining, any gaps or fix tasks]. Continuing from where we left off."
-   - If no progress file exists, check if TASKS.md exists. If yes, this is a resume without
-     progress tracking (shouldn't happen, but handle gracefully). If neither exists, this is
-     a fresh start — suggest `spec` mode if specs don't exist, or `start` mode if they do.
+   - If TASKS.md doesn't exist, this is a fresh start — suggest `spec` mode if specs don't
+     exist, or `start` mode if they do.
 
-5. **Orient the user** — briefly note any issues found.
+6. **Orient the user** — After reading source files, give a 2-3 sentence orientation:
+   - What's the current state? (e.g., "5 of 12 tasks complete, 2 blocked")
+   - Any architectural items parked? (from PARKING.md active section)
+   - What was the last significant decision? (from DECISIONS.md)
+   Keep it brief. The user will say what they want to do.
 
 ---
 
@@ -179,9 +185,8 @@ TEST_SPEC.md if they exist). Tasks are organized by implementation area with a c
 Mermaid dependency graph. If TEST_SPEC.md exists, generates test tasks as first-class
 entries: a test infrastructure task (no dependencies, parallel with early impl), per-module
 unit test tasks (follow their implementation task), per-milestone integration test tasks
-(depend on all spanned impl tasks), and contract test tasks. Creates
-`IMPLEMENTATION_PROGRESS.md` for session persistence. Populates Claude Code's task system
-via `TaskCreate`.
+(depend on all spanned impl tasks), and contract test tasks. Updates TASKS.md Session Log
+for session persistence. Populates Claude Code's task system via `TaskCreate`.
 
 ---
 
@@ -228,7 +233,7 @@ reconciliation).
 
 ## Status Mode
 
-Generate a progress report from TASKS.md and IMPLEMENTATION_PROGRESS.md:
+Generate a progress report from TASKS.md:
 
 ```
 Implementation Status
@@ -248,8 +253,7 @@ By area:
   UI Layer:     5/10 complete
 ```
 
-No reference file needed — this mode reads TASKS.md and IMPLEMENTATION_PROGRESS.md and
-formats the summary directly.
+No reference file needed — this mode reads TASKS.md and formats the summary directly.
 
 ---
 
@@ -352,3 +356,22 @@ user-added tasks and manual reorderings.
   idempotency, transaction boundaries, caching, or validation authority policies, every
   endpoint inherits them. Don't make per-endpoint decisions that contradict the system
   policy — flag them as L1 spec gaps instead.
+
+### Parking Protocol
+
+When a finding surfaces during any mode that is NOT the current focus:
+
+1. **Check first**: Read PARKING.md active section. If a similar item exists,
+   add context to it rather than creating a duplicate.
+
+2. **Classify**: `architectural` (blocks progress) | `incremental` (can wait) |
+   `scope-expansion` (new feature idea). Default to `incremental` if uncertain.
+
+3. **Record** in PARKING.md -> Active section:
+   - Assign next EC-NNN ID
+   - Fill all columns (Concept, Classification, Origin, Date, Impact, Notes)
+
+4. **Tell the user**: "Found [classification] issue: [brief]. Parked as EC-NNN."
+   If architectural: "This may affect implementation -- I'll flag it at spec/start."
+
+5. **Continue current work.** Don't derail.

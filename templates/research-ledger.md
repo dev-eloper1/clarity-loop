@@ -2,6 +2,14 @@
 
 Tracks all research cycles in this project. Updated by the `cl-researcher` skill.
 
+## Research Queue
+
+Recommended order for upcoming research. Adaptive — reorder based on new
+information, dependencies, or priority changes.
+
+| Priority | Topic | Type | Depends On | Notes |
+|----------|-------|------|-----------|-------|
+
 ## Active
 
 | ID | Topic | Type | Status | Open Qs | Rounds | Complexity | Research Doc | Started | Last Updated |

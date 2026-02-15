@@ -61,7 +61,7 @@ Not every choice is a decision entry. The threshold is: **would a future skill o
 - Routine triage at L0/L1 — unless the user overrode the assessment
 - Mechanical corrections (typo fixes, broken references, formatting)
 - Proposal approvals without conflict — the approval itself is tracked in PROPOSAL_TRACKER.md
-- Implementation tasks completing normally — tracked in IMPLEMENTATION_PROGRESS.md
+- Implementation tasks completing normally — tracked in TASKS.md
 - L1 spec gaps where the user accepted the default assumption unchanged
 
 ### Entry Formats

@@ -255,11 +255,7 @@ After writing all context files:
 1. **Create or update `.context-manifest.md`** — add/update entries for each library
    processed.
 
-2. **Update `docs/STATUS.md`** — if a "Context" section exists in the pipeline state,
-   update it. If not, this is a net-new artifact type that doesn't need STATUS tracking
-   (context files are project artifacts, not pipeline tracking artifacts).
-
-3. **Report to user**: "Context files created for [N] libraries in `{docsRoot}/context/`.
+2. **Report to user**: "Context files created for [N] libraries in `{docsRoot}/context/`.
    These will be loaded automatically during spec generation and implementation."
 
 ---

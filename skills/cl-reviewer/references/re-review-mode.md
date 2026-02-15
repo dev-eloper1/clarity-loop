@@ -56,6 +56,29 @@ consistency, technical soundness, completeness) but focus specifically on areas 
 Even if the initial review found no external consistency issues, re-verify against system
 docs. The proposal's content has changed, so the consistency map needs to be rebuilt.
 
+#### Part D: Convergence Tracking
+
+At each re-review round, compute:
+1. Raw blocking issue count
+2. Severity-weighted sum of all unresolved blocking issues (Critical=4, Major=2, Minor=1)
+3. Contraction ratio (this round's weighted sum / previous round's weighted sum)
+
+If contraction ratio > 1: "Review round [N] found MORE issues than round [N-1].
+Fixes may be destabilizing other parts."
+
+After round 3: "Is the problem with the proposal, or the process that produced it?"
+
+Epsilon thresholds -- compare the severity-weighted sum against the intent threshold
+(from DECISIONS.md). If at or below threshold, the proposal qualifies for APPROVE
+even with remaining minor issues. This supplements (does not replace) the existing
+verdict criteria -- the reviewer still assesses all dimensions, but epsilon provides
+a quantitative minimum bar calibrated to project intent:
+- Ship: severity-weighted sum <= 4 (e.g., up to 2 minor issues or 1 major)
+- Quality: severity-weighted sum <= 2 (at most 2 minor issues)
+- Rigor: severity-weighted sum = 0 (all blocking issues must be resolved)
+
+Include convergence metrics in the "Review Cycle Health" section of the report.
+
 ### Step 3: Produce the Re-Review File
 
 Determine the next version number by finding the highest existing `_v*.md` and incrementing.

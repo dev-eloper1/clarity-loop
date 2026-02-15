@@ -514,7 +514,6 @@ Read `references/design-checklist.md` and run the Tokens Checklist. Present resu
    - Set `Tokens` status to `Complete`
    - Record component list with approval status
    - Add `Last updated` date
-2. Update `{docsRoot}/STATUS.md` if it tracks design state
 
 Tell the user: "Design system complete. DESIGN_SYSTEM.md generated at
 `{docsRoot}/specs/DESIGN_SYSTEM.md`. Run `/cl-designer mockups` to generate screen

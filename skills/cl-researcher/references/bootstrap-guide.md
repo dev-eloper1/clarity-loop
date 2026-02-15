@@ -30,7 +30,7 @@ For a brand-new project where nothing exists yet.
 #### Step 1: Scaffold
 
 Check if the docs directory structure exists (tracking files like `docs/RESEARCH_LEDGER.md`,
-`docs/PROPOSAL_TRACKER.md`, `docs/STATUS.md`, and subdirectories like `docs/system/`).
+`docs/PROPOSAL_TRACKER.md`, `docs/PARKING.md`, and subdirectories like `docs/system/`).
 
 If anything is missing, run init.js automatically:
 
@@ -144,6 +144,25 @@ and `data-modeling`. Skip for Prototype preset projects.
 
 Continue the conversation naturally. These questions establish the project's identity.
 Don't rush -- the quality of initial docs depends on getting the picture right.
+
+#### Intent Inference
+
+From the discovery conversation, infer the user's project intent:
+
+| Signal | Inferred Intent |
+|--------|----------------|
+| "deadline," "demo," "weekend project," "prototype" | **Ship** |
+| "production," "users," "scale," "maintain," "team" | **Quality** |
+| "HIPAA," "compliance," "audit," "regulated" | **Rigor** |
+| Exploring a problem, no clear build target | **Explore** |
+
+Present the inference conversationally:
+
+"From what you've described — [reflect key signals] — this sounds like a **[intent]**
+project. That means [what it implies for the pipeline]. Sound right?"
+
+Record in defaults sheet with source `[from discovery]`. If the user doesn't confirm
+or changes intent later, update the entry.
 
 #### Step 2b: Project Profile Detection
 
@@ -463,12 +482,113 @@ review → merge) handles subsequent changes.
 
 1. Remove `docs/system/.pipeline-authorized`
 2. The PostToolUse hook will auto-generate `.manifest.md`
-3. Update `docs/STATUS.md` — note that bootstrap was completed, list the initial docs
-4. Update `docs/DECISIONS.md` — populate the Project Context section (purpose, architecture, constraints, technology stack, design principles) based on everything learned during bootstrap. Log initial architectural decisions as Decision entries
+3. Update `docs/DECISIONS.md` — populate the Project Context section (purpose, architecture, constraints, technology stack, design principles) based on everything learned during bootstrap. Log initial architectural decisions as Decision entries. Record the confirmed project intent as a Decision entry with Pipeline Phase = `meta` and source = `[from discovery]`
 
-Tell the user: "Initial system docs created in `docs/system/`. You can now use the normal
-pipeline for changes — `/cl-researcher research 'topic'` to research, then proposal and
-review to refine."
+#### Post-Bootstrap Orientation
+
+Based on confirmed intent, present the pipeline overview. Present the intent-specific
+orientation first, then the detailed pipeline overview below for reference.
+
+**Ship**:
+"Bootstrap complete. [N] system docs ready. Since you're shipping fast, I'd suggest
+going straight to specs — `/cl-implementer spec`. [If UI features in PRD: 'If you
+want UI mockups first, try `/cl-designer setup`.']"
+
+**Quality**:
+"Bootstrap complete. [N] system docs ready. For a production build, I'd recommend:
+1. [If UI features: `/cl-designer setup` — design your UI]
+2. `/cl-researcher research '[highest-priority topic]'` — [why]
+3. [Other relevant research topics]
+When you're satisfied, `/cl-implementer spec` to generate specs."
+
+**Rigor**:
+"Bootstrap complete. [N] system docs ready. For compliance, several areas need deep
+research before implementation: [list based on project type]. I'd start with
+`/cl-researcher research '[most critical topic]'`."
+
+**Explore**:
+"Bootstrap complete. [N] system docs capture what we know. Since you're exploring,
+what aspect interests you most? I can research any topic in depth."
+
+**Pipeline overview and next steps.** After bootstrap, the user needs to understand the
+full pipeline — not just "go build." Show them what's available, highlight what's most
+relevant to their project, and let them choose their path.
+
+Detect the project type from the generated docs, defaults sheet, and discovery conversation.
+Then present the pipeline overview:
+
+"Bootstrap complete! Initial system docs created in `docs/system/`.
+
+Here's your full pipeline — each step builds on the last, but you can skip or reorder
+based on your needs:
+
+```
+[You are here]
+     |
+     v
+ 1. DESIGN (UI projects)
+    /cl-designer setup → tokens → mockups → build-plan
+    Creates: design system, components, screen mockups, implementation plan
+     |
+     v
+ 2. RESEARCH (optional, any time)
+    /cl-researcher research 'topic'
+    Deep-dive into specific areas before committing to implementation
+     |
+     v
+ 3. SPECS
+    /cl-implementer spec
+    Creates: implementation specs, test specs, security specs, API contracts
+     |
+     v
+ 4. BUILD
+    /cl-implementer start → run (or autopilot)
+    Generates tasks from specs, implements with testing and verification
+     |
+     v
+ 5. REVIEW
+    /cl-reviewer audit
+    System-wide health check — consistency, technical accuracy, drift
+```"
+
+**Then highlight what's most relevant** based on project type:
+
+- **Has UI features** (PRD references user-facing screens, FRONTEND_DESIGN.md or TDD.md
+  was generated, project profile is "Web Application"):
+
+  "**Recommended next step: `/cl-designer setup`** — Your project has UI features. The
+  design loop creates a design system, components, and screen mockups before
+  implementation. This prevents ad-hoc UI decisions during coding.
+
+  You can also research specific areas first:
+  - `/cl-researcher research 'authentication flow'` — deep-dive before designing
+  - `/cl-researcher research 'error handling patterns'` — establish UX patterns
+  - `/cl-researcher research 'testing strategy'` — plan your test approach
+
+  Or skip design and go straight to specs: `/cl-implementer spec`"
+
+- **API/backend only** (no UI features, API_DESIGN.md or DATA_MODEL.md generated):
+
+  "**Recommended next step: `/cl-implementer spec`** — This generates implementation
+  specs including API contracts, test specs, and security specs from your system docs.
+
+  You can also research specific areas first:
+  - `/cl-researcher research 'API versioning strategy'` — before committing to contracts
+  - `/cl-researcher research 'data modeling'` — deep-dive on schema design
+  - `/cl-researcher research 'security model'` — plan auth and authorization"
+
+- **Library/SDK**:
+
+  "**Recommended next step: `/cl-researcher research 'API design'`** — Libraries benefit
+  from thorough API design research before implementation.
+
+  Or go straight to specs: `/cl-implementer spec`"
+
+**Always include the research reminder** at the end:
+
+"Any time you want to explore a topic before committing — security, testing, error
+handling, performance, accessibility — use `/cl-researcher research 'topic'`. Research
+cycles feed into proposals that update your system docs through the review pipeline."
 
 ---
 

@@ -378,7 +378,6 @@ Read `references/design-checklist.md` and run the Mockups Checklist. Present res
    - Set `Mockups` status to `Complete`
    - Record screen list with approval status
    - Add `Last updated` date
-2. Update `{docsRoot}/STATUS.md` if it tracks design state
 
 Tell the user: "Screen mockups complete. UI_SCREENS.md generated at
 `{docsRoot}/specs/UI_SCREENS.md`. Run `/cl-designer build-plan` to generate implementation

@@ -60,7 +60,7 @@ graph TD
             T1["decisions.md"]
             T2["research-ledger.md"]
             T3["proposal-tracker.md"]
-            T4["status.md"]
+            T4["parking.md"]
         end
 
         subgraph PluginCfg[".claude-plugin/"]
@@ -94,7 +94,7 @@ graph LR
         DR --> DEC["DECISIONS.md"]
         DR --> RL["RESEARCH_LEDGER.md"]
         DR --> PT["PROPOSAL_TRACKER.md"]
-        DR --> ST["STATUS.md"]
+        DR --> ST["PARKING.md"]
     end
 ```
 
@@ -678,10 +678,10 @@ graph LR
 |------|---------|-----------|
 | **spec** | Generate implementation specs (waterfall gate enforced) | `docs/specs/*.md`, `.spec-manifest.md`, `TEST_SPEC.md` |
 | **spec-review** | Cross-spec consistency check (6 dimensions) | Inline consistency report |
-| **start** | Generate unified task queue from all specs | `TASKS.md`, `IMPLEMENTATION_PROGRESS.md` |
+| **start** | Generate unified task queue from all specs | `TASKS.md` |
 | **run** | Reconcile, implement, verify, handle failures | Updated tasks, fix tasks |
 | **autopilot** | Self-testing + configurable checkpoints + integration gates | Autonomous implementation with tests |
-| **verify** | Post-implementation holistic check (7 dimensions) | Verification results in `IMPLEMENTATION_PROGRESS.md` |
+| **verify** | Post-implementation holistic check (7 dimensions) | Verification results in `TASKS.md` (Session Log section) |
 | **status** | Progress report | Console output |
 | **sync** | Adjust queue when specs change mid-implementation | Updated TASKS.md |
 
@@ -708,13 +708,13 @@ Clarity Loop uses markdown files for all persistent state. No database, no binar
 | `DECISIONS.md` | System-wide decision journal | All skills |
 | `RESEARCH_LEDGER.md` | Research cycle tracking | cl-researcher |
 | `PROPOSAL_TRACKER.md` | Proposal lifecycle tracking | cl-researcher, cl-reviewer |
-| `STATUS.md` | High-level pipeline dashboard | All skills |
+| `PARKING.md` | Parked findings, gaps, and ideas — classified by impact | All skills |
 
 ### Progress Files
 
 | File | Purpose | Updated By |
 |------|---------|-----------|
-| `IMPLEMENTATION_PROGRESS.md` | Implementation session state, spec gaps, fix tasks, verification results | cl-implementer |
+| `TASKS.md` (Session Log section) | Implementation session state, spec gaps, fix tasks, verification results | cl-implementer |
 | `DESIGN_PROGRESS.md` | Design session state, MCP path, user decisions, component approvals | cl-designer |
 
 ### Manifests
@@ -731,20 +731,20 @@ Clarity Loop uses markdown files for all persistent state. No database, no binar
 erDiagram
     DECISIONS ||--o{ RESEARCH_LEDGER : "decisions from research"
     DECISIONS ||--o{ PROPOSAL_TRACKER : "decisions from proposals"
-    DECISIONS ||--o{ IMPLEMENTATION_PROGRESS : "decisions from implementation"
+    DECISIONS ||--o{ TASKS : "decisions from implementation"
 
     RESEARCH_LEDGER ||--o{ PROPOSAL_TRACKER : "research → proposal"
-    PROPOSAL_TRACKER ||--o{ STATUS : "merged count, queue"
+    PROPOSAL_TRACKER ||--o{ PARKING : "merged count, parked findings"
 
-    STATUS ||--o{ RESEARCH_LEDGER : "research queue"
+    PARKING ||--o{ RESEARCH_LEDGER : "parked ideas → research"
 
-    DESIGN_PROGRESS ||--|| IMPLEMENTATION_PROGRESS : "design tasks → TASKS.md"
-    PROPOSAL_TRACKER ||--|| IMPLEMENTATION_PROGRESS : "all verified → spec gate"
+    DESIGN_PROGRESS ||--|| TASKS : "design tasks → TASKS.md"
+    PROPOSAL_TRACKER ||--|| TASKS : "all verified → spec gate"
 
     MANIFEST["system/.manifest.md"] ||--o{ RESEARCH_LEDGER : "orient research"
     MANIFEST ||--o{ PROPOSAL_TRACKER : "orient review"
-    SPEC_MANIFEST[".spec-manifest.md"] ||--o{ IMPLEMENTATION_PROGRESS : "spec hashes"
-    CONTEXT_MANIFEST[".context-manifest.md"] ||--o{ IMPLEMENTATION_PROGRESS : "context loading"
+    SPEC_MANIFEST[".spec-manifest.md"] ||--o{ TASKS : "spec hashes"
+    CONTEXT_MANIFEST[".context-manifest.md"] ||--o{ TASKS : "context loading"
 ```
 
 ### Session Start Protocol
@@ -753,7 +753,7 @@ Every skill follows the same session start protocol:
 
 1. **Read `.clarity-loop.json`** — resolve `docsRoot`
 2. **Check for stale `.pipeline-authorized` marker** — if present, a previous session crashed mid-operation
-3. **Read tracking files** — DECISIONS.md, STATUS.md, and the skill's relevant tracker
+3. **Read tracking files** — DECISIONS.md, PARKING.md, and the skill's relevant tracker
 4. **Orient the user** — 2-3 sentence summary of where things stand
 
 This ensures skills never start blind, even after context compression or a new session.
@@ -1113,7 +1113,7 @@ Fix tasks take **priority** over new tasks. After fixing, cascade re-verificatio
 | **L1 — Contained** | Log assumption, state it, ask user | Continue (assumption tracked) |
 | **L2 — Significant** | Pause task, suggest research cycle | Task paused, rest of queue continues |
 
-L1 assumptions are tracked in IMPLEMENTATION_PROGRESS.md. Periodic scans (configurable via `implementer.l1ScanFrequency`) check for assumption accumulation — if the same category keeps generating L1 assumptions, it indicates a systemic gap in the system docs.
+L1 assumptions are tracked in TASKS.md (Session Log section). Periodic scans (configurable via `implementer.l1ScanFrequency`) check for assumption accumulation — if the same category keeps generating L1 assumptions, it indicates a systemic gap in the system docs.
 
 ### Reconciliation (Git-Based)
 
@@ -1358,7 +1358,7 @@ This is a guideline, not a constraint. If a user wants detailed discussion durin
 | `templates/decisions.md` | DECISIONS.md template — Project Context + Decision Log |
 | `templates/research-ledger.md` | RESEARCH_LEDGER.md template — Active, Completed, Abandoned sections |
 | `templates/proposal-tracker.md` | PROPOSAL_TRACKER.md template — In-Flight, Merged, Rejected sections |
-| `templates/status.md` | STATUS.md template — Pipeline State, Research Queue, Emerged Concepts |
+| `templates/status.md` | STATUS.md template — minimal stub (pipeline dashboard replaced by PARKING.md) |
 
 ### Documentation (7 files + 2 assets)
 

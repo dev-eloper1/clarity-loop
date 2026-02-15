@@ -104,7 +104,7 @@ project/
 │   ├── DECISIONS.md          # Architectural decisions + conflict resolutions
 │   ├── RESEARCH_LEDGER.md   # Research cycle tracking
 │   ├── PROPOSAL_TRACKER.md  # Proposal tracking
-│   └── STATUS.md            # High-level dashboard
+│   └── PARKING.md           # Parked findings, gaps, and ideas
 ```
 
 ## Session Start (Run First)
@@ -116,9 +116,9 @@ and has a `docsRoot` field, use that value as the base path for all documentatio
 directories. If it does not exist, use the default `docs/`.
 
 Throughout this skill, all path references like `docs/system/`, `docs/research/`,
-`docs/proposals/`, `docs/STATUS.md`, etc. should be read relative to the configured
+`docs/proposals/`, `docs/PARKING.md`, etc. should be read relative to the configured
 root. For example, if `docsRoot` is `clarity-docs`, then `docs/system/` means
-`clarity-docs/system/`, `docs/STATUS.md` means `clarity-docs/STATUS.md`, and so on.
+`clarity-docs/system/`, `docs/PARKING.md` means `clarity-docs/PARKING.md`, and so on.
 
 ### Pipeline State Check
 
@@ -139,7 +139,7 @@ Before running any mode, check the pipeline state to orient yourself and the use
    - `docs/PROPOSAL_TRACKER.md` — any proposals with status `in-review`, `approved` (but
      not `merged`), or `merging`?
    - `docs/RESEARCH_LEDGER.md` — any active research that might produce proposals?
-   - `docs/STATUS.md` — overall pipeline state
+   - `docs/PARKING.md` — any parked findings or architectural items?
    - `docs/DECISIONS.md` — scan the Decision Log for prior decisions related to the
      proposal or system docs under review. During review, check new proposals against
      existing decisions — if a proposal contradicts or revisits a prior decision, flag it:
@@ -150,6 +150,7 @@ Before running any mode, check the pipeline state to orient yourself and the use
    - If proposals have `in-review` status, mention them
    - If proposals have `approved` status but no `merged`/`verified`, suggest merge then verify
    - If the stale marker situation was resolved in step 1, note what happened
+   - Any architectural items parked? (from PARKING.md active section)
 
 This orientation should be brief — 2-3 sentences max. Don't dump the full state on the
 user. Just highlight what's actionable.
@@ -402,9 +403,9 @@ Usage: `/cl-reviewer design-review`
   ones before they propagate into system docs. A clean APPROVE is a valid outcome.
 
 - **Track everything.** Update PROPOSAL_TRACKER.md after reviews and verifications.
-  Update STATUS.md after audits. Update DECISIONS.md whenever a conflict is resolved,
-  a proposal is rejected, a verification finding overrides proposal intent, or an audit
-  leads to a fix-vs-research decision. The pipeline relies on accurate state.
+  Update DECISIONS.md whenever a conflict is resolved, a proposal is rejected, a
+  verification finding overrides proposal intent, or an audit leads to a fix-vs-research
+  decision. The pipeline relies on accurate state.
 
 - **Decision flow: check before flagging.** When reviewing a proposal, check DECISIONS.md
   for prior decisions in the same area. If a proposal seems to contradict a prior decision,
@@ -412,3 +413,22 @@ Usage: `/cl-reviewer design-review`
   decision) and (b) accidental contradiction (the proposal author may not have known about
   the prior decision). Flag (b) as a blocking issue; note (a) as context. When merging,
   update DECISIONS.md if the merge supersedes a prior decision.
+
+### Parking Protocol
+
+When a finding surfaces during any mode that is NOT the current focus:
+
+1. **Check first**: Read PARKING.md active section. If a similar item exists,
+   add context to it rather than creating a duplicate.
+
+2. **Classify**: `architectural` (blocks progress) | `incremental` (can wait) |
+   `scope-expansion` (new feature idea). Default to `incremental` if uncertain.
+
+3. **Record** in PARKING.md -> Active section:
+   - Assign next EC-NNN ID
+   - Fill all columns (Concept, Classification, Origin, Date, Impact, Notes)
+
+4. **Tell the user**: "Found [classification] issue: [brief]. Parked as EC-NNN."
+   If architectural: "This may affect implementation -- I'll flag it at spec/start."
+
+5. **Continue current work.** Don't derail.

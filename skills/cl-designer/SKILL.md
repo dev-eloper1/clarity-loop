@@ -68,7 +68,7 @@ project/
 │   │   └── DESIGN_TASKS.md      # Implementation task breakdown
 │   ├── reviews/
 │   │   └── design/              # Design review artifacts
-│   └── STATUS.md
+│   └── PARKING.md               # Parked findings, gaps, and ideas
 ```
 
 ## Session Start (Run First)
@@ -92,7 +92,7 @@ Before running any mode, check the pipeline state:
    Resolve this before designing — use `/cl-reviewer` to clean up."
 
 2. **Read tracking files** to understand current state:
-   - `docs/STATUS.md` — overall pipeline state
+   - `docs/PARKING.md` — any parked findings or architectural items?
    - `docs/PROPOSAL_TRACKER.md` — any unresolved proposals?
    - `docs/DECISIONS.md` — scan for prior design decisions (Pipeline Phase `design`) and
      technology constraints that affect the design (stack choices, component pattern
@@ -111,6 +111,12 @@ Before running any mode, check the pipeline state:
    - If mockups are complete: "Mockups exist for [N] screens. Ready for
      `/cl-designer build-plan`."
    Tell the user where things stand and what the next step is.
+
+4. **Orient the user** — After reading source files, give a 2-3 sentence orientation:
+   - What's the current design state? (from DESIGN_PROGRESS.md)
+   - Any architectural items parked? (from PARKING.md active section)
+   - What was the last significant decision? (from DECISIONS.md)
+   Keep it brief. The user will say what they want to do.
 
 ---
 
@@ -329,6 +335,25 @@ DESIGN_TASKS.md.
   `accessibility`, `errors`, `content`, `responsive`). Use existing decisions as defaults.
   When generating batch behavioral specs, use DECISIONS.md entries to derive defaults for
   all screens simultaneously rather than asking per-screen questions.
+
+### Parking Protocol
+
+When a finding surfaces during any mode that is NOT the current focus:
+
+1. **Check first**: Read PARKING.md active section. If a similar item exists,
+   add context to it rather than creating a duplicate.
+
+2. **Classify**: `architectural` (blocks progress) | `incremental` (can wait) |
+   `scope-expansion` (new feature idea). Default to `incremental` if uncertain.
+
+3. **Record** in PARKING.md -> Active section:
+   - Assign next EC-NNN ID
+   - Fill all columns (Concept, Classification, Origin, Date, Impact, Notes)
+
+4. **Tell the user**: "Found [classification] issue: [brief]. Parked as EC-NNN."
+   If architectural: "This may affect implementation -- I'll flag it at spec/start."
+
+5. **Continue current work.** Don't derail.
 
 ### Browser Validation Tools (Optional)
 

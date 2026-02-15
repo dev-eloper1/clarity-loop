@@ -87,7 +87,7 @@ project/
 │   ├── DECISIONS.md          # Architectural decisions + conflict resolutions
 │   ├── RESEARCH_LEDGER.md   # Tracks all research cycles
 │   ├── PROPOSAL_TRACKER.md  # Tracks all proposals
-│   └── STATUS.md            # High-level dashboard
+│   └── PARKING.md           # Parked findings, gaps, and ideas
 ```
 
 ## Session Start (Run First)
@@ -99,9 +99,9 @@ and has a `docsRoot` field, use that value as the base path for all documentatio
 directories. If it does not exist, use the default `docs/`.
 
 Throughout this skill, all path references like `docs/system/`, `docs/research/`,
-`docs/proposals/`, `docs/STATUS.md`, etc. should be read relative to the configured
+`docs/proposals/`, `docs/PARKING.md`, etc. should be read relative to the configured
 root. For example, if `docsRoot` is `clarity-docs`, then `docs/system/` means
-`clarity-docs/system/`, `docs/STATUS.md` means `clarity-docs/STATUS.md`, and so on.
+`clarity-docs/system/`, `docs/PARKING.md` means `clarity-docs/PARKING.md`, and so on.
 
 ### Pipeline State Check
 
@@ -115,7 +115,7 @@ Before running any mode, check the pipeline state to orient yourself and the use
 2. **Read tracking files** to understand current state:
    - `docs/RESEARCH_LEDGER.md` — any research with status `draft` or `in-discussion`?
    - `docs/PROPOSAL_TRACKER.md` — any proposals that need attention?
-   - `docs/STATUS.md` — overall pipeline state
+   - `docs/PARKING.md` — any parked findings or architectural items?
    - `docs/DECISIONS.md` — scan the Decision Log for prior decisions related to the
      current topic. Before researching anything, check if the same question was already
      decided (even if the decision was "do not proceed"). If a relevant decision exists,
@@ -134,6 +134,8 @@ Before running any mode, check the pipeline state to orient yourself and the use
      generation
    - If `docs/system/` is empty (no `.md` files beyond `.manifest.md`), suggest bootstrap
      mode: "No system docs found. Would you like to bootstrap initial docs?"
+   - Any architectural items parked? (from PARKING.md active section)
+   - What was the last significant decision? (from DECISIONS.md)
 
 This orientation should be brief — 2-3 sentences max. Highlight what's actionable.
 
@@ -380,8 +382,8 @@ After generating the doc:
    document structure, or `/cl-researcher proposal` to go directly to proposal generation."
 
 **Emerged concepts**: If new ideas surface during the discussion that aren't the current
-topic, add them to the research doc's Emerged Concepts section AND to `docs/STATUS.md`'s
-emerged concepts table. Tell the user: "New concept emerged: [X]. Added to status tracker."
+topic, add them to the research doc's Emerged Concepts section AND to PARKING.md per the
+parking protocol. Tell the user: "New concept emerged: [X]. Parked as EC-NNN."
 
 ---
 
@@ -508,6 +510,13 @@ version, updates or versions the context files, and the cl-implementer retries.
 - **Take a position in your research.** Don't present five options with no recommendation.
   Analyze the tradeoffs and recommend an approach. The user can disagree — that's fine.
 
+- **Respect project intent.** The user's confirmed intent (Ship/Quality/Rigor/Explore,
+  recorded in DECISIONS.md) calibrates how you work. Ship intent means bias toward action —
+  don't suggest extensive research when the user wants to build. Rigor intent means bias
+  toward thoroughness — flag gaps even if they seem minor. Quality is the default balance.
+  Explore means follow curiosity — don't push toward implementation. If intent isn't set
+  yet (pre-bootstrap or intent not recorded), default to Quality behavior.
+
 - **Make the reviewer's life easy.** Every doc you produce should have explicit system doc
   references, clear traceability, and a structure that makes it obvious what's being proposed
   and why.
@@ -515,15 +524,46 @@ version, updates or versions the context files, and the cl-implementer retries.
 - **Don't skip Phase 2.** It's tempting to jump straight to research when the user says
   "research caching." Resist. Spend the turns to understand what they actually need.
 
-- **Track everything.** Update RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, STATUS.md, and
+- **Track everything.** Update RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, and
   DECISIONS.md as you go. The pipeline relies on these for state management. Don't leave
   tracking as a manual afterthought. When research concludes with a "do not proceed"
   recommendation, or when the user makes a significant design choice during discussion,
   log a Decision entry with the full context and rationale.
 
-- **Capture emerged concepts immediately.** Ideas that surface during research but aren't
-  the current topic should be captured in both the research doc and STATUS.md right away.
-  Don't wait — they'll be forgotten.
+### Parking Protocol
+
+When a finding surfaces during any mode that is NOT the current focus:
+
+1. **Check first**: Read PARKING.md active section. If a similar item exists,
+   add context to it rather than creating a duplicate.
+
+2. **Classify**: `architectural` (blocks progress) | `incremental` (can wait) |
+   `scope-expansion` (new feature idea). Default to `incremental` if uncertain.
+
+3. **Record** in PARKING.md -> Active section:
+   - Assign next EC-NNN ID
+   - Fill all columns (Concept, Classification, Origin, Date, Impact, Notes)
+
+4. **Tell the user**: "Found [classification] issue: [brief]. Parked as EC-NNN."
+   If architectural: "This may affect implementation -- I'll flag it at spec/start."
+
+5. **Continue current work.** Don't derail.
+
+### Loop Calibration
+
+When a parked finding (from PARKING.md) is picked up, assess the loop type:
+
+| Risk Level | Signal | Loop Type | Ceremony |
+|------------|--------|-----------|----------|
+| Low | Typo, formatting, minor clarification | Direct fix | No ceremony |
+| Medium | Single-section update, new edge case | Lightweight | Update + targeted re-review |
+| High | Cross-doc impact, architectural change | Full cycle | Research -> proposal -> review |
+| Critical | Fundamental assumption invalidated | Full + advisory | Research + user decision |
+
+Risk = blast radius x reversibility.
+
+Compression: Areas with 2+ full cycles without issues -> default risk drops one level.
+Deming safeguard: Don't upgrade all loops after a single failure. Only if there's a pattern.
 
 - **Use the manifest, not full reads.** The manifest gives you file metadata, section
   headings with line ranges, and cross-references. Read it first, then do targeted reads

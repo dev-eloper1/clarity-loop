@@ -279,7 +279,8 @@ clarity-loop/
     decisions.md                    DECISIONS.md template
     research-ledger.md              RESEARCH_LEDGER.md template
     proposal-tracker.md             PROPOSAL_TRACKER.md template
-    status.md                       STATUS.md template
+    status.md                       STATUS.md template (minimal stub)
+    parking.md                      PARKING.md template (parked findings, gaps, ideas)
   docs/                             Detailed documentation
     SYSTEM_DESIGN.md                Full architecture reference
 ```

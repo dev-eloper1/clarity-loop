@@ -52,12 +52,12 @@ For each entry in the change manifest, design the actual change:
 
 Use the template below. Generate at:
 ```
-docs/proposals/P-NNN-slug.md
+docs/proposals/P-NNN-TOPIC.md
 ```
 
-Use sequential numbering matching the PROPOSAL_TRACKER. The slug should reflect what's
-being proposed, not the research doc it came from. For example: research `R-001-memory-layer.md`
-might produce proposal `P-001-memory-system-v2.md`.
+Use sequential numbering matching the PROPOSAL_TRACKER. The TOPIC uses SCREAMING_SNAKE_CASE
+and should reflect what's being proposed, not the research doc it came from. For example:
+research `R-001-MEMORY_LAYER.md` might produce proposal `P-001-MEMORY_SYSTEM_V2.md`.
 
 To determine the next ID, check `docs/PROPOSAL_TRACKER.md` for the highest existing ID
 and increment.
@@ -74,7 +74,7 @@ After generating, tell the user:
 - Where the proposal is
 - Summary of what it proposes
 - That they can refine it further and then run it through the review gate
-  with `/cl-reviewer review P-NNN-slug.md`
+  with `/cl-reviewer review P-NNN-TOPIC.md`
 
 Tell the user: "Proposal generated. Read it over and let me know when you'd like to run
 it through the review gate."
@@ -89,7 +89,7 @@ it through the review gate."
 **ID**: P-NNN
 **Created**: [date]
 **Status**: Draft | In Review | Approved
-**Research**: docs/research/R-NNN-slug.md
+**Research**: docs/research/R-NNN-TOPIC.md
 **Document Plan**: [reference to locked structure plan, if any]
 **Author**: [user + AI researcher]
 **Depends On**: [P-XXX, P-YYY — or "None"]
@@ -105,7 +105,7 @@ This proposal is based on the following research:
 
 | Research Doc | Key Findings Used | Recommendation Adopted |
 |-------------|-------------------|----------------------|
-| docs/research/R-NNN-slug.md | [Which findings from the research inform this proposal] | [Which recommendation] |
+| docs/research/R-NNN-TOPIC.md | [Which findings from the research inform this proposal] | [Which recommendation] |
 
 ## System Context
 

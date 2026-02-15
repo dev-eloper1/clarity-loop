@@ -14,7 +14,7 @@ time) and then processes tasks until the user stops or the queue is exhausted.
 This runs at the start of EVERY `run` invocation. It grounds the skill in reality before
 processing any tasks.
 
-1. **Read IMPLEMENTATION_PROGRESS.md** — get last session date, task states, known files
+1. **Read TASKS.md** — get last session date, task states, known files
    per task.
 
 2. **Git check** — Is this a git repository?
@@ -29,7 +29,7 @@ processing any tasks.
      reliable — no rename detection, no granularity.
 
 4. **Map changed files to tasks**: Cross-reference changed files against the "Files Modified"
-   column in IMPLEMENTATION_PROGRESS.md.
+   column in TASKS.md.
 
 5. **Categorize each external change**:
 
@@ -113,7 +113,7 @@ Implement the task. This is where Claude Code writes code:
    b. For each relevant library: read `_meta.md`, match task category against file tags
       in the inventory, load matching detail files
    c. Inject loaded context after spec reference, before implementation
-   d. Record which context files were loaded in IMPLEMENTATION_PROGRESS.md
+   d. Record which context files were loaded in TASKS.md
    (See `skills/cl-researcher/references/context-mode.md` → "Standard Loading Protocol"
    for the full protocol.)
 3.5. **Dependency verification** — When the implementation requires adding a new dependency
@@ -145,7 +145,7 @@ Implement the task. This is where Claude Code writes code:
           [Y/flag for review]"
         - **Approved license**: Continue silently — **Tier 3** (auto-proceed).
 
-     Record all dependency additions in IMPLEMENTATION_PROGRESS.md with package name,
+     Record all dependency additions in TASKS.md with package name,
      version, license, and audit status.
 
 4. Implement the code to meet the acceptance criteria
@@ -166,7 +166,7 @@ For parallel groups (if user approved in start mode):
   gaps found
 - Main context: collect results, check for file conflicts (same file modified by multiple
   subagents), resolve conflicts or re-run sequentially
-- Update TASKS.md and IMPLEMENTATION_PROGRESS.md from main context
+- Update TASKS.md and TASKS.md from main context
 
 #### 3d: Verify Acceptance Criteria
 
@@ -191,7 +191,7 @@ regressions are only caught during `verify` mode.
 
 #### 3f: L1 Assumption Check (Periodic)
 
-After completing every 5th task (configurable), scan IMPLEMENTATION_PROGRESS.md's Spec
+After completing every 5th task (configurable), scan TASKS.md's Spec
 Gaps table for L1 assumptions:
 
 1. **Count L1 assumptions by category**: Group all gaps with level `L1` by their
@@ -213,7 +213,7 @@ Gaps table for L1 assumptions:
 4. **If user chooses research**: Log the gap as L2 and suggest
    `/cl-researcher research '[category] policy'`
 
-5. **Log the check**: Record in IMPLEMENTATION_PROGRESS.md when the L1 scan ran, what
+5. **Log the check**: Record in TASKS.md when the L1 scan ran, what
    was found, and what action was taken.
 
 The scan frequency is configurable in `.clarity-loop.json` under
@@ -337,7 +337,7 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
 7. **Cascade deduplication**: If multiple fix tasks resolve in a batch, collect the union
    of all `needs-re-verification` tasks, deduplicate, then re-verify each once.
 
-8. **Update tracking**: Record fix task in IMPLEMENTATION_PROGRESS.md.
+8. **Update tracking**: Record fix task in TASKS.md.
 
 **When to create fix tasks vs. absorb inline**: Small issues discovered while implementing
 the current task (missing import, wrong variable name, obvious typo) are fixed inline — no
@@ -386,7 +386,7 @@ L0 and L1 gaps don't block the queue — the current task continues (L0 silently
 a stated assumption). L2 gaps pause the affected task but NOT the whole queue — other
 unblocked tasks can continue.
 
-Record all gaps in IMPLEMENTATION_PROGRESS.md with ID (G-NNN), task, description, level,
+Record all gaps in TASKS.md with ID (G-NNN), task, description, level,
 status, and resolution.
 
 **Log L2 gaps and user decisions to DECISIONS.md**: When an L2 gap is identified or when
@@ -426,7 +426,7 @@ The queue reflects reality after reconciliation. Continue from wherever it actua
 
 Before ending a session (context compression, user stops, crash recovery):
 
-1. Update IMPLEMENTATION_PROGRESS.md with:
+1. Update TASKS.md with:
    - Current date as "Last session"
    - All task state changes from this session
    - Any open gaps or fix tasks

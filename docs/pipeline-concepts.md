@@ -212,15 +212,20 @@ Tracks all proposals through the review lifecycle.
 
 Three sections: **In-Flight** (active), **Merged** (applied to system docs), **Rejected** (with reason).
 
-### STATUS.md
+### PARKING.md
 
-High-level pipeline dashboard.
+The parking lot for findings, gaps, and ideas that surface during any pipeline phase. Items are classified by type and tracked through a simple lifecycle.
 
-| Section | Content |
-|---------|---------|
-| **Pipeline State** | Active research count, in-flight proposals, merged count, system doc count, last audit date, specs status |
-| **Research Queue** | Recommended research order with priorities and dependencies |
-| **Emerged Concepts** | Parking lot for ideas (see below) |
+| Classification | What Goes Here |
+|----------------|---------------|
+| **Architectural** | Structural concerns, cross-cutting patterns, design questions |
+| **Incremental** | Small improvements, refinements to existing behavior |
+| **Scope-expansion** | New capabilities, features, or integrations beyond current scope |
+
+| Status | Meaning |
+|--------|---------|
+| `Active` | Item is relevant and unresolved |
+| `Resolved` | Addressed (merged into system docs, implemented, or intentionally discarded) |
 
 ---
 
@@ -256,18 +261,18 @@ For the full context creation process, loading protocol, and staleness model, se
 
 ## Emerged Concepts
 
-During any pipeline phase — research, review, implementation, or casual conversation — new ideas surface that aren't currently tracked. These get captured immediately in the STATUS.md Emerged Concepts table.
+During any pipeline phase — research, review, implementation, or casual conversation — new ideas surface that aren't currently tracked. These get parked immediately in PARKING.md with an appropriate classification (architectural, incremental, or scope-expansion).
 
 ### Concept Lifecycle
 
+Parked items follow a simple two-state lifecycle:
+
 | Status | Meaning |
 |--------|---------|
-| `captured` | Just recorded, not evaluated yet |
-| `scoped` | Evaluated and slotted into the Research Queue |
-| `deferred` | Acknowledged but pushed to later (e.g., V2) |
-| `discarded` | Evaluated and intentionally dropped |
+| `Active` | Item is relevant and unresolved — awaiting research, discussion, or implementation |
+| `Resolved` | Addressed — merged into system docs, implemented, or intentionally discarded |
 
-The table is a parking lot, not a commitment. Concepts can move between states as understanding evolves.
+PARKING.md is a parking lot, not a commitment. Items can be reclassified or resolved as understanding evolves.
 
 ### Where They Come From
 
@@ -392,7 +397,7 @@ After initialization, your project has this structure:
   DECISIONS.md
   RESEARCH_LEDGER.md
   PROPOSAL_TRACKER.md
-  STATUS.md
+  PARKING.md
 ```
 
 ---

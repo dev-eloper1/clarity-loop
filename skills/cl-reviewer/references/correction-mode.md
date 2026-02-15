@@ -141,15 +141,13 @@ After corrections are applied:
 [CLEAN — all corrections verified / ISSUES — describe]
 ```
 
-2. **Update STATUS.md** — Note that corrections were applied, with date and source.
-
-3. **Update DECISIONS.md** — Log a Decision entry for corrections that involved judgment:
+2. **Update DECISIONS.md** — Log a Decision entry for corrections that involved judgment:
    - Reconciling two conflicting doc sections (which version wins?)
    - Choosing between multiple valid ways to fix an issue
    - Deciding that code behavior is correct and docs should match it (or vice versa)
    Skip for mechanical corrections: broken cross-references, typos, formatting, stale dates.
 
-4. **Tell the user**: "Corrections applied. [N] fixes across [M] files. Spot-check: [result].
+3. **Tell the user**: "Corrections applied. [N] fixes across [M] files. Spot-check: [result].
    Corrections log at `docs/reviews/proposals/CORRECTIONS_[DATE].md`."
 
 ### What Corrections Mode Does NOT Do
@@ -159,8 +157,7 @@ After corrections are applied:
 - **No full review** — the audit/spec review already did the analysis
 - **No full verify** — spot-check only, covering just the changed sections
 - **No tracking file ceremony** — corrections don't get RESEARCH_LEDGER or PROPOSAL_TRACKER
-  entries (they're not research or proposals). They're logged in the corrections file and
-  noted in STATUS.md.
+  entries (they're not research or proposals). They're logged in the corrections file.
 
 ### Safety Rails
 

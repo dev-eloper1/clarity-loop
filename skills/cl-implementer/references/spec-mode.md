@@ -43,6 +43,19 @@ Before generating anything, verify the pipeline is clear:
    "No context files found. Context files improve implementation accuracy. Consider
    running `/cl-researcher context` before or after spec generation."
 
+5. **Transition advisory** — Before presenting the gate check batch, read PARKING.md and
+   DECISIONS.md:
+
+   a. Filter PARKING.md Active section for `architectural` items. If any:
+      "There are [N] architectural items parked: [list]. These may affect spec generation."
+
+   b. Check intent (from DECISIONS.md):
+      - Ship: proceed unless architectural blockers exist
+      - Quality: mention areas without deliberate decisions
+      - Rigor: highlight all gaps
+
+   c. Never block. The user can always say "proceed."
+
 If all clear, proceed. If warnings were issued and the user confirms, proceed with a note
 in the spec manifest about the caveat.
 
@@ -55,6 +68,7 @@ than sequential warnings:
 | In-flight proposals | Clear / Warning | [details] |
 | Unverified merges | Clear / Warning | [details] |
 | Context freshness | Clear / Advisory | [details] |
+| Transition advisory | Clear / Advisory | [architectural items or gaps if any] |
 
 "Gate check complete. [N issues found / All clear]. Proceed?"
 
@@ -266,8 +280,7 @@ Create `{docsRoot}/specs/.spec-manifest.md`:
 ### Step 6: Update Tracking
 
 After generating specs:
-1. Update `{docsRoot}/STATUS.md` — set "Specs generated" to "Yes" with date
-2. Tell the user: "Specs generated in `{docsRoot}/specs/`. Run `/cl-implementer spec-review`
+1. Tell the user: "Specs generated in `{docsRoot}/specs/`. Run `/cl-implementer spec-review`
    for a cross-spec consistency check before starting implementation."
 
 **Parallelization hint**: While the user reviews the spec format suggestion (Step 3),

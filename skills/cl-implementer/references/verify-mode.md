@@ -166,7 +166,7 @@ secrets, critical architectural drift).
 
 ### Output
 
-Update IMPLEMENTATION_PROGRESS.md with verification results:
+Update TASKS.md with verification results:
 
 ```markdown
 ## Verification Results
@@ -231,4 +231,4 @@ significant misalignment — documenting whether the code or the docs should be 
 and why. Use Pipeline Phase `implementation`, Source the verification dimension and
 finding.
 
-After all verification passes, update IMPLEMENTATION_PROGRESS.md status to `Complete`.
+After all verification passes, update TASKS.md status to `Complete`.
