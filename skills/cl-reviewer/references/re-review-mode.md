@@ -23,7 +23,7 @@ problems.
    index. Only deep-read individual system docs if you need to verify something specific
    that the proposal's context doesn't cover.
 
-### Step 2: Three-Part Analysis
+### Step 2: Five-Part Analysis
 
 #### Part A: Issue Resolution Check
 
@@ -78,6 +78,31 @@ a quantitative minimum bar calibrated to project intent:
 - Rigor: severity-weighted sum = 0 (all blocking issues must be resolved)
 
 Include convergence metrics in the "Review Cycle Health" section of the report.
+
+#### Part E: Ground Truth Re-Check
+
+Verify ground truth on sections that changed since the last review. This is lighter than
+the initial review's full spot-check — only re-verify what was actually modified.
+
+For each fix that changed a "Current" description or factual claim:
+- Read the actual target file and verify the corrected claim is accurate
+
+For each fix that expanded merge targets (new Change Manifest entries):
+- Verify the new target sections exist in the actual files
+
+For each fix that added new Detailed Design content:
+- Check it doesn't conflict with what already exists in the target file
+
+If no ground truth claims were modified in this fix round:
+`**Part E: Ground Truth Re-Check** — No ground truth claims were modified in this fix
+round. Skipped.`
+
+If claims were verified and all accurate:
+`**Part E: Ground Truth Re-Check** — 3 corrected claims verified against target files.
+All accurate.`
+
+If issues found: summary line with count, then a table of failures using the same format
+as Dimension 7 in the initial review.
 
 ### Step 3: Produce the Re-Review File
 

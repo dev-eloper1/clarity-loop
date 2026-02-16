@@ -36,7 +36,9 @@ system docs have just been modified. You must read them fresh.
 #### Part A: Application Completeness
 
 Walk through each concrete change the proposal describes and verify it landed in the
-correct system doc(s):
+correct system doc(s). Pre-apply validation (merge Step 2) already confirmed that target
+sections exist — this step verifies the changes were actually applied, not just that the
+targets were valid.
 
 - **Applied** — The change is present in the system doc, faithfully representing the proposal.
 - **Partially applied** — The change is present but incomplete, missing details, or watered
@@ -77,6 +79,38 @@ have been based on the proposal's scope:
 - Were unrelated sections accidentally modified?
 - Did the merge accidentally delete or overwrite existing content?
 - Were existing design decisions changed that the proposal didn't intend to revisit?
+
+#### Part E: Code Alignment Check
+
+Verify that code-related claims in the merged sections still match the actual codebase.
+This uses targeted sync checks — not a full sync scan.
+
+1. Extract code-related claims from the sections changed by the merge. Focus on:
+   - Existence claims: file paths, module names, dependencies referenced
+   - Structural claims: function signatures, class hierarchies, config shapes
+   Skip behavioral claims (retry logic, rate limits) — those are the domain of standalone
+   sync and implementation verification.
+
+2. Verify each claim against the actual codebase.
+
+3. Report findings:
+
+If no code-related claims in merged sections:
+`**Part E: Code Alignment** — No code-related claims in merged sections. Skipped.`
+
+If all in sync:
+`**Part E: Code Alignment** — 4 code claims checked, all in sync.`
+
+If drift found:
+
+| Claim | Source Section | Expected | Actual | Severity |
+|-------|--------------|----------|--------|----------|
+| pgvector dimension | ARCHITECTURE.md §Memory | 768-dim | 1536-dim in schema.sql | Warning |
+
+Code alignment findings are advisory (Warning), not blocking. System docs describe
+intended state, which may legitimately differ from current code during implementation.
+But the finding should be surfaced so the user can decide whether it represents drift
+or intent.
 
 ### Step 3: Produce the Verification File
 

@@ -24,7 +24,43 @@ instead of re-reading every system doc from scratch.
 5. **Check the proposal tracker** — Read `docs/PROPOSAL_TRACKER.md` to check for other
    in-flight proposals that might conflict with the same target sections.
 
-### Step 2: Analyze Across Six Dimensions
+### Step 2: Ground Truth Spot-Check
+
+Before dimensional analysis, verify the proposal's factual claims against actual target
+files. This catches accuracy and executability issues that dimensional analysis cannot
+detect.
+
+**Select 3-5 Change Manifest items for spot-checking.** Prioritize:
+- MODIFY operations (claims about current state are most likely to be wrong)
+- Items with terse "Current" descriptions (less detail = more room for inaccuracy)
+- Items targeting files modified by other recent proposals
+- Items with broad targets ("restructure section X")
+
+**For each selected item, read the actual target file and verify:**
+
+1. **Factual accuracy** — Does the proposal's "Current" description match what's actually
+   in the file? Check line counts, section structure, content summaries.
+2. **Target completeness** — For "remove all references to X" or "replace X with Y"
+   operations, grep the target directory for the key terms. Are there references the
+   proposal missed?
+3. **Design specificity** — Is there enough detail in the merge instructions for
+   mechanical execution? Could someone apply this change without interpretation?
+4. **Insertion point awareness** — For Add/Add Section changes, what already exists at
+   the proposed location? Will the new content fit naturally?
+
+**Code-related claims** — If any spot-checked items involve claims about code (e.g.,
+"the codebase currently uses X", "the system does Y"), verify those claims against the
+actual codebase using targeted sync checks:
+- Existence claims: Does the referenced file, module, function, or dependency exist?
+- If the Change Manifest modifies sections about technology, architecture, or code
+  structure, check the specific claims in those sections.
+
+This is NOT a full sync scan. It piggybacks on the spot-check — same 3-5 items, checking
+against code only when claims are code-related.
+
+**Report findings under Dimension 7: Ground Truth** in the review output.
+
+### Step 3: Analyze Across Seven Dimensions
 
 Evaluate the proposal along these dimensions. Only report issues you actually find.
 Don't manufacture concerns to look thorough.
@@ -79,7 +115,28 @@ Can structured specs eventually be derived from this proposal's content?
 This dimension is advisory, not blocking — early proposals may not be spec-ready. But
 flagging spec-readiness issues helps the user improve precision before merging.
 
-### Step 3: Cross-Proposal Conflict Detection
+#### 7. Ground Truth
+Do the proposal's factual claims match reality?
+- Are "Current" descriptions accurate against the actual target files?
+- Are all references accounted for (no orphaned references after removal)?
+- Are merge instructions specific enough for mechanical execution?
+- Do code-related claims match the actual codebase?
+
+Ground truth issues are always blocking — inaccurate claims about current state lead to
+merge failures. Unlike other dimensions, ground truth findings include a `Type` column
+distinguishing Doc-to-File (target file mismatch) from Doc-to-Code (codebase mismatch).
+
+**UX**: On clean pass, report a single summary line:
+`**Dimension 7: Ground Truth** — 5 items spot-checked, all confirmed.`
+
+On issues found, report a table of only the failed items:
+
+| Change # | Issue | Type | Severity |
+|----------|-------|------|----------|
+| Change 3 | "Current" says ~10 lines, actual is ~45 lines | Doc-to-File | Blocking |
+| Change 5 | Proposal claims pgvector uses 768-dim, code uses 1536 | Doc-to-Code | Blocking |
+
+### Step 4: Cross-Proposal Conflict Detection
 
 Check `docs/PROPOSAL_TRACKER.md` for in-flight proposals. If any other proposals target
 the same system doc sections as this one, flag the conflict:
@@ -89,7 +146,7 @@ the same system doc sections as this one, flag the conflict:
 - Whether the changes are compatible or contradictory
 - Recommended resolution (merge order, coordination, etc.)
 
-### Step 4: Produce the Review File
+### Step 5: Produce the Review File
 
 Create the review as a markdown file at:
 ```
@@ -128,7 +185,7 @@ Issues that MUST be resolved before this proposal updates system docs.
 If none, write "No blocking issues found."
 
 ### [Issue Title]
-- **Dimension**: Which of the six dimensions this falls under
+- **Dimension**: Which of the seven dimensions this falls under
 - **Where**: Section or line reference in the proposal
 - **Issue**: What's wrong
 - **Why it matters**: Impact on the system
@@ -138,6 +195,11 @@ If none, write "No blocking issues found."
 
 Improvements that would strengthen the proposal but aren't required.
 If none, write "No suggestions — the proposal is solid."
+
+## Merge Advisory
+
+Recommend exhaustive pre-apply validation: Yes / No
+[If Yes: brief rationale — e.g., "high MODIFY density with imprecise Current descriptions"]
 
 ## Spec-Readiness Notes
 
@@ -161,7 +223,7 @@ Risks of adopting this proposal that aren't addressed in the proposal itself.
 If no significant risks, say so briefly.
 ```
 
-### Step 5: Update Tracking
+### Step 6: Update Tracking
 
 After writing the review file:
 1. Update `docs/PROPOSAL_TRACKER.md` — set status to `in-review`, increment review round

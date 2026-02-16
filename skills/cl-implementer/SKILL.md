@@ -150,10 +150,11 @@ Read `references/spec-mode.md` and follow its process.
 Generates implementation-ready specs from verified system docs, including `TEST_SPEC.md` —
 a parallel artifact defining test architecture, per-module unit test cases, cross-spec
 integration contracts, and contract tests. Enforces the waterfall gate — specs are
-generated only after all system docs are complete and verified. The spec format adapts
-to the content (OpenAPI for APIs, JSON Schema for data, structured markdown for general).
-Uses subagent dispatch to read all system docs in parallel without overloading the main
-context.
+generated only after all system docs are complete and verified, with a code-doc alignment
+advisory check to catch drift between docs and codebase before generating specs. The spec
+format adapts to the content (OpenAPI for APIs, JSON Schema for data, structured markdown
+for general). Uses subagent dispatch to read all system docs in parallel without overloading
+the main context.
 
 In addition to implementation specs, generates cross-cutting specifications:
 - **SECURITY_SPEC.md**: Per-endpoint auth, system security policy, secure UX, dependency governance

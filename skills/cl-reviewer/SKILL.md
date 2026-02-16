@@ -208,11 +208,13 @@ review mode.
 
 When running an initial review, read `references/review-mode.md` and follow its process.
 
-Initial review gathers context (proposal, manifest, research doc, proposal tracker), analyzes
-across six dimensions (value, internal coherence, external consistency, technical soundness,
-completeness, spec-readiness), checks for cross-proposal conflicts, and produces a review
-file at `docs/reviews/proposals/REVIEW_P-NNN_v1.md` with verdict, blocking issues,
-non-blocking suggestions, consistency map, and risk assessment.
+Initial review gathers context (proposal, manifest, research doc, proposal tracker),
+spot-checks ground truth (3-5 Change Manifest items verified against actual target files
+and codebase), analyzes across seven dimensions (value, internal coherence, external
+consistency, technical soundness, completeness, spec-readiness, ground truth), checks for
+cross-proposal conflicts, and produces a review file at
+`docs/reviews/proposals/REVIEW_P-NNN_v1.md` with verdict, blocking issues, non-blocking
+suggestions, consistency map, and risk assessment.
 
 ---
 
@@ -232,7 +234,8 @@ When running post-merge verification, read `references/verify-mode.md` and follo
 
 Verify mode runs after a proposal has been approved and the system docs have been updated.
 It checks that the proposal was applied faithfully, that system docs remain consistent with
-each other, and that no collateral damage occurred during the merge.
+each other, that no collateral damage occurred during the merge, and that code-related
+claims in merged sections still match the actual codebase (targeted code alignment check).
 
 ---
 
@@ -258,19 +261,22 @@ When applying an approved proposal to system docs, read `references/merge-mode.m
 follow its process.
 
 Merge mode is the bridge between an APPROVE verdict and the verify step. It reads the
-proposal's Change Manifest, presents a merge plan for user approval, creates a
-`.pipeline-authorized` marker (operation: merge), applies changes to system docs, removes
-the marker, and auto-triggers verify mode.
+proposal's Change Manifest, presents a merge plan for user approval, runs pre-apply
+validation (confirms target files still match proposal assumptions — auto-proceeds on
+clean, presents impact-assessed report on issues), creates a `.pipeline-authorized` marker
+(operation: merge), applies changes to system docs, removes the marker, and auto-triggers
+verify mode.
 
 **The workflow:**
 1. Verify prerequisites (APPROVE verdict exists, no conflicting merges)
 2. Build merge plan from the proposal's Change Manifest
 3. Present the plan to the user for approval
-4. Create `docs/system/.pipeline-authorized` marker (authorizes edits to system docs)
-5. Apply each change from the Change Manifest to the target system docs
-6. Remove the marker
-7. Update tracking (PROPOSAL_TRACKER.md)
-8. Auto-trigger verify mode
+4. Pre-apply validation (confirm targets still match proposal assumptions)
+5. Create `docs/system/.pipeline-authorized` marker (authorizes edits to system docs)
+6. Apply each change from the Change Manifest to the target system docs
+7. Remove the marker
+8. Update tracking (PROPOSAL_TRACKER.md)
+9. Auto-trigger verify mode
 
 Usage: `/cl-reviewer merge [P-NNN-slug.md]`
 

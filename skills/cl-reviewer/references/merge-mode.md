@@ -50,7 +50,58 @@ This will modify [N] files and add [M] new sections. Approve?
 
 Wait for explicit user approval before proceeding.
 
-#### Step 2: Create Authorization Marker
+#### Step 2: Pre-Apply Validation
+
+After the user approves the merge plan, validate that target files still match the
+proposal's assumptions before applying any changes.
+
+**Lightweight validation (always runs)**:
+For every Change Manifest item, read the target file and confirm:
+- The target section exists at the stated location
+- The content broadly matches the proposal's "Current" description
+
+**Exhaustive validation (complexity-triggered)**:
+Runs when any of these signals are present:
+- Change Manifest has 12+ items
+- 50%+ of changes are MODIFY type
+- Any file is targeted by 3+ changes
+- Proposal has been through 3+ review/fix rounds
+- User or reviewer explicitly requests it (e.g., review recommends exhaustive validation)
+
+Exhaustive validation additionally:
+- Verifies every factual claim in the proposal against target files
+- Greps for missed references on removal/replacement operations
+- Checks insertion point surroundings for conflicts
+- Validates merge instruction specificity
+
+**Validation report**:
+
+If all items confirmed, auto-proceed with a one-line summary:
+```
+Pre-apply validation: 8/8 targets confirmed. Proceeding to apply.
+```
+No user prompt — clean merges should feel unchanged.
+
+If issues found, present the validation report and wait for user decision:
+```
+Pre-apply validation: 6/8 confirmed, 2 issues.
+
+| # | Target | Status | Proposal Expects | Actual State | Impact on Change |
+|---|--------|--------|-----------------|--------------|-----------------|
+| 3 | ARCHITECTURE.md §Event Flow | Stale | ~10-line section describing webhook flow | ~45 lines, restructured with subheadings | HIGH — "replace section" would discard 35 lines of new content |
+| 7 | TDD.md §Sandbox Config | Stale | 3-tier list (bash, OS, Docker) | 3-tier list with added resource limits table | LOW — proposal appends to end, existing content unaffected |
+
+Options: (1) Fix proposal and re-review, (2) Proceed anyway, (3) Abort merge
+```
+
+The **Impact on Change** column is what makes the decision actionable:
+- **HIGH**: Proposed change would overwrite, discard, or conflict with current content
+- **LOW**: Drift exists but proposed change wouldn't collide with it
+- **Missing**: Target section/file doesn't exist at all
+
+No automatic blocking — the user decides based on assessed impact.
+
+#### Step 3: Create Authorization Marker
 
 Write the marker file at `docs/system/.pipeline-authorized`:
 
@@ -63,7 +114,7 @@ timestamp: [ISO 8601]
 
 This tells the PreToolUse hook to allow edits to `docs/system/` files.
 
-#### Step 3: Apply Changes
+#### Step 4: Apply Changes
 
 Walk through each row of the Change Manifest and apply the change to the target system doc:
 
@@ -80,11 +131,11 @@ Walk through each row of the Change Manifest and apply the change to the target 
 **Important**: Apply changes faithfully from the proposal. Don't improve, rephrase, or
 editorialize. The proposal has already been through review — the merge is mechanical.
 
-#### Step 4: Remove Authorization Marker
+#### Step 5: Remove Authorization Marker
 
 Delete `docs/system/.pipeline-authorized`. The window for system doc edits is closed.
 
-#### Step 5: Update Tracking
+#### Step 6: Update Tracking
 
 1. Update `docs/PROPOSAL_TRACKER.md` — set status to `merged`, record merge date
 2. **Propagate design decisions** — If the proposal's Design Decisions section includes
@@ -99,7 +150,7 @@ Delete `docs/system/.pipeline-authorized`. The window for system doc edits is cl
    the new state. This keeps DECISIONS.md current so future skills orient correctly.
 5. Tell the user: "Proposal P-NNN merged into system docs. Running post-merge verification."
 
-#### Step 6: Auto-Trigger Verify
+#### Step 7: Auto-Trigger Verify
 
 Immediately transition to verify mode. Read `references/verify-mode.md` and run the full
 verification process. The user doesn't need to separately invoke `/cl-reviewer verify` —
@@ -108,7 +159,9 @@ it runs as part of the merge flow.
 ### Error Handling
 
 **Merge fails mid-way** (e.g., a system doc section referenced by the proposal doesn't
-exist or has changed since the proposal was written):
+exist or has changed since the proposal was written). Pre-apply validation (Step 2) should
+catch most target issues before they reach this point. This error handling covers edge cases
+that validation missed:
 
 1. Stop applying changes
 2. Do NOT remove the marker yet — partial changes have been made

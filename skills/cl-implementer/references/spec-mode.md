@@ -69,8 +69,22 @@ than sequential warnings:
 | Unverified merges | Clear / Warning | [details] |
 | Context freshness | Clear / Advisory | [details] |
 | Transition advisory | Clear / Advisory | [architectural items or gaps if any] |
+| Code-doc alignment | Clear / Advisory / Warning | [sync check results] |
 
 "Gate check complete. [N issues found / All clear]. Proceed?"
+
+**Check 6: Code-doc alignment** — Run a lightweight, targeted sync check on the system
+docs that will be used for spec generation. Check structural and technology claims only:
+file paths, dependency names, module structure, export shapes. Skip behavioral claims
+(too expensive for a gate check).
+
+- **Clear**: All checked claims match the codebase
+- **Advisory**: Minor drift detected (e.g., file renamed but logic unchanged) — note and proceed
+- **Warning**: Structural drift detected (e.g., docs describe a module that no longer exists) —
+  suggest running `/cl-reviewer sync` or `/cl-reviewer correct` before proceeding
+
+This is advisory, not blocking. The user can always proceed. But structural drift means
+specs will describe a system that doesn't match reality.
 
 The user makes one go/no-go decision for the batch. If any check is a hard blocker
 (e.g., unverified merge), call it out prominently: "1 blocker: unverified merge for
