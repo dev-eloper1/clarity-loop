@@ -239,7 +239,7 @@ DESIGN_TASKS.md.
   design look broken, even if the content is correct. Follow these rules:
   - **Use auto-layout on every container.** Manual absolute positioning is the root cause
     of overlap. Auto-layout (vertical or horizontal stacking with gap values) lets Pencil
-    calculate positions. Set `layoutMode: "VERTICAL"` or `"HORIZONTAL"` with explicit `gap`
+    calculate positions. Set `layout: "vertical"` or `layout: "horizontal"` with explicit `gap`
     values on section frames, row containers, and component groups.
   - **Account for actual rendered text height.** A "4xl" heading at 36px takes ~44px of
     vertical space with line height. A label below a swatch needs ~20px. When calculating

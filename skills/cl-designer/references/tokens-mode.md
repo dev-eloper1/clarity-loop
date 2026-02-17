@@ -87,7 +87,7 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    - Use **at least 100px gaps** between frames in both directions
    - Use `find_empty_space_on_canvas` if resuming an existing file
    - Each frame gets a clear title label at the top
-   - **Set `layoutMode: "VERTICAL"` with explicit `gap` values on every frame.** This is
+   - **Set `layout: "vertical"` with explicit `gap` values on every frame.** This is
      critical — auto-layout prevents the text overlap issues that manual positioning causes.
      Without auto-layout, elements placed at absolute coordinates will overlap when text
      renders taller than expected (a 36px heading needs ~50px of vertical space with line
@@ -109,8 +109,8 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    Structure each section carefully:
 
    **Color Tokens section** — organize as labeled rows, one row per color role:
-   - Set the frame to `layoutMode: "VERTICAL"` with `gap: 24` between rows
-   - Each row is a horizontal auto-layout container (`layoutMode: "HORIZONTAL"`, `gap: 16`)
+   - Set the frame to `layout: "vertical"` with `gap: 24` between rows
+   - Each row is a horizontal auto-layout container (`layout: "horizontal"`, `gap: 16`)
    - Row label on the left (e.g., "Primary", "Secondary", "Neutral", "Success")
    - Swatches in a horizontal strip from lightest to darkest (50 → 900)
    - Only show 5-6 key shades per row, not all 10+ — too many swatches is noise
@@ -125,7 +125,7 @@ NOT write to disk. You must create the file on the filesystem first, then open i
      the row below, fix spacing before proceeding.
 
    **Typography section** — show as a vertical stack, largest to smallest:
-   - Set the frame to `layoutMode: "VERTICAL"` with `gap: 16`
+   - Set the frame to `layout: "vertical"` with `gap: 16`
    - One line per size level: "4xl — The quick brown fox" / "3xl — The quick brown fox" /
      etc., each rendered at the actual font size
    - **Give each line enough vertical space.** A 36px heading needs at least 50px of row
@@ -141,8 +141,8 @@ NOT write to disk. You must create the file on the filesystem first, then open i
      Verify every line has clear separation.
 
    **Spacing & Sizing section** — show as a horizontal row of blocks:
-   - Set the frame to `layoutMode: "VERTICAL"` with `gap: 24` between sub-sections
-   - The spacing row itself is `layoutMode: "HORIZONTAL"` with `gap: 16`
+   - Set the frame to `layout: "vertical"` with `gap: 24` between sub-sections
+   - The spacing row itself is `layout: "horizontal"` with `gap: 16`
    - Each block is a filled square sized to the spacing value (4px, 8px, 16px, etc.)
    - Label below each block with token name and pixel value
    - This row naturally reads left-to-right, small to large
