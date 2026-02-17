@@ -65,7 +65,11 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    `Write` tool (empty content is fine — Pencil will populate it).
    Record the chosen filename in DESIGN_PROGRESS.md so mockups mode knows which file to open.
 2. Call `open_document("{docsRoot}/designs/{project-name}.pen")` to open it in Pencil
-3. **Create separate top-level frames — not one giant wrapper.** A fresh .pen file is a
+3. **Load Pencil schema reference and templates** before any `batch_design` operations:
+   - Read `references/pencil-schema-quick-ref.md` for property syntax (layout, fill, text properties)
+   - Read `references/pencil-templates.md` for copy-paste examples
+   - These files ensure correct property names and provide working code snippets
+4. **Create separate top-level frames — not one giant wrapper.** A fresh .pen file is a
    blank canvas. The instinct is to create a single large frame that holds everything, but
    this forces the user to constantly zoom in and out of a massive container. Instead,
    create each section as its own independent top-level frame on the canvas:
@@ -92,6 +96,14 @@ NOT write to disk. You must create the file on the filesystem first, then open i
      Without auto-layout, elements placed at absolute coordinates will overlap when text
      renders taller than expected (a 36px heading needs ~50px of vertical space with line
      height and padding).
+   - **Always use light backgrounds with dark text for token/component showcase frames.**
+     Regardless of the project's theme (light or dark mode), token section frames and
+     component category frames must have `fill: "#ffffff"` (white) with dark text
+     (`fill: "#1a1a1a"` for labels and titles). These are documentation/presentation frames,
+     not theme-aware UI — visibility is critical. The actual app components will use the
+     project's theme tokens, but the showcase frames displaying those tokens must remain
+     readable. This prevents dark-on-dark invisible content when the user's design direction
+     includes dark mode aesthetics.
    - Use `batch_design` for all of this in one call — frame creation + title labels
    - **Why separate frames matter**: the user can click any frame and zoom to fit just that
      section. They can evaluate colors at readable size without the typography section
@@ -104,7 +116,16 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    - Group by category (color, typography, spacing, etc.)
    - If light + dark themes: define theme axes with per-theme values
 5. Call `get_variables` to verify tokens were set correctly
-6. **Populate each section frame with token visualizations.** This is the first visual
+6. **Run pre-generation checklist** before any `batch_design` calls. Verify:
+   - [ ] All auto-layout frames will use `layout: "vertical"` or `"horizontal"` (NOT `layoutMode`)
+   - [ ] All showcase frames will have `fill: "#ffffff"` (white background)
+   - [ ] All showcase text will have `fill: "#1a1a1a"` (dark text for contrast)
+   - [ ] Font weights are strings: `"normal"` not `400`, `"bold"` not `700`
+   - [ ] Layout values are lowercase: `"vertical"` not `"VERTICAL"`
+   - [ ] Gap and padding are numbers: `24` not `"24px"`
+   - [ ] Every Insert/Copy/Replace will have a binding: `foo=I(...)`
+   - [ ] Property names match Pencil schema (check `pencil-schema-quick-ref.md` if unsure)
+7. **Populate each section frame with token visualizations.** This is the first visual
    artifact the user sees — if it's a wall of unlabeled rectangles, they'll be lost.
    Structure each section carefully:
 
@@ -123,9 +144,19 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    - **After `batch_design`: call `snapshot_layout` and check for overlapping bounding
      boxes.** If any swatch labels overlap adjacent swatches or row labels bleed into
      the row below, fix spacing before proceeding.
+   - **Example structure** for Color Tokens frame:
+     ```javascript
+     colorFrame=I(document, {type: "frame", name: "Color Tokens", layout: "vertical",
+                              gap: 24, padding: 32, fill: "#ffffff", width: 900, height: 600,
+                              x: 100, y: 100})
+     title=I(colorFrame, {type: "text", content: "Color Tokens", fontSize: 24,
+                          fontWeight: "normal", fill: "#1a1a1a"})
+     // Then add rows, swatches, labels — all with explicit fill colors for visibility
+     ```
 
    **Typography section** — show as a vertical stack, largest to smallest:
-   - Set the frame to `layout: "vertical"` with `gap: 16`
+   - Set the frame to `layout: "vertical"` with `gap: 16`, `fill: "#ffffff"`, `padding: 32`
+   - Frame title and all text samples use `fill: "#1a1a1a"` (dark text on white background)
    - One line per size level: "4xl — The quick brown fox" / "3xl — The quick brown fox" /
      etc., each rendered at the actual font size
    - **Give each line enough vertical space.** A 36px heading needs at least 50px of row
@@ -141,7 +172,9 @@ NOT write to disk. You must create the file on the filesystem first, then open i
      Verify every line has clear separation.
 
    **Spacing & Sizing section** — show as a horizontal row of blocks:
-   - Set the frame to `layout: "vertical"` with `gap: 24` between sub-sections
+   - Set the frame to `layout: "vertical"` with `gap: 24` between sub-sections,
+     `fill: "#ffffff"`, `padding: 32`
+   - Frame title and all labels use `fill: "#1a1a1a"` (dark text)
    - The spacing row itself is `layout: "horizontal"` with `gap: 16`
    - Each block is a filled square sized to the spacing value (4px, 8px, 16px, etc.)
    - Label below each block with token name and pixel value
@@ -197,7 +230,12 @@ NOT write to disk. You must create the file on the filesystem first, then open i
 Present the component plan to the user before generating: "Based on the PRD, I'll generate
 these components: [list with variants]. Add or remove any?"
 
-3. Create a **separate top-level frame per component category** on the canvas (same
+3. **Use component templates** from `pencil-templates.md` as starting points. The templates
+   provide tested, working code for common components (Button, Input, Card, etc.). Copy the
+   relevant template, adjust colors/sizes/content to match your tokens, and execute via
+   `batch_design`. This ensures correct property names and structure.
+
+4. Create a **separate top-level frame per component category** on the canvas (same
    principle as token sections — no giant wrapper):
    - "Components — Form Controls" (Button, Input, TextArea, Select, Checkbox)
    - "Components — Layout" (Card, Nav/Sidebar, Modal/Dialog)
@@ -209,6 +247,9 @@ these components: [list with variants]. Add or remove any?"
      This cuts the vertical scrolling in half and lets the user see related categories
      at the same zoom level.
    - Size each category frame to fit its components (not oversized)
+   - **Use light backgrounds (`fill: "#ffffff"`) for component category frames** with dark
+     text for labels — same principle as token sections. This ensures components are visible
+     regardless of the project's theme.
 4. For each component:
    - Create a labeled container group within its category frame
    - Call `batch_design` with `reusable: true` — **this is critical.** The `reusable` flag

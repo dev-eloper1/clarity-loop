@@ -191,7 +191,62 @@ on light backgrounds and lighter text on dark backgrounds than your first instin
 Run this protocol after any `batch_design` call that produces visual content. This
 extends the existing overlap detection with quality checks.
 
-#### Step 1: Layout Integrity (existing)
+#### Step 0: Structural Validation (schema compliance)
+
+**Purpose**: Catch wrong property names before they cause layout issues.
+
+After `batch_design`, use `batch_get` to read back the nodes you just created. Verify:
+
+**For all frames intended to use auto-layout:**
+- [ ] `layout` property exists and equals `"vertical"` or `"horizontal"` (NOT `layoutMode`)
+- [ ] `gap` property exists (number value, not string)
+- [ ] `padding` property exists if specified
+
+**For all showcase frames (token sections, component categories):**
+- [ ] `fill` property exists and equals `"#ffffff"` (white background)
+
+**For all text elements:**
+- [ ] `fill` property exists (text color, typically `"#1a1a1a"`)
+- [ ] `fontWeight` is a string if specified (`"normal"`, `"medium"`, `"semibold"`, `"bold"`)
+
+**For reusable components:**
+- [ ] `reusable` property equals `true`
+
+**For component instances:**
+- [ ] `type` equals `"ref"`
+- [ ] `ref` property contains a valid component ID
+
+**Common failure patterns:**
+- Missing `layout` property → frame uses manual positioning, elements will overlap
+- `fill` missing on frames → inherits from canvas, can cause dark-on-dark invisible content
+- `fill` missing on text → inherits default, can cause invisible text
+- `fontWeight: 400` → should be `"normal"` (string, not number)
+- `layoutMode` instead of `layout` → property ignored, manual positioning fallback
+
+**How to check:**
+
+```javascript
+// After batch_design that created colorFrame
+batch_get({
+  filePath: "path/to/file.pen",
+  nodeIds: ["colorFrame"],
+  readDepth: 2
+})
+```
+
+Review the returned node data. If `layout` is missing but you intended auto-layout, fix
+immediately with `U("colorFrame", {layout: "vertical"})`.
+
+**Why this step matters**: Pencil silently ignores unrecognized properties. `layoutMode: "VERTICAL"`
+produces no error — the property is just ignored, and the frame falls back to manual positioning.
+This causes overlaps that Step 1 (snapshot_layout) will detect, but by then you're debugging
+symptoms, not the root cause. Structural validation catches schema violations immediately.
+
+If structural validation fails, fix with `batch_design` updates before proceeding to Step 1.
+
+---
+
+#### Step 1: Layout Integrity
 
 Call `snapshot_layout`. Check for:
 - Overlapping bounding boxes between siblings
@@ -240,8 +295,8 @@ imbalance, unclear hierarchy, crowding), fix before presenting.
 
 | Mode | What to Apply |
 |------|--------------|
-| **Tokens — swatch generation** | Contrast checking (note safe foreground/background pairs) |
-| **Tokens — component generation** | Target sizes, label association, focus indicators, similarity |
-| **Mockups — screen composition** | All Gestalt principles, heading hierarchy, full verification protocol |
-| **Mockups — behavioral variants** | Contrast on error/warning states, focus indicators on interactive states |
-| **Design review** | Full verification as a review dimension |
+| **Tokens — swatch generation** | Step 0 (structural validation), Step 1 (layout integrity), Contrast checking (note safe foreground/background pairs) |
+| **Tokens — component generation** | Step 0 (structural validation), Step 1 (layout integrity), Target sizes, label association, focus indicators, similarity |
+| **Mockups — screen composition** | Full verification protocol (Steps 0-4), All Gestalt principles, heading hierarchy |
+| **Mockups — behavioral variants** | Step 0 (verify state properties), Contrast on error/warning states, focus indicators on interactive states |
+| **Design review** | Full verification (Steps 0-4) as a review dimension |

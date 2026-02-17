@@ -41,6 +41,12 @@ Wait for user confirmation.
 
 #### Step 2: Generate Mockups
 
+**Load references first:**
+
+Before any mockup generation, read:
+- `references/pencil-schema-quick-ref.md` for property syntax (layout, fill, ref nodes)
+- `references/pencil-templates.md` for screen mockup and component instance examples
+
 **File setup** — reuse the existing .pen file (one canvas, everything together):
 
 1. Read `DESIGN_PROGRESS.md` for the .pen filename chosen during tokens mode (e.g.,
@@ -70,7 +76,14 @@ Wait for user confirmation.
      mode. This means: if the user later updates a Button in the design system, every screen
      that uses that Button updates automatically. Recreating components from scratch on each
      screen defeats the purpose of the design system and creates maintenance nightmares.
-   - Apply layout using auto-layout properties where possible
+   - **Apply auto-layout properties** to all container frames:
+     - Screen frames: `layout: "vertical"`, `gap: 24`, `padding: 32`
+     - Section containers: `layout: "vertical"`, `gap: 16`
+     - Button rows: `layout: "horizontal"`, `gap: 12`
+     - Form sections: `layout: "vertical"`, `gap: 20`
+     - Card grids: `layout: "horizontal"`, `gap: 24`
+     See `pencil-templates.md` "Screen Mockup Frame" and "Form Section" examples for
+     working code.
    - Add real-ish content (not "Lorem ipsum" — use plausible text that reflects the feature)
    - **Keep every element inside its screen frame.** No floating elements on the canvas.
    - Keep `batch_design` calls to ~25 operations each
@@ -90,7 +103,17 @@ Wait for user confirmation.
        primary CTA is the most visually prominent button. Section headings are visibly larger
        than body text (see spatial hierarchy rules in visual-quality-rules.md).
 
-4. **Run the visual verification protocol after each `batch_design` call** (see
+4. **Run pre-generation checklist before each `batch_design` call**. Verify:
+   - [ ] All container frames use `layout: "vertical"` or `"horizontal"` (NOT `layoutMode`)
+   - [ ] Screen frames have appropriate `fill` (e.g., `"#f9fafb"` for light gray background)
+   - [ ] Text elements have `fill: "#111827"` or appropriate semantic color
+   - [ ] Component instances use `type: "ref"` with `ref: "componentId"`
+   - [ ] Font weights are strings: `"normal"`, `"medium"`, `"semibold"`, `"bold"`
+   - [ ] Gap and padding values are numbers: `24` not `"24px"`
+   - [ ] Every Insert has a binding: `section=I(...)`
+   - [ ] Property names match Pencil schema (check `pencil-schema-quick-ref.md`)
+
+5. **Run the visual verification protocol after each `batch_design` call** (see
    `references/visual-quality-rules.md` for the full protocol):
 
    **Step 1 — Layout integrity**: Call `snapshot_layout`. Check for overlapping bounding
