@@ -218,22 +218,75 @@ NOT write to disk. You must create the file on the filesystem first, then open i
 
 8. Record in DESIGN_PROGRESS.md: tokens generated, file reference, user approval per section
 
-#### Step 3: Generate Reusable Components
+#### Step 3: Identify and Generate Reusable Components
 
-1. Call `get_guidelines("tailwind")` for component and styling best practices
-2. Identify components needed from PRD features:
-   - **Minimum set** (adapt per project): Button, Input, TextArea, Select, Checkbox, Card,
-     Badge, Nav/Sidebar, Modal/Dialog, Toast/Alert
-   - **Project-specific**: derived from PRD (e.g., todo item, kanban card, chat bubble,
-     data table row, metric card)
+**IMPORTANT:** Component identification is the foundation of the design system. A shallow
+analysis here causes downstream problems (missing components, duplicate effort, poor
+composition, incomplete behavioral specs). Invest 15-20 minutes in systematic identification.
 
-Present the component plan to the user before generating: "Based on the PRD, I'll generate
-these components: [list with variants]. Add or remove any?"
+1. **Load component identification process:**
+   Read `references/component-identification-process.md` for the full methodology. This guide
+   explains atomic design principles (atoms → molecules → organisms), pattern recognition,
+   and traceability validation.
 
-3. **Use component templates** from `pencil-templates.md` as starting points. The templates
-   provide tested, working code for common components (Button, Input, Card, etc.). Copy the
-   relevant template, adjust colors/sizes/content to match your tokens, and execute via
-   `batch_design`. This ensures correct property names and structure.
+2. **Extract UI patterns from PRD** (feature-by-feature analysis):
+   For each PRD feature, identify:
+   - Data displays (lists, cards, tables, stats)
+   - Input mechanisms (forms, search, filters)
+   - Actions (buttons, links, menus)
+   - Navigation (tabs, sidebar, breadcrumbs)
+   - Feedback (toasts, modals, errors, loading)
+
+   Create a feature-to-UI-pattern matrix to visualize coverage.
+
+3. **Identify atoms** (indivisible primitives):
+   Buttons (primary, secondary, danger, ghost, icon), Inputs (text, textarea, select,
+   checkbox, radio), Text (headings, body, labels), Indicators (badges, avatars, icons,
+   spinners). These have no composition and highest reusability.
+
+4. **Identify molecules** (simple compositions):
+   Look for atoms that always appear together: Input-with-Label (Label + Input + Helper +
+   Error), Search Box (Icon + Input + Clear Button), Tag/Chip (Badge + Close Icon). These
+   compose 2-3 atoms with a focused purpose.
+
+5. **Identify organisms** (complex compositions):
+   Feature-specific components that compose molecules/atoms: Cards, Form Sections, List Items
+   (e.g., Task List Item), Modals, Navigation Sidebars. These map to specific PRD features
+   but are reusable across 2+ features.
+
+6. **Create component-to-feature traceability matrix:**
+   Map every component to the PRD features it serves. Validate that every feature's UI needs
+   are covered. Identify gaps.
+
+7. **Prioritize by dependency order:**
+   Generate atoms first (no dependencies), then molecules (depend on atoms), then organisms
+   (depend on molecules). This builds the foundation before complex components.
+
+8. **Define behavioral variants per component:**
+   For each component, identify required states: Button (idle, hover, focus, loading,
+   disabled), Input (empty, focused, filled, error, disabled), Organism-specific states
+   (Task List Item: unchecked, checked, deleting). Include ARIA attributes.
+
+9. **Present comprehensive component plan to user:**
+   Show the full inventory with:
+   - Atoms (X components) — table with variants, states, reusability
+   - Molecules (X components) — table with composition, features served
+   - Organisms (X components) — table with composition, features served, complexity
+   - Behavioral specifications for key components
+   - Generation order (atoms → molecules → organisms)
+
+   Ask: "This is the complete design system based on the PRD. It covers all [N] features.
+   Add, remove, or adjust components?"
+
+   Wait for user confirmation or adjustments.
+
+10. **Load component templates:**
+    Read `references/pencil-templates.md` for copy-paste examples of common atoms and
+    molecules (Button, Input, Card, etc.). Use these as starting points — copy the template,
+    adjust colors/sizes to match your tokens, execute via `batch_design`. This ensures
+    correct property names and structure.
+
+11. Call `get_guidelines("tailwind")` for additional styling best practices (if needed)
 
 4. Create a **separate top-level frame per component category** on the canvas (same
    principle as token sections — no giant wrapper):
