@@ -684,6 +684,239 @@ dashboardTitle=I(dashboardScreen, {
 
 ---
 
+## Multi-Pane Screen Layouts
+
+### Three-Pane Layout (Sidebar + List + Detail)
+
+**CRITICAL:** Screen frame uses `layout: "horizontal"` to place panes side-by-side.
+Each pane is a child frame with explicit width and `height: "fill_container"`.
+
+```javascript
+// Screen frame with horizontal layout (NO padding/gap at this level)
+threePaneScreen=I(screenGroup, {
+  type: "frame",
+  name: "Three-Pane Screen",
+  layout: "horizontal",
+  gap: 0,
+  padding: 0,
+  width: 1440,
+  height: 900
+})
+
+// Left sidebar (240px wide, fills height)
+sidebar=I(threePaneScreen, {
+  type: "frame",
+  name: "Sidebar",
+  layout: "vertical",
+  gap: 16,
+  padding: 24,
+  fill: "#f9fafb",
+  width: 240,
+  height: "fill_container"
+})
+
+sidebarTitle=I(sidebar, {
+  type: "text",
+  content: "Navigation",
+  fontSize: 14,
+  fontWeight: "semibold",
+  fontFamily: "Inter",
+  fill: "#111827"
+})
+
+// Middle list pane (400px wide, fills height)
+listPane=I(threePaneScreen, {
+  type: "frame",
+  name: "List",
+  layout: "vertical",
+  gap: 16,
+  padding: 24,
+  fill: "#ffffff",
+  stroke: "#e5e7eb",
+  strokeWidth: 1,
+  width: 400,
+  height: "fill_container"
+})
+
+listTitle=I(listPane, {
+  type: "text",
+  content: "Items",
+  fontSize: 18,
+  fontWeight: "semibold",
+  fontFamily: "Inter",
+  fill: "#111827"
+})
+
+// Right detail pane (fills remaining width and height)
+detailPane=I(threePaneScreen, {
+  type: "frame",
+  name: "Detail",
+  layout: "vertical",
+  gap: 24,
+  padding: 32,
+  fill: "#ffffff",
+  width: "fill_container",
+  height: "fill_container"
+})
+
+detailTitle=I(detailPane, {
+  type: "text",
+  content: "Detail View",
+  fontSize: 24,
+  fontWeight: "bold",
+  fontFamily: "Inter",
+  fill: "#111827"
+})
+```
+
+**Example** (Notes app with sidebar, note list, note detail):
+```javascript
+notesScreen=I(appScreens, {
+  type: "frame",
+  name: "Notes App — Three Panes",
+  layout: "horizontal",
+  gap: 0,
+  padding: 0,
+  width: 1440,
+  height: 900
+})
+
+// Sidebar with navigation
+notesSidebar=I(notesScreen, {
+  type: "frame",
+  layout: "vertical",
+  gap: 8,
+  padding: 16,
+  fill: "#f3f4f6",
+  width: 240,
+  height: "fill_container"
+})
+
+// Note list
+notesList=I(notesScreen, {
+  type: "frame",
+  layout: "vertical",
+  gap: 0,
+  padding: 0,
+  fill: "#ffffff",
+  stroke: "#e5e7eb",
+  strokeWidth: 1,
+  width: 400,
+  height: "fill_container"
+})
+
+// Note detail/editor
+noteDetail=I(notesScreen, {
+  type: "frame",
+  layout: "vertical",
+  gap: 16,
+  padding: 32,
+  fill: "#ffffff",
+  width: "fill_container",
+  height: "fill_container"
+})
+```
+
+---
+
+### Two-Pane Layout (Sidebar + Content)
+
+```javascript
+// Screen frame with horizontal layout
+twoPaneScreen=I(screenGroup, {
+  type: "frame",
+  name: "Two-Pane Screen",
+  layout: "horizontal",
+  gap: 0,
+  padding: 0,
+  width: 1440,
+  height: 900
+})
+
+// Left sidebar (280px wide)
+sidebar=I(twoPaneScreen, {
+  type: "frame",
+  layout: "vertical",
+  gap: 16,
+  padding: 24,
+  fill: "#f9fafb",
+  width: 280,
+  height: "fill_container"
+})
+
+// Main content area (fills remaining width)
+mainContent=I(twoPaneScreen, {
+  type: "frame",
+  layout: "vertical",
+  gap: 24,
+  padding: 32,
+  fill: "#ffffff",
+  width: "fill_container",
+  height: "fill_container"
+})
+```
+
+**Example** (Dashboard with sidebar):
+```javascript
+dashboardScreen=I(appScreens, {
+  type: "frame",
+  name: "Dashboard — Two Panes",
+  layout: "horizontal",
+  gap: 0,
+  padding: 0,
+  width: 1440,
+  height: 900
+})
+
+dashboardSidebar=I(dashboardScreen, {
+  type: "frame",
+  layout: "vertical",
+  gap: 12,
+  padding: 20,
+  fill: "#1f2937",
+  width: 280,
+  height: "fill_container"
+})
+
+dashboardContent=I(dashboardScreen, {
+  type: "frame",
+  layout: "vertical",
+  gap: 24,
+  padding: 32,
+  fill: "#f9fafb",
+  width: "fill_container",
+  height: "fill_container"
+})
+```
+
+---
+
+## Why Multi-Pane Layouts Need Special Care
+
+**Common mistake:**
+```javascript
+// WRONG - Creates overlapping panes
+screen=I(group, {type: "frame", layout: "vertical", ...})  // ← Vertical stacks panes on top of each other!
+sidebar=I(screen, {type: "frame", width: 240, height: 900, x: 0, y: 0})  // ← Absolute positioning
+listPane=I(screen, {type: "frame", width: 400, height: 900, x: 240, y: 0})  // ← Manual coordinates = OVERLAP
+```
+
+**Correct:**
+```javascript
+// RIGHT - Uses horizontal auto-layout
+screen=I(group, {type: "frame", layout: "horizontal", gap: 0, padding: 0, ...})  // ← Horizontal places panes side-by-side
+sidebar=I(screen, {type: "frame", width: 240, height: "fill_container", ...})  // ← Auto-positioned by parent
+listPane=I(screen, {type: "frame", width: 400, height: "fill_container", ...})  // ← No x,y needed
+```
+
+**Key differences:**
+- Screen frame: `layout: "horizontal"` (not `"vertical"`)
+- Screen frame: `gap: 0`, `padding: 0` (panes go edge-to-edge)
+- Panes: Explicit `width`, `height: "fill_container"` (fills parent height)
+- Panes: NO `x` or `y` properties (auto-positioned by horizontal layout)
+
+---
+
 ## Component Instance (ref node)
 
 Instantiates a reusable component in a screen mockup.

@@ -77,12 +77,33 @@ Before any mockup generation, read:
      that uses that Button updates automatically. Recreating components from scratch on each
      screen defeats the purpose of the design system and creates maintenance nightmares.
    - **Apply auto-layout properties** to all container frames:
-     - Screen frames: `layout: "vertical"`, `gap: 24`, `padding: 32`
+
+     **Single-column layouts:**
+     - Screen frames (single column): `layout: "vertical"`, `gap: 24`, `padding: 32`
      - Section containers: `layout: "vertical"`, `gap: 16`
-     - Button rows: `layout: "horizontal"`, `gap: 12`
      - Form sections: `layout: "vertical"`, `gap: 20`
+
+     **Multi-pane layouts (CRITICAL - prevents overlaps):**
+     - Three-pane screen (sidebar + list + detail): Screen frame uses `layout: "horizontal"`,
+       `gap: 0`, `padding: 0`. Each pane is a child frame with explicit width + `height: "fill_container"`.
+       Example:
+       ```javascript
+       screen=I(group, {type: "frame", layout: "horizontal", gap: 0, padding: 0,
+                         width: 1440, height: 900})
+       sidebar=I(screen, {type: "frame", layout: "vertical", width: 240,
+                          height: "fill_container", fill: "#f9fafb"})
+       listPane=I(screen, {type: "frame", layout: "vertical", width: 400,
+                           height: "fill_container", fill: "#ffffff"})
+       detailPane=I(screen, {type: "frame", layout: "vertical", width: "fill_container",
+                             height: "fill_container", fill: "#ffffff"})
+       ```
+     - Two-pane screen (sidebar + content): Same pattern with 2 children instead of 3
+
+     **Grids and rows:**
+     - Button rows: `layout: "horizontal"`, `gap: 12`
      - Card grids: `layout: "horizontal"`, `gap: 24`
-     See `pencil-templates.md` "Screen Mockup Frame" and "Form Section" examples for
+
+     See `pencil-templates.md` "Screen Mockup Frame" and "Multi-Pane Layout" examples for
      working code.
    - Add real-ish content (not "Lorem ipsum" — use plausible text that reflects the feature)
    - **Keep every element inside its screen frame.** No floating elements on the canvas.
