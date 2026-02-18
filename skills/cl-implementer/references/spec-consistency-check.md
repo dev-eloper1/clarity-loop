@@ -1,21 +1,39 @@
+---
+mode: spec-review
+tier: structured
+depends-on: [spec-mode.md]
+state-files: [.spec-manifest.md]
+---
+
 ## Spec Consistency Check
 
 Reference for the `cl-implementer spec-review` mode. After specs have been generated from
 verified system docs, this check ensures all specs are consistent with each other and
 with the source system docs.
 
+## Variables
+
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | Project config / .clarity-loop.json | Yes | Root path for all documentation artifacts |
+| .spec-manifest.md | {docsRoot}/specs/ | Yes | Spec manifest listing all generated specs |
+| System docs | {docsRoot}/system/ | Yes | Source system documentation for traceability checks |
+| API conventions preamble | {docsRoot}/specs/ | No | API conventions for adherence checks (Dimension 6) |
+
 ### When to Run
 
 Run after `/cl-implementer spec` has produced specs in `docs/specs/`. This is the
 final quality gate before the start mode generates implementation tasks.
 
-### Six Consistency Dimensions
+## Workflow
 
-#### 1. Type Consistency
+### Phase 1: Type Consistency
 
 All specs must agree on the types of shared entities.
 
-Check for:
+**Step 1.** Scan all spec files for shared entity definitions and collect type declarations.
+
+**Step 2.** Check for:
 - Same entity defined with different types across specs (e.g., `id: string` in one spec
   vs. `id: number` in another)
 - Enum values that differ between specs for the same field
@@ -23,54 +41,69 @@ Check for:
 - Date/time format inconsistencies
 - Precision mismatches (e.g., `float` vs. `decimal` for currency)
 
-#### 2. Naming Consistency
+**Verify**: All shared entities have consistent type definitions across specs.
+**On failure**: Record each type mismatch with spec file names and field details.
+
+### Phase 2: Naming Consistency
 
 All specs must use consistent naming conventions.
 
-Check for:
+**Step 3.** Check for:
 - Same concept named differently across specs (e.g., `userId` vs. `user_id` vs. `UserID`)
 - Abbreviation inconsistencies (e.g., `msg` in one spec, `message` in another)
 - Plural/singular disagreements for the same entity
 - Casing convention violations within a spec (mixing camelCase and snake_case)
 - Entity names that don't match the terminology in system docs
 
-#### 3. Contract Consistency
+**Verify**: All naming conventions are consistent across specs and aligned with system doc terminology.
+**On failure**: Record each naming variation with recommended standard.
+
+### Phase 3: Contract Consistency
 
 Specs that define interfaces between components must agree on the contracts.
 
-Check for:
+**Step 4.** Check for:
 - Request/response shape mismatches between producer and consumer specs
 - Event payload disagreements between emitter and handler specs
 - Missing error types that one spec expects but another doesn't define
 - Version or protocol mismatches
 - Authentication/authorization assumptions that differ between specs
 
-#### 4. Completeness
+**Verify**: All inter-spec contracts (producer/consumer) are aligned.
+**On failure**: Record each contract mismatch with producer spec, consumer spec, and impact.
+
+### Phase 4: Completeness
 
 Every significant concept in the system docs should be represented in specs.
 
-Check for:
+**Step 5.** Check for:
 - System doc sections that describe behavior but have no corresponding spec
 - Specs that reference entities not defined in any other spec
 - Missing edge cases that the system docs explicitly enumerate
 - Integration points described in system docs but not covered by any spec
 - Error handling described in system docs but absent from specs
 
-#### 5. Traceability
+**Verify**: All significant system doc concepts have corresponding spec coverage.
+**On failure**: Record each coverage gap with system doc section and missing spec area.
+
+### Phase 5: Traceability
 
 Every spec should trace back to a specific system doc section.
 
-Check for:
+**Step 6.** Check for:
 - Specs without a `source` or reference to the system doc they derive from
 - Specs that claim to derive from a system doc section but don't match its content
 - System doc sections that were significantly updated since spec generation (staleness)
 - Orphaned specs that no longer correspond to any system doc content
 
-#### 6. API Convention Adherence
+**Verify**: All specs trace to current system doc sections.
+**On failure**: Record each traceability issue with spec file and expected source.
+
+### Phase 6: API Convention Adherence
 
 All endpoint specs must follow the conventions defined in the API conventions preamble.
 
-Check for:
+**Step 7.** Check for:
 - Pagination style inconsistencies (some specs use cursor, others use offset)
 - Naming convention violations (some specs use camelCase, others snake_case in JSON)
 - Error response format deviations (some specs define custom error shapes)
@@ -82,7 +115,12 @@ Check for:
 If no API conventions preamble exists: skip this dimension but note: "No API conventions
 preamble found. Consider generating one to ensure consistency across endpoint specs."
 
-### Output Format
+**Verify**: All endpoint specs follow the API conventions preamble.
+**On failure**: Record each convention violation with spec file and expected convention.
+
+### Phase 7: Generate Output
+
+**Step 8.** Produce the consistency review document:
 
 ```markdown
 # Spec Consistency Review
@@ -164,6 +202,9 @@ Prioritized list of fixes. Group by severity:
 3. **Nice to have** — cosmetic or convention improvements
 ```
 
+**Verify**: Output document contains all six dimensions with findings or all-clear notes.
+**On failure**: Ensure all dimensions are represented even if skipped.
+
 ### Guidance
 
 - **Type consistency is the highest priority.** A naming inconsistency is confusing; a type
@@ -179,3 +220,10 @@ Prioritized list of fixes. Group by severity:
 - **Don't check style.** This is a consistency check, not a style guide review. Different
   spec formats (YAML, JSON Schema, TypeScript, SQL) have different conventions — that's fine.
   Only flag actual semantic inconsistencies.
+
+## Report
+
+```
+CONSISTENCY: PASS | Specs: N checked | Issues: 0
+CONSISTENCY: FAIL | Issues: N | Must-fix: X | Should-fix: Y | Nice-to-have: Z
+```

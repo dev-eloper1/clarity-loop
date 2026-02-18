@@ -40,7 +40,7 @@ graph TD
         subgraph Skills["skills/ — 4 Skills"]
             RES["cl-researcher<br/>SKILL.md + 6 references"]
             REV["cl-reviewer<br/>SKILL.md + 9 references"]
-            DES["cl-designer<br/>SKILL.md + 6 references"]
+            DES["cl-designer<br/>SKILL.md + 10 references"]
             IMP["cl-implementer<br/>SKILL.md + 10 references"]
         end
 
@@ -100,6 +100,30 @@ graph LR
 
 The `docsRoot` path defaults to `docs/` but is configurable via `.clarity-loop.json`. All skills resolve paths relative to this root.
 
+### Reference File Convention
+
+All reference files follow one of two templates based on their execution model.
+
+**Tier 1: Structured** — For deterministic pipeline modes where step order is fixed and
+outputs are predictable. Files have: YAML frontmatter, Variables table, Workflow section
+with globally numbered steps, Verify checkpoints, inline error handling, and a Report
+section with parseable summary lines.
+
+**Tier 2: Guided** — For judgment-driven and conversational modes where the agent
+exercises discretion. Files have: YAML frontmatter, Variables table, Guidelines section,
+Process section with named Phases and Checkpoints, and an Output section.
+
+Both tiers share: frontmatter, Variables, and a defined output section. The difference is
+in the middle — Workflow (rigid) vs. Guidelines+Process (flexible).
+
+**Frontmatter fields**: `mode`, `tier`, `depends-on`, `state-files`.
+
+**Tier assignment**: 14 Tier 1 files, 21 Tier 2 files. See Section 17 for the complete
+assignment table.
+
+**Convention enforcement**: Skills instruct the agent to read frontmatter when loading a
+reference file. A future lint script may validate compliance.
+
 ### Skill Responsibilities
 
 | Skill | Responsibility | Modes |
@@ -109,7 +133,7 @@ The `docsRoot` path defaults to `docs/` but is configurable via `.clarity-loop.j
 | **cl-designer** | Visual design and components | setup, tokens, mockups, build-plan (4 modes) |
 | **cl-implementer** | Specs, tasks, implementation | spec, spec-review, start, run, autopilot, verify, status, sync (8 modes) |
 
-**Total: 4 skills, 28 modes, 34 reference files.**
+**Total: 4 skills, 28 modes, 35 reference files.**
 
 ---
 
@@ -1278,62 +1302,66 @@ This is a guideline, not a constraint. If a user wants detailed discussion durin
 | `.claude-plugin/plugin.json` | Plugin manifest — name, version, skills path, metadata |
 | `.claude-plugin/marketplace.json` | Marketplace catalog entry |
 
-### Skills (4 SKILL.md + 31 references)
+### Skills (4 SKILL.md + 35 references)
 
 #### cl-researcher (SKILL.md + 6 references)
 
-| File | Purpose |
-|------|---------|
-| `skills/cl-researcher/SKILL.md` | Skill definition — 7 modes, session start, mode detection |
-| `skills/cl-researcher/references/bootstrap-guide.md` | Greenfield/brownfield paths, discovery conversation, profile system, defaults sheet |
-| `skills/cl-researcher/references/operational-bootstrap.md` | Operational bootstrap: security, config, observability, data lifecycle decisions |
-| `skills/cl-researcher/references/research-template.md` | Research doc template (R-NNN format) |
-| `skills/cl-researcher/references/proposal-template.md` | Proposal template with Change Manifest format |
-| `skills/cl-researcher/references/document-plan-template.md` | Structure planning template |
-| `skills/cl-researcher/references/context-mode.md` | Three-layer context system, staleness model, loading protocol |
+| File | Tier | Purpose |
+|------|------|---------|
+| `skills/cl-researcher/SKILL.md` | — | Skill definition — 7 modes, session start, mode detection |
+| `skills/cl-researcher/references/bootstrap-guide.md` | Guided | Greenfield/brownfield paths, discovery conversation, profile system, defaults sheet |
+| `skills/cl-researcher/references/operational-bootstrap.md` | Guided | Operational bootstrap: security, config, observability, data lifecycle decisions |
+| `skills/cl-researcher/references/research-template.md` | Guided | Research doc template (R-NNN format) |
+| `skills/cl-researcher/references/proposal-template.md` | Guided | Proposal template with Change Manifest format |
+| `skills/cl-researcher/references/document-plan-template.md` | Guided | Structure planning template |
+| `skills/cl-researcher/references/context-mode.md` | Structured | Three-layer context system, staleness model, loading protocol |
 
 #### cl-reviewer (SKILL.md + 9 references)
 
-| File | Purpose |
-|------|---------|
-| `skills/cl-reviewer/SKILL.md` | Skill definition — 9 modes, session start, mode detection |
-| `skills/cl-reviewer/references/review-mode.md` | 6-dimension review process, cross-proposal conflict detection |
-| `skills/cl-reviewer/references/re-review-mode.md` | Cumulative issue ledger, regression detection |
-| `skills/cl-reviewer/references/fix-mode.md` | Walk through blocking issues, apply edits, auto-trigger re-review |
-| `skills/cl-reviewer/references/merge-mode.md` | Authorization marker lifecycle, Change Manifest execution |
-| `skills/cl-reviewer/references/verify-mode.md` | 4-part post-merge verification, design nudge |
-| `skills/cl-reviewer/references/audit-mode.md` | 8-dimension analysis, drift analysis, technical verification via web search |
-| `skills/cl-reviewer/references/correction-mode.md` | Corrections manifest, spot-check, lightweight pipeline bypass |
-| `skills/cl-reviewer/references/sync-mode.md` | Claim extraction, code verification, DECISIONS.md reconciliation |
-| `skills/cl-reviewer/references/design-review-mode.md` | 3-dimension design validation, Pencil MCP integration |
+| File | Tier | Purpose |
+|------|------|---------|
+| `skills/cl-reviewer/SKILL.md` | — | Skill definition — 9 modes, session start, mode detection |
+| `skills/cl-reviewer/references/review-mode.md` | Structured | 6-dimension review process, cross-proposal conflict detection |
+| `skills/cl-reviewer/references/re-review-mode.md` | Structured | Cumulative issue ledger, regression detection |
+| `skills/cl-reviewer/references/fix-mode.md` | Structured | Walk through blocking issues, apply edits, auto-trigger re-review |
+| `skills/cl-reviewer/references/merge-mode.md` | Structured | Authorization marker lifecycle, Change Manifest execution |
+| `skills/cl-reviewer/references/verify-mode.md` | Structured | 4-part post-merge verification, design nudge |
+| `skills/cl-reviewer/references/audit-mode.md` | Guided | 8-dimension analysis, drift analysis, technical verification via web search |
+| `skills/cl-reviewer/references/correction-mode.md` | Guided | Corrections manifest, spot-check, lightweight pipeline bypass |
+| `skills/cl-reviewer/references/sync-mode.md` | Structured | Claim extraction, code verification, DECISIONS.md reconciliation |
+| `skills/cl-reviewer/references/design-review-mode.md` | Structured | 3-dimension design validation, Pencil MCP integration |
 
-#### cl-designer (SKILL.md + 6 references)
+#### cl-designer (SKILL.md + 10 references)
 
-| File | Purpose |
-|------|---------|
-| `skills/cl-designer/SKILL.md` | Skill definition — 4 modes, two paths (Pencil/markdown), canvas rules |
-| `skills/cl-designer/references/setup-mode.md` | MCP detection, visual references, design discovery, style guide |
-| `skills/cl-designer/references/tokens-mode.md` | Token derivation, .pen file setup, component generation, behavioral states |
-| `skills/cl-designer/references/mockups-mode.md` | Screen inventory, ref nodes, behavioral walkthrough, responsive states |
-| `skills/cl-designer/references/behavioral-walkthrough.md` | Screen states, interaction flows, navigation context, content decisions |
-| `skills/cl-designer/references/build-plan-mode.md` | 5-phase task breakdown, dependency graph, acceptance criteria |
-| `skills/cl-designer/references/design-checklist.md` | Tokens checklist (14 items), mockups checklist (11 items), tier system |
+| File | Tier | Purpose |
+|------|------|---------|
+| `skills/cl-designer/SKILL.md` | — | Skill definition — 4 modes, two paths (Pencil/markdown), canvas rules |
+| `skills/cl-designer/references/setup-mode.md` | Guided | MCP detection, visual references, design discovery, style guide |
+| `skills/cl-designer/references/tokens-mode.md` | Guided | Token derivation, .pen file setup, component generation, behavioral states |
+| `skills/cl-designer/references/mockups-mode.md` | Guided | Screen inventory, ref nodes, behavioral walkthrough, responsive states |
+| `skills/cl-designer/references/behavioral-walkthrough.md` | Guided | Screen states, interaction flows, navigation context, content decisions |
+| `skills/cl-designer/references/build-plan-mode.md` | Structured | 5-phase task breakdown, dependency graph, acceptance criteria |
+| `skills/cl-designer/references/design-checklist.md` | Guided | Tokens checklist (14 items), mockups checklist (11 items), tier system |
+| `skills/cl-designer/references/visual-quality-rules.md` | Guided | Gestalt principles, WCAG constraints, visual quality gates |
+| `skills/cl-designer/references/component-identification-process.md` | Guided | Atomic design methodology, component hierarchy identification |
+| `skills/cl-designer/references/pencil-schema-quick-ref.md` | Guided | Pencil MCP node types, frame properties, common patterns |
+| `skills/cl-designer/references/pencil-templates.md` | Guided | Copy-paste Pencil code blocks for common UI components |
 
 #### cl-implementer (SKILL.md + 10 references)
 
-| File | Purpose |
-|------|---------|
-| `skills/cl-implementer/SKILL.md` | Skill definition — 8 modes, waterfall gate, queue discipline |
-| `skills/cl-implementer/references/spec-mode.md` | Waterfall gate checks, spec format selection, parallel generation |
-| `skills/cl-implementer/references/cross-cutting-specs.md` | SECURITY_SPEC, error taxonomy, API conventions, shared types, edge cases, accessibility |
-| `skills/cl-implementer/references/operational-specs.md` | CONFIG_SPEC, migrations, observability, integration contracts, backend policies, data modeling, code conventions, performance |
-| `skills/cl-implementer/references/governance-checks.md` | 10 sub-checks for verify mode dimension 7 |
-| `skills/cl-implementer/references/spec-consistency-check.md` | 6-dimension cross-spec consistency check |
-| `skills/cl-implementer/references/start-mode.md` | 13 task generation rules, dependency graph, test tasks, operational tasks |
-| `skills/cl-implementer/references/run-mode.md` | Reconciliation, queue processing, fix tasks, spec gap triage |
-| `skills/cl-implementer/references/autopilot-mode.md` | Self-testing, checkpoint tiers, integration gates, parallel execution |
-| `skills/cl-implementer/references/verify-mode.md` | 7 dimensions, 10 governance sub-checks, dependency audit |
-| `skills/cl-implementer/references/sync-mode.md` | Spec hash comparison, queue adjustment, cascade handling |
+| File | Tier | Purpose |
+|------|------|---------|
+| `skills/cl-implementer/SKILL.md` | — | Skill definition — 8 modes, waterfall gate, queue discipline |
+| `skills/cl-implementer/references/spec-mode.md` | Structured | Waterfall gate checks, spec format selection, parallel generation |
+| `skills/cl-implementer/references/cross-cutting-specs.md` | Guided | SECURITY_SPEC, error taxonomy, API conventions, shared types, edge cases, accessibility |
+| `skills/cl-implementer/references/operational-specs.md` | Guided | CONFIG_SPEC, migrations, observability, integration contracts, backend policies, data modeling, code conventions, performance |
+| `skills/cl-implementer/references/governance-checks.md` | Guided | 10 sub-checks for verify mode dimension 7 |
+| `skills/cl-implementer/references/spec-consistency-check.md` | Structured | 6-dimension cross-spec consistency check |
+| `skills/cl-implementer/references/start-mode.md` | Structured | 13 task generation rules, dependency graph, test tasks, operational tasks |
+| `skills/cl-implementer/references/run-mode.md` | Guided | Reconciliation, queue processing, fix tasks, spec gap triage |
+| `skills/cl-implementer/references/autopilot-mode.md` | Guided | Self-testing, checkpoint tiers, integration gates, parallel execution |
+| `skills/cl-implementer/references/verify-mode.md` | Structured | 7 dimensions, 10 governance sub-checks, dependency audit |
+| `skills/cl-implementer/references/sync-mode.md` | Structured | Spec hash comparison, queue adjustment, cascade handling |
 
 ### Hooks (4 files)
 

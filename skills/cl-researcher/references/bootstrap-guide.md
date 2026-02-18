@@ -1,29 +1,71 @@
+---
+mode: bootstrap-guide
+tier: guided
+depends-on: [operational-bootstrap.md, context-mode.md]
+state-files: [DECISIONS.md, RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, PARKING.md, .manifest.md, .pipeline-authorized]
+---
+
 ## Bootstrap Guide
 
 Bootstrap mode creates the initial system documentation for a project. This is the entry
 point for both greenfield projects (no docs exist) and brownfield projects (existing code
 and/or existing docs need to be organized into the Clarity Loop structure).
 
-### When to Use
+## Variables
+
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docs/system/ contents | Filesystem scan | Yes | Existing .md files in docs/system/ to determine greenfield vs brownfield |
+| User project description | Conversation (Step 2) | Yes | What the project does, tech stack, audience, scope |
+| Project intent | Inferred from conversation | Yes | Ship, Quality, Rigor, or Explore |
+| Profile detection results | Auto-detect / Quick Research / Preset | Yes | Detected tech stack, framework, testing, auth, etc. |
+| ux.profileMode config | .clarity-loop.json | No | Controls profile detection behavior (default: "auto") |
+| Stack validation results | WebSearch | No | Latest stable versions and compatibility checks |
+| Defaults sheet confirmations | User review | Yes | Confirmed or overridden cross-cutting decisions |
+| Approved doc set | User confirmation (Step 3) | Yes | Which system docs to generate |
+| Existing docs (brownfield) | Filesystem / user input | No | Pre-existing documentation to import or use as context |
+| Existing codebase (brownfield) | Filesystem scan | No | Source code for auto-detect profile generation |
+
+## Guidelines
+
+1. Bootstrap triggers when the user says "bootstrap", "set up docs", "initialize docs", "create initial docs", or when `docs/system/` is empty.
+2. If `docs/system/` doesn't exist at all, auto-scaffold by running init.js. Do NOT ask the user to run it manually -- just run it.
+3. If docs are found in `docs/system/`, bootstrap isn't needed. Suggest the normal pipeline instead.
+4. Don't generate everything at once. Bootstrap creates a starting set. Detailed docs for specific subsystems go through the normal pipeline.
+5. Don't copy-paste code into docs. Docs describe intent and architecture, not implementation details.
+6. Don't skip the conversation. Even for brownfield with existing docs, talk to the user. Existing docs might be outdated, wrong, or reflect abandoned plans.
+7. Don't over-document. 3-5 well-written system docs are better than 15 stubs. Start small, expand through the pipeline.
+8. Not every project needs all behavioral/UX questions. Server-side APIs don't need empty state philosophy. Simple tools don't need offline handling. But always ask about error handling and accessibility.
+9. These are ARCHITECTURE-LEVEL decisions for testing. Don't ask for implementation details -- ask for strategy and philosophy.
+10. Never proceed silently on stack validation. The user should always see the detected-vs-latest comparison so they can make a conscious choice.
+11. The defaults sheet should feel like reviewing a menu, not filling out a tax form.
+
+## Process
+
+### Phase 1: Detection
+
+#### When to Use
 
 Bootstrap triggers when:
 - The user says "bootstrap", "set up docs", "initialize docs", "create initial docs"
 - `docs/system/` is empty (no `.md` files beyond `.manifest.md` and `.pipeline-authorized`)
 - The user is a new Clarity Loop adopter and asks "how do I start?"
 
-### Detection
+#### Detection
 
 Check `docs/system/` for existing `.md` files (excluding `.manifest.md`):
-- **No docs found** → greenfield or brownfield-with-code path
-- **Docs found** → the project already has system docs, bootstrap isn't needed. Suggest
-  the normal pipeline (research → proposal → review → merge) instead.
+- **No docs found** -> greenfield or brownfield-with-code path
+- **Docs found** -> the project already has system docs, bootstrap isn't needed. Suggest
+  the normal pipeline (research -> proposal -> review -> merge) instead.
 
-If `docs/system/` doesn't exist at all, auto-scaffold by running init.js (see Step 1 below).
-Do NOT ask the user to run it manually — just run it.
+If `docs/system/` doesn't exist at all, auto-scaffold by running init.js (see Phase 2 below).
+Do NOT ask the user to run it manually -- just run it.
+
+**Checkpoint**: Bootstrap path determined (greenfield, brownfield-with-docs, or brownfield-with-code).
 
 ---
 
-### Greenfield Bootstrap (No Existing Docs or Code)
+### Phase 2: Greenfield Bootstrap (No Existing Docs or Code)
 
 For a brand-new project where nothing exists yet.
 
@@ -38,12 +80,12 @@ If anything is missing, run init.js automatically:
 node <plugin-root>/scripts/init.js
 ```
 
-Where `<plugin-root>` is the Clarity Loop plugin directory. The init script is idempotent —
+Where `<plugin-root>` is the Clarity Loop plugin directory. The init script is idempotent --
 safe to run even if some directories already exist. It handles collision detection, creates
 all directories, copies tracking file templates, and sets up .gitignore entries.
 
 Tell the user: "Setting up the documentation structure..." and then run it. Do NOT ask the
-user to run it manually — this is a transparent setup step, not a user action.
+user to run it manually -- this is a transparent setup step, not a user action.
 
 #### Step 2: Discovery Conversation
 
@@ -55,44 +97,40 @@ Have a genuine conversation with the user to understand the project:
 - What are the key components or subsystems?
 - What's the tech stack?
 
-**Then dig deeper — functional:**
+**Then dig deeper -- functional:**
 - What are the main workflows or user journeys?
 - Are there external integrations or dependencies?
 - What are the key architectural decisions already made?
 - What's the scope? What's explicitly out of scope?
 
 **Behavioral and UX questions** (ask these as a natural continuation of the conversation,
-not as a separate checklist dump — adapt to context and skip what's not applicable):
+not as a separate checklist dump -- adapt to context and skip what's not applicable):
 - How should the app handle errors? Toast notifications? Inline errors? Error pages?
-  (Establishes error handling philosophy — category: `errors`)
+  (Establishes error handling philosophy -- category: `errors`)
 - Should actions feel instant (optimistic updates) or show loading states?
-  (Establishes state management approach — category: `resilience`)
+  (Establishes state management approach -- category: `resilience`)
 - What happens when there's no data yet? Empty states with onboarding? Minimal
-  placeholders? (Establishes empty state philosophy — category: `content`)
+  placeholders? (Establishes empty state philosophy -- category: `content`)
 - What accessibility level are you targeting? WCAG 2.1 AA? 2.2? No specific target?
-  (Category: `accessibility` — this constrains design tokens and component specs)
+  (Category: `accessibility` -- this constrains design tokens and component specs)
 - Is this keyboard-first, mouse-first, or touch-optimized?
-  (Affects interaction patterns, component sizing, focus management — category: `accessibility`)
-- What's the app's voice — professional? Friendly? Minimal? Technical?
-  (Establishes content tone for error messages, empty states, help text — category: `content`)
+  (Affects interaction patterns, component sizing, focus management -- category: `accessibility`)
+- What's the app's voice -- professional? Friendly? Minimal? Technical?
+  (Establishes content tone for error messages, empty states, help text -- category: `content`)
 - How should the app handle being offline or network errors?
-  (Establishes resilience philosophy — category: `resilience`. Skip for server-only apps)
+  (Establishes resilience philosophy -- category: `resilience`. Skip for server-only apps)
 - What's your testing philosophy? Specific framework? Coverage expectations?
-  (Category: `testing` — feeds into spec generation)
+  (Category: `testing` -- feeds into spec generation)
 - Target devices? Desktop only? Mobile? Both? Tablet?
-  (Establishes responsive targets — category: `responsive`)
-
-Not every project needs all of these. Server-side APIs don't need empty state philosophy.
-Simple tools don't need offline handling. Ask what's relevant to the project type. But
-**always ask about error handling and accessibility** — these affect every project.
+  (Establishes responsive targets -- category: `responsive`)
 
 These conversational answers feed into Step 2b (profile detection) and Step 2c (defaults
 sheet). If the user answered a behavioral question here, the defaults sheet pre-fills that
 category with source `[from discovery]` instead of `[preset]` or `[research-generated]`.
-This means the user won't be re-asked the same question in the defaults sheet — their
+This means the user won't be re-asked the same question in the defaults sheet -- their
 conversational answer takes precedence per the DECISIONS.md precedence rules.
 
-**Testing strategy (probe when project type warrants it — skip for pure documentation
+**Testing strategy (probe when project type warrants it -- skip for pure documentation
 or simple scripts):**
 
 The project profile system (Step 2b) already captures basic testing decisions via
@@ -101,17 +139,13 @@ expectations). These probes go deeper into project-specific testing architecture
 
 - "What integration boundaries matter most? (API contracts? Database operations?
   Full user flows? Authentication chain?)"
-  → Record in DECISIONS.md with category `testing`
+  -> Record in DECISIONS.md with category `testing`
 - "Are there any testing constraints? (CI time budget, specific test environments,
   external service dependencies that can't be mocked?)"
-  → Record in DECISIONS.md with category `testing`
+  -> Record in DECISIONS.md with category `testing`
 
 If the profile system already resolved framework, mock boundaries, test data, and
 coverage via auto-detect or presets, don't re-ask those. Only probe for gaps.
-
-These are ARCHITECTURE-LEVEL decisions. Don't ask for implementation details — ask for
-strategy and philosophy. The answers go into DECISIONS.md with category tag `testing`
-and are consumed by spec generation when producing TEST_SPEC.md.
 
 **If the user doesn't have strong opinions and the profile system provided no
 testing defaults**: Use sensible defaults:
@@ -124,16 +158,16 @@ testing defaults**: Use sensible defaults:
 
 Record the defaults in DECISIONS.md with source `[auto-default]` and category `testing`.
 
-**Dig deeper — security and data (scale to project type):**
+**Dig deeper -- security and data (scale to project type):**
 - Data sensitivity? (PII, financial data, health data, public only?)
 - Compliance requirements? (GDPR, HIPAA, SOC2, PCI-DSS, none?)
 - Are there admin vs. regular user roles? What can each do?
 
 These questions inform the `security`, `auth`, and `authorization` category decisions
-in the defaults sheet (Step 2c). For hobby/prototype projects, these can be brief —
+in the defaults sheet (Step 2c). For hobby/prototype projects, these can be brief --
 the Prototype preset already defaults to "Skip" for security depth.
 
-**Dig deeper — operational and quality (scale to project type):**
+**Dig deeper -- operational and quality (scale to project type):**
 
 For projects that will be deployed (not just prototypes or scripts), read
 `references/operational-bootstrap.md` for operational discovery questions covering
@@ -158,11 +192,13 @@ From the discovery conversation, infer the user's project intent:
 
 Present the inference conversationally:
 
-"From what you've described — [reflect key signals] — this sounds like a **[intent]**
+"From what you've described -- [reflect key signals] -- this sounds like a **[intent]**
 project. That means [what it implies for the pipeline]. Sound right?"
 
 Record in defaults sheet with source `[from discovery]`. If the user doesn't confirm
 or changes intent later, update the entry.
+
+**Checkpoint**: Discovery conversation complete, project intent inferred and confirmed.
 
 #### Step 2b: Project Profile Detection
 
@@ -191,7 +227,7 @@ questions needed for decisions already made in code:
 | Containerization | `Dockerfile`, `docker-compose.yml` | Docker with compose |
 
 Prepare the detected profile as a **Project Profile** table. **Do not present it to the
-user yet** — the Stack Validation step below will validate library versions and
+user yet** -- the Stack Validation step below will validate library versions and
 compatibility first, then present the combined result (profile + version status) together.
 
 The raw profile table looks like:
@@ -225,7 +261,7 @@ value but still show both.
 After preparing the detected profile, check for **gaps** -- categories the pipeline needs
 that auto-detect couldn't determine (error handling strategy, security depth, content
 tone, accessibility level, etc.). If gaps exist, fill them via Level 2 (quick research)
-or ask the user directly. Resolve gaps before proceeding to Stack Validation — the
+or ask the user directly. Resolve gaps before proceeding to Stack Validation -- the
 validation step needs the full tech stack.
 
 ##### Level 2: Quick Research (new or complex projects)
@@ -283,8 +319,8 @@ freeform. The user fills in decisions through conversation.
 
 After any detection level produces a tech stack (auto-detect, quick research, or preset +
 user's stated preferences), **do NOT present it to the user yet**. First, validate the
-stack against current releases. Then present the full picture — what was detected, what's
-latest, and whether libraries are compatible — so the user can make an informed decision.
+stack against current releases. Then present the full picture -- what was detected, what's
+latest, and whether libraries are compatible -- so the user can make an informed decision.
 
 **1. Version currency check:**
 
@@ -306,34 +342,31 @@ Check that the detected libraries are compatible with each other:
 
 **3. Present the tech stack with version status:**
 
-Always show the user what you know vs what's current. Be transparent — even if everything
+Always show the user what you know vs what's current. Be transparent -- even if everything
 is up to date, show it:
 
 "Here's your tech stack with current version status:
 
 | Library | Your Version | Latest Stable | Compatible | Status |
 |---------|-------------|---------------|------------|--------|
-| Next.js | 14.2.0 | 15.1.0 | ⚠️ Requires React 19 | Major update available |
-| React | 18.3.0 | 19.0.0 | ✅ With Next.js 15 | Major update available |
-| Drizzle | 0.38.0 | 0.39.0 | ✅ | Minor update available |
-| Tailwind CSS | 4.0.0 | 4.0.0 | ✅ | Current |
-| Vitest | 2.1.0 | 2.1.0 | ✅ | Current |
+| Next.js | 14.2.0 | 15.1.0 | Warning: Requires React 19 | Major update available |
+| React | 18.3.0 | 19.0.0 | OK: With Next.js 15 | Major update available |
+| Drizzle | 0.38.0 | 0.39.0 | OK | Minor update available |
+| Tailwind CSS | 4.0.0 | 4.0.0 | OK | Current |
+| Vitest | 2.1.0 | 2.1.0 | OK | Current |
 
 Would you like to:
-1. **Update to latest compatible set** — I'll research the latest versions and download
+1. **Update to latest compatible set** -- I'll research the latest versions and download
    up-to-date context for each library (recommended)
-2. **Keep your current versions** — proceed as-is
-3. **Mix** — tell me which ones to update"
+2. **Keep your current versions** -- proceed as-is
+3. **Mix** -- tell me which ones to update"
 
-**Never proceed silently.** The user should always see the detected-vs-latest comparison
-so they can make a conscious choice about which versions their project targets.
-
-**4. If user chooses to update — download context and present updated list:**
+**4. If user chooses to update -- download context and present updated list:**
 
 When the user opts to update (all or specific libraries):
 
-a. Run the context mode process for each library being updated — follow Steps 2-5 of
-   `references/context-mode.md` (skip Step 1: Identify Libraries — you already have the
+a. Run the context mode process for each library being updated -- follow Steps 2-5 of
+   `references/context-mode.md` (skip Step 1: Identify Libraries -- you already have the
    library list from the profile detection above). This fetches official docs, correct API
    patterns, import paths, breaking changes, and gotchas. Creates `{docsRoot}/context/` files.
 
@@ -344,11 +377,11 @@ b. After context is downloaded, present the **updated tech list** so the user se
 
    | Library | Version | Context | Notes |
    |---------|---------|---------|-------|
-   | Next.js | 15.1.0 | ✅ Downloaded | App Router stable, Turbopack default |
-   | React | 19.0.0 | ✅ Downloaded | use() hook, Server Components stable |
-   | Drizzle | 0.39.0 | ✅ Downloaded | New query builder API |
-   | Tailwind CSS | 4.0.0 | ✅ Downloaded | CSS-first config, no tailwind.config.js |
-   | Vitest | 2.1.0 | ✅ Current | No context needed — already up to date |
+   | Next.js | 15.1.0 | Downloaded | App Router stable, Turbopack default |
+   | React | 19.0.0 | Downloaded | use() hook, Server Components stable |
+   | Drizzle | 0.39.0 | Downloaded | New query builder API |
+   | Tailwind CSS | 4.0.0 | Downloaded | CSS-first config, no tailwind.config.js |
+   | Vitest | 2.1.0 | Current | No context needed -- already up to date |
 
    This is the tech stack I'll use for your system docs. Proceeding to project
    configuration."
@@ -362,11 +395,13 @@ c. This validated, context-backed tech list feeds directly into the defaults she
 Still offer context download: "Want me to download detailed context for your current
 library versions? This ensures your system docs reference correct API patterns even if
 you're not on the latest." If accepted, run context mode and present the result. If
-declined, proceed — context can be created later via `/cl-researcher context`.
+declined, proceed -- context can be created later via `/cl-researcher context`.
 
 **Skip conditions**: If no tech stack was detected (pure documentation project) or the user
 is in full freeform mode and hasn't named any libraries yet, skip validation. It will
 run when the user provides library choices.
+
+**Checkpoint**: Project profile detected, stack validated, and context downloaded (if applicable).
 
 #### Step 2c: Defaults Sheet (Generate-Confirm Pattern)
 
@@ -425,15 +460,14 @@ attribution (`[auto-detected]`, `[research-generated]`, `[preset: X]`, `[user ov
 `[from discovery]`, or `[DEFERRED]`) and the appropriate category tag. Use compact
 Decision entries -- the defaults sheet IS the rationale.
 
-**Warmth note**: This step should feel like reviewing a menu, not filling out a tax
-form. Present the table with brief explanations: "I've pre-filled based on what I
-detected in your codebase and PRD. The important ones to look at are auth strategy
-and security depth -- the rest are sensible defaults you can always change later."
+**Checkpoint**: Defaults sheet confirmed, all decisions recorded to DECISIONS.md.
+
+### Phase 3: Doc Generation
 
 #### Step 3: Suggest Initial Doc Set
 
 Based on the conversation, suggest which system docs to create. Don't default to a fixed
-template — the doc set should reflect what the project actually needs.
+template -- the doc set should reflect what the project actually needs.
 
 Common starting sets (adapt based on project):
 
@@ -465,39 +499,41 @@ timestamp: [ISO 8601]
 #### Step 5: Generate Initial System Docs
 
 For each doc in the approved set, generate it in `docs/system/`. Each doc should:
-- Be substantive but not exhaustive — capture what's known, mark what isn't
+- Be substantive but not exhaustive -- capture what's known, mark what isn't
 - Use `[TBD]` or `[To be researched]` for areas that need more investigation
 - Include cross-references to related docs in the initial set
 - Follow the project's conventions (Mermaid for diagrams, etc.)
 - **Reference library context files** (if created during Stack Validation in Step 2b) for
   version-accurate details. The Architecture doc's tech stack section should use current API
   patterns and import paths from the context files, not general LLM knowledge. If context
-  files exist, use the "pass by reference" pattern where appropriate — e.g., `"Drizzle ORM
+  files exist, use the "pass by reference" pattern where appropriate -- e.g., `"Drizzle ORM
   (see context/drizzle-orm/ for version details and API patterns)"`.
 
-These are starting points, not final docs. The normal pipeline (research → proposal →
-review → merge) handles subsequent changes.
+These are starting points, not final docs. The normal pipeline (research -> proposal ->
+review -> merge) handles subsequent changes.
 
 #### Step 6: Clean Up
 
 1. Remove `docs/system/.pipeline-authorized`
 2. The PostToolUse hook will auto-generate `.manifest.md`
-3. Update `docs/DECISIONS.md` — populate the Project Context section (purpose, architecture, constraints, technology stack, design principles) based on everything learned during bootstrap. Log initial architectural decisions as Decision entries. Record the confirmed project intent as a Decision entry with Pipeline Phase = `meta` and source = `[from discovery]`
+3. Update `docs/DECISIONS.md` -- populate the Project Context section (purpose, architecture, constraints, technology stack, design principles) based on everything learned during bootstrap. Log initial architectural decisions as Decision entries. Record the confirmed project intent as a Decision entry with Pipeline Phase = `meta` and source = `[from discovery]`
 
-#### Post-Bootstrap Orientation
+**Checkpoint**: System docs generated, authorization marker removed, DECISIONS.md populated.
+
+### Phase 4: Post-Bootstrap Orientation
 
 Based on confirmed intent, present the pipeline overview. Present the intent-specific
 orientation first, then the detailed pipeline overview below for reference.
 
 **Ship**:
 "Bootstrap complete. [N] system docs ready. Since you're shipping fast, I'd suggest
-going straight to specs — `/cl-implementer spec`. [If UI features in PRD: 'If you
+going straight to specs -- `/cl-implementer spec`. [If UI features in PRD: 'If you
 want UI mockups first, try `/cl-designer setup`.']"
 
 **Quality**:
 "Bootstrap complete. [N] system docs ready. For a production build, I'd recommend:
-1. [If UI features: `/cl-designer setup` — design your UI]
-2. `/cl-researcher research '[highest-priority topic]'` — [why]
+1. [If UI features: `/cl-designer setup` -- design your UI]
+2. `/cl-researcher research '[highest-priority topic]'` -- [why]
 3. [Other relevant research topics]
 When you're satisfied, `/cl-implementer spec` to generate specs."
 
@@ -511,7 +547,7 @@ research before implementation: [list based on project type]. I'd start with
 what aspect interests you most? I can research any topic in depth."
 
 **Pipeline overview and next steps.** After bootstrap, the user needs to understand the
-full pipeline — not just "go build." Show them what's available, highlight what's most
+full pipeline -- not just "go build." Show them what's available, highlight what's most
 relevant to their project, and let them choose their path.
 
 Detect the project type from the generated docs, defaults sheet, and discovery conversation.
@@ -519,7 +555,7 @@ Then present the pipeline overview:
 
 "Bootstrap complete! Initial system docs created in `docs/system/`.
 
-Here's your full pipeline — each step builds on the last, but you can skip or reorder
+Here's your full pipeline -- each step builds on the last, but you can skip or reorder
 based on your needs:
 
 ```
@@ -527,7 +563,7 @@ based on your needs:
      |
      v
  1. DESIGN (UI projects)
-    /cl-designer setup → tokens → mockups → build-plan
+    /cl-designer setup -> tokens -> mockups -> build-plan
     Creates: design system, components, screen mockups, implementation plan
      |
      v
@@ -542,13 +578,13 @@ based on your needs:
      |
      v
  4. BUILD
-    /cl-implementer start → run (or autopilot)
+    /cl-implementer start -> run (or autopilot)
     Generates tasks from specs, implements with testing and verification
      |
      v
  5. REVIEW
     /cl-reviewer audit
-    System-wide health check — consistency, technical accuracy, drift
+    System-wide health check -- consistency, technical accuracy, drift
 ```"
 
 **Then highlight what's most relevant** based on project type:
@@ -556,45 +592,47 @@ based on your needs:
 - **Has UI features** (PRD references user-facing screens, FRONTEND_DESIGN.md or TDD.md
   was generated, project profile is "Web Application"):
 
-  "**Recommended next step: `/cl-designer setup`** — Your project has UI features. The
+  "**Recommended next step: `/cl-designer setup`** -- Your project has UI features. The
   design loop creates a design system, components, and screen mockups before
   implementation. This prevents ad-hoc UI decisions during coding.
 
   You can also research specific areas first:
-  - `/cl-researcher research 'authentication flow'` — deep-dive before designing
-  - `/cl-researcher research 'error handling patterns'` — establish UX patterns
-  - `/cl-researcher research 'testing strategy'` — plan your test approach
+  - `/cl-researcher research 'authentication flow'` -- deep-dive before designing
+  - `/cl-researcher research 'error handling patterns'` -- establish UX patterns
+  - `/cl-researcher research 'testing strategy'` -- plan your test approach
 
   Or skip design and go straight to specs: `/cl-implementer spec`"
 
 - **API/backend only** (no UI features, API_DESIGN.md or DATA_MODEL.md generated):
 
-  "**Recommended next step: `/cl-implementer spec`** — This generates implementation
+  "**Recommended next step: `/cl-implementer spec`** -- This generates implementation
   specs including API contracts, test specs, and security specs from your system docs.
 
   You can also research specific areas first:
-  - `/cl-researcher research 'API versioning strategy'` — before committing to contracts
-  - `/cl-researcher research 'data modeling'` — deep-dive on schema design
-  - `/cl-researcher research 'security model'` — plan auth and authorization"
+  - `/cl-researcher research 'API versioning strategy'` -- before committing to contracts
+  - `/cl-researcher research 'data modeling'` -- deep-dive on schema design
+  - `/cl-researcher research 'security model'` -- plan auth and authorization"
 
 - **Library/SDK**:
 
-  "**Recommended next step: `/cl-researcher research 'API design'`** — Libraries benefit
+  "**Recommended next step: `/cl-researcher research 'API design'`** -- Libraries benefit
   from thorough API design research before implementation.
 
   Or go straight to specs: `/cl-implementer spec`"
 
 **Always include the research reminder** at the end:
 
-"Any time you want to explore a topic before committing — security, testing, error
-handling, performance, accessibility — use `/cl-researcher research 'topic'`. Research
+"Any time you want to explore a topic before committing -- security, testing, error
+handling, performance, accessibility -- use `/cl-researcher research 'topic'`. Research
 cycles feed into proposals that update your system docs through the review pipeline."
+
+**Checkpoint**: User has been oriented to the pipeline and knows their next step.
 
 ---
 
-### Brownfield Bootstrap — Existing Docs
+### Phase 5: Brownfield Bootstrap -- Existing Docs
 
-For projects that already have documentation — whether organized project docs, scattered
+For projects that already have documentation -- whether organized project docs, scattered
 markdown files, a wiki export, README-driven docs, or research generated in ChatGPT/Claude.
 
 #### Step 1: Discover Existing Docs
@@ -619,34 +657,34 @@ Present both options and let the user decide:
 
 "I found existing documentation. How would you like to use it?"
 
-**Path A — Import as system docs (fast, with audit)**:
-Best when the user trusts the docs — recent AI-generated research, fresh project docs,
+**Path A -- Import as system docs (fast, with audit)**:
+Best when the user trusts the docs -- recent AI-generated research, fresh project docs,
 or content they've already vetted. The existing docs become the starting system docs, and
 an immediate audit verifies quality.
 
-**Path B — Import as research context (thorough, with regeneration)**:
-Best when docs might be stale, incomplete, or of uncertain quality — old wikis, inherited
+**Path B -- Import as research context (thorough, with regeneration)**:
+Best when docs might be stale, incomplete, or of uncertain quality -- old wikis, inherited
 documentation, or rough notes. The existing docs go into `docs/research/` as reference
 material, and bootstrap runs a conversation-driven regeneration that uses the old docs as
 input but produces fresh system docs.
 
 The user chooses which path based on their confidence in the existing material. If unsure,
-Path B is safer — no stale claims sneak through.
+Path B is safer -- no stale claims sneak through.
 
-#### Step 3A: Import Path — Migrate and Audit
+#### Step 3A: Import Path -- Migrate and Audit
 
 For docs the user trusts:
 
 1. Map the existing content to a proposed `docs/system/` structure:
 
 ```
-Existing docs → Proposed system docs
+Existing docs -> Proposed system docs
 
-README.md (overview section) → docs/system/PRD.md
-README.md (architecture section) → docs/system/ARCHITECTURE.md
-docs/api.md → docs/system/API_DESIGN.md
-docs/deployment.md → docs/system/OPERATIONS.md
-[no existing content] → docs/system/DATA_MODEL.md (gap — to be researched)
+README.md (overview section) -> docs/system/PRD.md
+README.md (architecture section) -> docs/system/ARCHITECTURE.md
+docs/api.md -> docs/system/API_DESIGN.md
+docs/deployment.md -> docs/system/OPERATIONS.md
+[no existing content] -> docs/system/DATA_MODEL.md (gap -- to be researched)
 ```
 
 2. Present the mapping: "Here's how I'd reorganize your existing docs into the system doc
@@ -662,21 +700,21 @@ docs/deployment.md → docs/system/OPERATIONS.md
 6. Update tracking
 
 7. **Immediately suggest an audit**: "System docs imported from existing documentation. I
-   recommend running `/cl-reviewer audit` to verify quality — this catches AI
+   recommend running `/cl-reviewer audit` to verify quality -- this catches AI
    hallucinations, stale claims, internal contradictions, and gaps. Want to run it now?"
 
 Tell the user about gaps: "These areas have no existing documentation and will need
 research cycles: [list]. You can start with `/cl-researcher research 'topic'` for any
 of these."
 
-#### Step 3B: Research Context Path — Ingest and Regenerate
+#### Step 3B: Research Context Path -- Ingest and Regenerate
 
 For docs the user doesn't fully trust:
 
 1. Copy existing docs into `docs/research/` with a clear prefix:
    - `docs/research/IMPORTED-original-name.md`
    - Add a header to each: "Imported from [source] on [date]. Used as research context
-     for bootstrap — not a pipeline research doc."
+     for bootstrap -- not a pipeline research doc."
 
 2. Read all imported docs to build understanding of the project.
 
@@ -692,9 +730,11 @@ For docs the user doesn't fully trust:
 5. After generation, the imported docs in `docs/research/` remain as historical reference.
    They are NOT tracked in RESEARCH_LEDGER (they're not pipeline research docs).
 
+**Checkpoint**: Brownfield docs imported (Path A) or used as research context (Path B), system docs generated.
+
 ---
 
-### Brownfield Bootstrap — Existing Code, No Docs
+### Phase 6: Brownfield Bootstrap -- Existing Code, No Docs
 
 For projects with a codebase but no documentation.
 
@@ -722,7 +762,7 @@ Reference what you found in the code:
 modules: [list]. I have some questions to fill in what the code doesn't tell me: [questions
 about intent, constraints, future direction]."
 
-This is a collaborative process — don't just auto-generate docs from code structure.
+This is a collaborative process -- don't just auto-generate docs from code structure.
 
 #### Step 3: Generate Docs
 
@@ -733,18 +773,7 @@ provides concrete details that a pure greenfield bootstrap wouldn't have:
 - Existing patterns and conventions
 - Integration points with external services
 
----
-
-### Common Pitfalls
-
-- **Don't generate everything at once.** Bootstrap creates a starting set. Detailed docs
-  for specific subsystems should go through the normal pipeline.
-- **Don't copy-paste code into docs.** Docs describe intent and architecture, not
-  implementation details. Code changes; docs should be stable at a higher level.
-- **Don't skip the conversation.** Even for brownfield with existing docs, talk to the user.
-  Existing docs might be outdated, wrong, or reflect abandoned plans.
-- **Don't over-document.** 3-5 well-written system docs are better than 15 stubs. Start
-  small, expand through the pipeline.
+**Checkpoint**: System docs generated from code analysis + user conversation.
 
 ---
 
@@ -942,3 +971,13 @@ The three levels are complementary, not exclusive. Common patterns:
 
 The profile is a starting point, not a package deal. Every decision can be
 individually overridden regardless of its source.
+
+## Output
+
+**Primary artifact**: System docs generated in `docs/system/`
+
+**Additional outputs**:
+- `docs/DECISIONS.md` populated with all bootstrap decisions (profile, defaults, intent)
+- `docs/system/.manifest.md` auto-generated by PostToolUse hook
+- `{docsRoot}/context/` library context files (if stack validation triggered context download)
+- `docs/system/.pipeline-authorized` created and removed during process

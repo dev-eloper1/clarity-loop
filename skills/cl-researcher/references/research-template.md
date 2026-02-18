@@ -1,12 +1,41 @@
+---
+mode: research-template
+tier: guided
+depends-on: []
+state-files: [RESEARCH_LEDGER.md, DECISIONS.md, PARKING.md]
+---
+
 # Research Doc Template
 
 Use this template when generating research documents. Adjust section depth based on the
-complexity of the research — a simple investigation might only need brief sections, while
+complexity of the research -- a simple investigation might only need brief sections, while
 a major architectural exploration deserves full detail.
 
-## Filename Convention
+## Variables
 
-Use `R-NNN-TOPIC.md` format: `docs/research/R-NNN-TOPIC.md`
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| Research topic | User argument to `/cl-researcher research 'topic'` | Yes | What to research |
+| Next research ID | docs/RESEARCH_LEDGER.md (highest existing ID + 1) | Yes | Sequential R-NNN identifier |
+| System doc manifest | docs/system/.manifest.md | No | Current system docs landscape for traceability |
+| Related system docs | docs/system/*.md (targeted sections) | No | Existing docs/sections being changed or constrained by |
+| Research type | Determined by analysis | Yes | Evolutionary, Net New, or Hybrid |
+
+## Guidelines
+
+1. System Context is non-negotiable. The cl-reviewer skill cross-references proposals against system docs. If your research doesn't trace to system docs, the proposal generated from it won't either, and the reviewer will flag it.
+2. The Status section makes progress visible. Always update the open questions count and discussion round number as the research evolves. The gate passes when open questions = 0 AND status = approved.
+3. The Decision Log captures reasoning. Don't just record the final answer -- record what was considered and rejected. Three months from now, "why didn't we use approach X?" is answered by the decision log.
+4. Take a position in Recommendations. "Here are three options" without a recommendation is a research failure. If you can't recommend, you haven't researched deeply enough.
+5. Keep Options Analysis honest. Don't stack the deck for your preferred option. The user needs to see real tradeoffs to make an informed decision.
+6. Open Questions are a feature, not a bug. It's better to surface what you don't know than to pretend you've covered everything. These questions drive the refinement conversation.
+7. Emerged Concepts keep the pipeline honest. Ideas that surface during research but aren't the current topic should be captured, not forgotten. They feed the research queue.
+
+## Process
+
+### Phase 1: Setup
+
+Determine the filename using `R-NNN-TOPIC.md` format: `docs/research/R-NNN-TOPIC.md`
 
 The NNN is a sequential number. The TOPIC is a SCREAMING_SNAKE_CASE descriptor.
 
@@ -14,6 +43,90 @@ Examples: `R-001-MEMORY_LAYER.md`, `R-002-EVENT_BUS_SCALING.md`, `R-003-AUTH_STR
 
 To determine the next ID, check `docs/RESEARCH_LEDGER.md` for the highest existing ID
 and increment.
+
+**Checkpoint**: Research ID assigned, filename determined.
+
+### Phase 2: Research and Analysis
+
+Conduct the research, gathering findings organized by theme or question. For each finding:
+
+**Context**: What aspect of the system or problem this addresses.
+
+**Analysis**: What you found, with evidence. Reference system docs where relevant:
+"Currently, [SYSTEM_DOC] Section X defines Y as Z. This finding examines whether
+an alternative approach would better support [requirement]."
+
+**Tradeoffs**: What are the pros and cons? Be honest about downsides.
+
+**Source**: Where this finding comes from -- system doc analysis, industry best practice,
+user requirements, external research, etc.
+
+If multiple approaches are identified, analyze them in an Options Analysis:
+
+| Criterion | Option A: [Name] | Option B: [Name] | Option C: [Name] |
+|-----------|-------------------|-------------------|-------------------|
+| Complexity | ... | ... | ... |
+| Performance | ... | ... | ... |
+| Migration effort | ... | ... | ... |
+| Alignment with current architecture | ... | ... | ... |
+| [criterion from user constraints] | ... | ... | ... |
+
+**Checkpoint**: Research findings complete, options analyzed (if applicable).
+
+### Phase 3: Recommendations
+
+Take a position. Don't just list options -- recommend one and explain why.
+
+Determine the primary recommendation and tie the rationale back to findings and constraints.
+
+Identify risks and mitigations:
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| ... | Low/Med/High | Low/Med/High | ... |
+
+Assess impact on system docs -- which system docs would need to change if this
+recommendation is adopted. This is a preview of what the proposal will formalize:
+
+| System Doc | Expected Changes |
+|------------|-----------------|
+| [doc name] | [What sections would change and how] |
+| (new) [doc name] | [New system doc needed -- describe purpose] |
+| ... | ... |
+
+For net new capabilities: note if an entirely new system doc is needed, and which
+existing docs would need cross-references added to point to it.
+
+**Checkpoint**: Recommendation made with rationale, risks identified, system doc impact assessed.
+
+### Phase 4: Discussion and Refinement
+
+Engage in conversation with the user to refine the research. Track decisions in the
+Decision Log:
+
+| # | Topic | Considered | Decision | Rationale |
+|---|-------|-----------|----------|-----------|
+| 1 | | | | |
+
+Capture emerged concepts -- ideas that surfaced during research that aren't the main
+topic but should be tracked. These get added to PARKING.md with appropriate
+classification (architectural, incremental, or scope-expansion):
+
+| Concept | Why It Matters | Suggested Action |
+|---------|---------------|-----------------|
+| | | |
+
+Track open questions that need user input or further investigation before this can
+move to proposal stage. The discussion gate passes when all open questions are resolved.
+
+> **Decision Log Propagation**: When research is approved, review the log for significant
+> entries -- scope-setting decisions, rejected approaches with rationale, assumptions that
+> downstream work depends on. Extract those to `docs/DECISIONS.md` with Pipeline Phase
+> `research` and Source pointing to this research doc and row number.
+
+**Checkpoint**: All open questions resolved, decision log complete, emerged concepts captured, status = approved.
+
+---
 
 ## Template
 
@@ -35,7 +148,7 @@ and increment.
 
 ## System Context
 
-> This section is critical — it's what enables the cl-reviewer to trace your research
+> This section is critical -- it's what enables the cl-reviewer to trace your research
 > back to the existing system. Never skip it.
 
 ### Research Type: [Evolutionary | Net New | Hybrid]
@@ -47,14 +160,14 @@ and increment.
 
 ### Related System Docs
 
-For evolutionary/hybrid research — docs and sections being changed:
+For evolutionary/hybrid research -- docs and sections being changed:
 
 | System Doc | Relevant Sections | Relationship |
 |------------|-------------------|-------------|
 | [doc name] | Section X, Section Y | [What's being changed and why] |
 | ... | ... | ... |
 
-For net new/hybrid research — docs and sections that define integration points,
+For net new/hybrid research -- docs and sections that define integration points,
 constraints, or patterns the new capability must respect:
 
 | System Doc | Relevant Sections | Relationship |
@@ -70,7 +183,7 @@ which docs define the architectural context the new capability will live within.
 
 For evolutionary: Describe the current system behavior that will change.
 
-For net new: Describe the architectural landscape this new capability enters — what
+For net new: Describe the architectural landscape this new capability enters -- what
 exists around where this will live, what patterns it should follow, and what constraints
 the current system imposes. Note explicitly: "This capability does not currently exist
 in the system. The following describes the architectural context it must fit within."
@@ -109,7 +222,7 @@ an alternative approach would better support [requirement]."
 
 **Tradeoffs**: What are the pros and cons? Be honest about downsides.
 
-**Source**: Where this finding comes from — system doc analysis, industry best practice,
+**Source**: Where this finding comes from -- system doc analysis, industry best practice,
 user requirements, external research, etc.
 
 ### [Finding Area 2]
@@ -134,7 +247,7 @@ If the research identified multiple approaches, analyze them here.
 
 ## Recommendations
 
-Take a position. Don't just list options — recommend one and explain why.
+Take a position. Don't just list options -- recommend one and explain why.
 
 ### Primary Recommendation
 
@@ -154,7 +267,7 @@ This is a preview of what the proposal will formalize.
 | System Doc | Expected Changes |
 |------------|-----------------|
 | [doc name] | [What sections would change and how] |
-| (new) [doc name] | [New system doc needed — describe purpose] |
+| (new) [doc name] | [New system doc needed -- describe purpose] |
 | ... | ... |
 
 For net new capabilities: note if an entirely new system doc is needed, and which
@@ -163,10 +276,10 @@ existing docs would need cross-references added to point to it.
 ## Decision Log
 
 Running log of decisions made during the human discussion loop. Captures what was
-considered and why it was accepted or rejected — invaluable for reconstructing
+considered and why it was accepted or rejected -- invaluable for reconstructing
 reasoning later.
 
-> **Propagation**: When research is approved, review this log for significant entries —
+> **Propagation**: When research is approved, review this log for significant entries --
 > scope-setting decisions, rejected approaches with rationale, assumptions that downstream
 > work depends on. Extract those to `docs/DECISIONS.md` with Pipeline Phase `research` and
 > Source pointing to this research doc and row number.
@@ -195,28 +308,11 @@ questions are resolved.
 External sources, articles, documentation, or prior research consulted.
 ```
 
-## Section Guidance
+## Output
 
-**System Context is non-negotiable.** The cl-reviewer skill cross-references proposals
-against system docs. If your research doesn't trace to system docs, the proposal generated
-from it won't either, and the reviewer will flag it.
+**Primary artifact**: `docs/research/R-NNN-TOPIC.md`
 
-**The Status section makes progress visible.** Always update the open questions count and
-discussion round number as the research evolves. The gate passes when open questions = 0
-AND status = approved.
-
-**The Decision Log captures reasoning.** Don't just record the final answer — record what
-was considered and rejected. Three months from now, "why didn't we use approach X?" is
-answered by the decision log.
-
-**Take a position in Recommendations.** "Here are three options" without a recommendation
-is a research failure. If you can't recommend, you haven't researched deeply enough.
-
-**Keep Options Analysis honest.** Don't stack the deck for your preferred option. The user
-needs to see real tradeoffs to make an informed decision.
-
-**Open Questions are a feature, not a bug.** It's better to surface what you don't know
-than to pretend you've covered everything. These questions drive the refinement conversation.
-
-**Emerged Concepts keep the pipeline honest.** Ideas that surface during research but aren't
-the current topic should be captured, not forgotten. They feed the research queue.
+**Additional outputs**:
+- Updated `docs/RESEARCH_LEDGER.md` (new entry for this research)
+- Updated `docs/PARKING.md` (any emerged concepts)
+- Updated `docs/DECISIONS.md` (significant decision log entries, on approval)

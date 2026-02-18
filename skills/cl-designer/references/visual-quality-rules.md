@@ -1,3 +1,11 @@
+---
+mode: visual-quality
+tier: guided
+depends-on:
+  - pencil-schema-quick-ref.md
+state-files: []
+---
+
 ## Visual Quality Rules
 
 Hard constraints for visual generation. These rules apply during `batch_design` operations
@@ -6,12 +14,34 @@ conditions that must be met before presenting any visual artifact to the user.
 
 Read this file when generating components (tokens mode) or composing screens (mockups mode).
 
----
+## Variables
 
-### Gestalt Principles as Design Constraints
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| batch_design output | Pencil MCP | Yes | Nodes created by the most recent batch_design call |
+| snapshot_layout output | Pencil MCP | Yes | Bounding box data for overlap detection |
+| get_screenshot output | Pencil MCP | Yes | Visual confirmation of generated content |
 
-These rules encode how humans perceive visual grouping. Violating them produces layouts
-that feel "off" even when technically correct.
+## Guidelines
+
+1. Violating Gestalt principles produces layouts that feel "off" even when technically correct.
+2. Elements with the same function must share at least two visual attributes.
+3. Related elements must be closer to each other than to unrelated elements (proximity is the primary mechanism for visual grouping).
+4. Each section should have one clear focal point (Pragnanz).
+5. Group related content inside visually bounded containers (closure).
+6. Visual hierarchy is established through deliberate size ratios between elements at different levels of importance.
+7. Never skip heading levels. If a section uses H2, its subsections use H3, not H4.
+8. Designs that fail WCAG 2.2 accessibility hard constraints are not presentable.
+9. Every interactive element must have a visible focus state distinct from hover and active.
+10. Every form input must have a visible text label — placeholder text is NOT a label.
+11. Always run the full visual verification protocol after any `batch_design` call that produces visual content.
+12. Structural validation (Step 0) catches schema violations immediately, preventing downstream symptoms that are harder to debug.
+
+## Process
+
+### Phase 1: Gestalt Principles as Design Constraints
+
+These rules encode how humans perceive visual grouping.
 
 #### Proximity
 
@@ -20,10 +50,10 @@ primary mechanism for visual grouping.
 
 **During generation:**
 - Use smaller `gap` values within groups, larger `gap` values between groups. The
-  within-group gap should be ≤ half the between-group gap. Example: form fields within
+  within-group gap should be <= half the between-group gap. Example: form fields within
   a section use `gap: 12`, sections use `gap: 32`.
-- When placing a label next to its input, the gap between them should be 4–8px. The gap
-  between that input group and the next input group should be 16–24px.
+- When placing a label next to its input, the gap between them should be 4-8px. The gap
+  between that input group and the next input group should be 16-24px.
 - Action buttons related to a form or card should be inside the same container frame,
   not floating adjacent to it.
 - Price and "Buy" button, title and subtitle, icon and label — these pairs must share a
@@ -64,7 +94,7 @@ Group related content inside visually bounded containers.
 be traceable to a single parent frame. If related elements are siblings of the document
 root or a very high-level container, they need an intermediate grouping frame.
 
-#### Simplicity (Prägnanz)
+#### Simplicity (Pragnanz)
 
 Each section should have one clear focal point.
 
@@ -74,7 +104,7 @@ Each section should have one clear focal point.
 - Headings are the largest text in their section. Nothing else competes at the same
   font size and weight.
 - Use whitespace to separate sections — generous `padding` and `gap` values between
-  top-level sections (≥32px). Dense layouts need even more intentional spacing.
+  top-level sections (>=32px). Dense layouts need even more intentional spacing.
 - Avoid decorative elements that don't serve comprehension. Every visual element should
   either communicate information or guide attention.
 
@@ -83,16 +113,16 @@ you can't immediately tell what the primary element is, the hierarchy needs adju
 increase size disparity between heading and body, or increase visual weight of the
 primary action.
 
----
+**Checkpoint**: Gestalt principles applied to all generated elements.
 
-### Spatial Hierarchy via Size Disparity
+### Phase 2: Spatial Hierarchy via Size Disparity
 
 Visual hierarchy is established through deliberate size ratios between elements at
 different levels of importance.
 
 **Heading hierarchy:**
-- Page title (H1): largest text on the screen. Typically 28–36px for app screens,
-  48–72px for landing pages.
+- Page title (H1): largest text on the screen. Typically 28-36px for app screens,
+  48-72px for landing pages.
 - Section heading (H2): noticeably smaller than H1. At least 0.7x the H1 size.
 - Subsection heading (H3): noticeably smaller than H2. Same ratio.
 - Body text: the baseline. All headings should be measurably larger.
@@ -106,9 +136,9 @@ different levels of importance.
 **Verification:** After generating a screen, check font sizes. If H1 and H2 are within
 2px of each other, the hierarchy is too flat — increase the disparity.
 
----
+**Checkpoint**: Size disparity verified across all heading levels and interactive elements.
 
-### Accessibility Hard Constraints (WCAG 2.2)
+### Phase 3: Accessibility Hard Constraints (WCAG 2.2)
 
 These are not suggestions. Designs that fail these constraints are not presentable.
 
@@ -117,7 +147,7 @@ These are not suggestions. Designs that fail these constraints are not presentab
 | Element | Minimum Ratio | WCAG Criterion |
 |---------|--------------|----------------|
 | Regular text (< 24px, or < 19px bold) | 4.5:1 | 1.4.3 |
-| Large text (≥ 24px, or ≥ 19px bold) | 3:1 | 1.4.3 |
+| Large text (>= 24px, or >= 19px bold) | 3:1 | 1.4.3 |
 | UI components (borders, icons, controls) | 3:1 | 1.4.11 |
 | Non-text graphics conveying information | 3:1 | 1.4.11 |
 
@@ -139,16 +169,16 @@ on light backgrounds and lighter text on dark backgrounds than your first instin
 
 | Element | Minimum Size | WCAG Criterion |
 |---------|-------------|----------------|
-| Interactive elements (buttons, links, inputs) | 24×24px | 2.5.8 (AA) |
-| Touch targets (mobile) | 44×44px | 2.5.5 (AAA, recommended) |
+| Interactive elements (buttons, links, inputs) | 24x24px | 2.5.8 (AA) |
+| Touch targets (mobile) | 44x44px | 2.5.5 (AAA, recommended) |
 
 **During generation:**
-- Button minimum height: 36px (with padding, the touch target is ≥ 24px even for
+- Button minimum height: 36px (with padding, the touch target is >= 24px even for
   compact variants).
-- Icon buttons: minimum 32×32px frame with padding to reach 24×24px interactive area.
-- Checkbox / radio / toggle: minimum 20×20px for the control itself, with padding to
-  reach 24×24px touch area.
-- Links within text: ensure sufficient line-height (≥ 1.5) so link targets don't overlap
+- Icon buttons: minimum 32x32px frame with padding to reach 24x24px interactive area.
+- Checkbox / radio / toggle: minimum 20x20px for the control itself, with padding to
+  reach 24x24px touch area.
+- Links within text: ensure sufficient line-height (>= 1.5) so link targets don't overlap
   vertically.
 
 #### Semantic Heading Structure
@@ -184,9 +214,9 @@ on light backgrounds and lighter text on dark backgrounds than your first instin
   a label element in the component structure or document that a label is required.
 - When composing forms in mockup screens, verify every input has a visible label.
 
----
+**Checkpoint**: All accessibility hard constraints verified (contrast, target sizes, heading structure, focus indicators, labels).
 
-### Visual Verification Protocol
+### Phase 4: Visual Verification Protocol
 
 Run this protocol after any `batch_design` call that produces visual content. This
 extends the existing overlap detection with quality checks.
@@ -217,11 +247,11 @@ After `batch_design`, use `batch_get` to read back the nodes you just created. V
 - [ ] `ref` property contains a valid component ID
 
 **Common failure patterns:**
-- Missing `layout` property → frame uses manual positioning, elements will overlap
-- `fill` missing on frames → inherits from canvas, can cause dark-on-dark invisible content
-- `fill` missing on text → inherits default, can cause invisible text
-- `fontWeight: 400` → should be `"normal"` (string, not number)
-- `layoutMode` instead of `layout` → property ignored, manual positioning fallback
+- Missing `layout` property -> frame uses manual positioning, elements will overlap
+- `fill` missing on frames -> inherits from canvas, can cause dark-on-dark invisible content
+- `fill` missing on text -> inherits default, can cause invisible text
+- `fontWeight: 400` -> should be `"normal"` (string, not number)
+- `layoutMode` instead of `layout` -> property ignored, manual positioning fallback
 
 **How to check:**
 
@@ -243,8 +273,6 @@ This causes overlaps that Step 1 (snapshot_layout) will detect, but by then you'
 symptoms, not the root cause. Structural validation catches schema violations immediately.
 
 If structural validation fails, fix with `batch_design` updates before proceeding to Step 1.
-
----
 
 #### Step 1: Layout Integrity
 
@@ -272,9 +300,9 @@ For the content just generated:
 - **Contrast**: Are text colors sufficiently contrasted against their backgrounds?
   Check especially: secondary text, placeholder text, disabled states, text on colored
   backgrounds.
-- **Target sizes**: Are interactive elements at least 24×24px?
+- **Target sizes**: Are interactive elements at least 24x24px?
 - **Labels**: Does every input have a visible label?
-- **Heading hierarchy**: Are heading sizes correctly ordered (largest → smallest)?
+- **Heading hierarchy**: Are heading sizes correctly ordered (largest -> smallest)?
 
 If issues are found, fix before proceeding.
 
@@ -289,14 +317,19 @@ Before presenting to the user, self-check:
 If the screenshot reveals issues that `snapshot_layout` didn't catch (visual weight
 imbalance, unclear hierarchy, crowding), fix before presenting.
 
----
+**Checkpoint**: Full visual verification protocol passed (Steps 0-4).
 
-### When to Apply
+### Phase 5: When to Apply
 
 | Mode | What to Apply |
 |------|--------------|
-| **Tokens — swatch generation** | Step 0 (structural validation), Step 1 (layout integrity), Contrast checking (note safe foreground/background pairs) |
-| **Tokens — component generation** | Step 0 (structural validation), Step 1 (layout integrity), Target sizes, label association, focus indicators, similarity |
-| **Mockups — screen composition** | Full verification protocol (Steps 0-4), All Gestalt principles, heading hierarchy |
-| **Mockups — behavioral variants** | Step 0 (verify state properties), Contrast on error/warning states, focus indicators on interactive states |
+| **Tokens -- swatch generation** | Step 0 (structural validation), Step 1 (layout integrity), Contrast checking (note safe foreground/background pairs) |
+| **Tokens -- component generation** | Step 0 (structural validation), Step 1 (layout integrity), Target sizes, label association, focus indicators, similarity |
+| **Mockups -- screen composition** | Full verification protocol (Steps 0-4), All Gestalt principles, heading hierarchy |
+| **Mockups -- behavioral variants** | Step 0 (verify state properties), Contrast on error/warning states, focus indicators on interactive states |
 | **Design review** | Full verification (Steps 0-4) as a review dimension |
+
+## Output
+
+- **Primary artifact**: Verified visual content (no overlaps, Gestalt-compliant, accessible)
+- **Additional outputs**: `snapshot_layout` data, `get_screenshot` images for user presentation

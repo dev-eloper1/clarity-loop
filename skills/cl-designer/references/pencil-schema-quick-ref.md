@@ -1,25 +1,51 @@
+---
+mode: pencil-schema
+tier: guided
+depends-on: []
+state-files: []
+---
+
 ## Pencil Schema Quick Reference
 
 Property definitions for Pencil MCP batch_design operations. Use this as a reference when writing `batch_design` calls to ensure correct property names and values.
 
 **Source**: Extracted from `mcp__pencil__batch_design` tool schema. Last validated: 2026-02-16.
 
----
+## Variables
 
-### Common Node Types
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| .pen file path | DESIGN_PROGRESS.md | Yes | Path to the Pencil file being edited |
+
+## Guidelines
+
+1. Always use `layout` (not `layoutMode`) for auto-layout frames.
+2. Font weights must be lowercase strings (`"normal"`, `"medium"`, `"semibold"`, `"bold"`), not numbers.
+3. Text color uses `fill`, not `textColor`. Background color uses `fill`, not `backgroundColor`.
+4. Gap and padding are numbers, not strings: `24` not `"24px"`.
+5. Never set `id` in the property object -- IDs are auto-generated via bindings.
+6. Padding is a single number, not an object.
+7. Every Insert, Copy, and Replace must have a binding (even if unused).
+8. Always specify `fill` for showcase frames (`"#ffffff"`) and text (`"#1a1a1a"`) -- never rely on defaults.
+9. Set `reusable: true` for components that will be instantiated with `ref` nodes.
+10. Use `document` as parent for top-level frames.
+
+## Process
+
+### Phase 1: Common Node Types
 
 Valid values for the `type` property:
-- `"frame"` — Container with layout capabilities (most common)
-- `"group"` — Simple grouping without layout
-- `"rectangle"` — Filled shape
-- `"ellipse"` — Circular/oval shape
-- `"text"` — Text element
-- `"ref"` — Component instance (references a reusable node)
+- `"frame"` -- Container with layout capabilities (most common)
+- `"group"` -- Simple grouping without layout
+- `"rectangle"` -- Filled shape
+- `"ellipse"` -- Circular/oval shape
+- `"text"` -- Text element
+- `"ref"` -- Component instance (references a reusable node)
 - `"line"`, `"polygon"`, `"path"`, `"icon_font"`, `"image"`, `"connection"`, `"note"`
 
----
+**Checkpoint**: Node types understood before creating elements.
 
-### Frame Properties
+### Phase 2: Frame Properties
 
 Frames are the primary container type. They support auto-layout and are used for sections, components, and screens.
 
@@ -30,7 +56,7 @@ Frames are the primary container type. They support auto-layout and are used for
 | `layout` | string | `"vertical"` \| `"horizontal"` \| undefined | **Critical.** Layout mode. `"vertical"` stacks children top-to-bottom, `"horizontal"` left-to-right. Omit for manual (absolute) positioning. |
 | `gap` | number | Pixels (e.g., `24`) | Spacing between children in auto-layout. Only applies when `layout` is set. |
 | `padding` | number | Pixels (e.g., `32`) | Internal spacing around children. |
-| `fill` | string | Hex color (e.g., `"#ffffff"`) | Background color. **Always specify for showcase frames** — defaults can cause invisible content. |
+| `fill` | string | Hex color (e.g., `"#ffffff"`) | Background color. **Always specify for showcase frames** -- defaults can cause invisible content. |
 | `stroke` | string | Hex color (e.g., `"#e5e7eb"`) | Border color. |
 | `strokeWidth` | number | Pixels (e.g., `1`) | Border thickness. |
 | `cornerRadius` | number | Pixels (e.g., `8`) | Rounded corners. |
@@ -67,9 +93,7 @@ manualFrame=I(parent, {
 })
 ```
 
----
-
-### Text Properties
+### Phase 3: Text Properties
 
 | Property | Type | Values | Description |
 |----------|------|--------|-------------|
@@ -78,7 +102,7 @@ manualFrame=I(parent, {
 | `fontSize` | number | Pixels (e.g., `24`) | Font size. |
 | `fontWeight` | string | `"light"` \| `"normal"` \| `"medium"` \| `"semibold"` \| `"bold"` | Font weight. Values are **lowercase strings**, not numbers. |
 | `fontFamily` | string | Font name (e.g., `"Inter"`) | Font family. |
-| `fill` | string | Hex color (e.g., `"#1a1a1a"`) | **Text color** (not background). **Always specify for showcase text** — defaults can cause invisible dark-on-dark text. |
+| `fill` | string | Hex color (e.g., `"#1a1a1a"`) | **Text color** (not background). **Always specify for showcase text** -- defaults can cause invisible dark-on-dark text. |
 | `textAlign` | string | `"left"` \| `"center"` \| `"right"` | Horizontal alignment. |
 | `width` | number \| string | Pixels \| `"fill_container"` | Text box width. Use `"fill_container"` to match parent. |
 
@@ -94,9 +118,7 @@ heading=I(container, {
 })
 ```
 
----
-
-### Ref (Component Instance) Properties
+### Phase 4: Ref (Component Instance) Properties
 
 Use `ref` nodes to instantiate reusable components created during tokens mode.
 
@@ -128,9 +150,7 @@ card=I(container, {type: "ref", ref: "CardComponent"})
 U(card+"/titleText", {content: "New Title"})
 ```
 
----
-
-### Rectangle Properties
+### Phase 5: Rectangle Properties
 
 Simple filled shape. Often used for color swatches or decorative elements.
 
@@ -155,9 +175,7 @@ swatch=I(colorRow, {
 })
 ```
 
----
-
-### Operation Syntax
+### Phase 6: Operation Syntax
 
 #### Insert (I)
 
@@ -170,7 +188,7 @@ nodeId=I(parentId, {property: value, ...})
 **Important:**
 - Parent is **required** for Insert
 - Every Insert **must have a binding** (the `nodeId=` part)
-- Never include `id` in the property object — IDs are auto-generated
+- Never include `id` in the property object -- IDs are auto-generated
 - Use `document` as parent for top-level frames
 
 #### Update (U)
@@ -183,7 +201,7 @@ U(nodeIdOrPath, {property: value, ...})
 
 **Important:**
 - Can't change `type`, `ref`, or `id`
-- Can't update `children` — use Replace (R) instead
+- Can't update `children` -- use Replace (R) instead
 - Use slash-separated paths for nested nodes: `"instanceId/childId"`
 
 #### Replace (R)
@@ -231,23 +249,19 @@ G(nodeId, "ai" | "stock", "prompt or keywords")
 - Images are applied as **fills** to frame/rectangle nodes
 - First create the frame/rectangle, then use G to apply the image
 
----
+### Phase 7: Common Mistakes
 
-### Common Mistakes
-
-| ❌ Wrong | ✅ Correct | Issue |
-|---------|-----------|-------|
+| Wrong | Correct | Issue |
+|-------|---------|-------|
 | `layoutMode: "VERTICAL"` | `layout: "vertical"` | Wrong property name and case |
 | `fontWeight: 400` | `fontWeight: "normal"` | Font weight is a string, not a number |
 | `textColor: "#000"` | `fill: "#000"` | Text color uses `fill`, not `textColor` |
 | `backgroundColor: "#fff"` | `fill: "#fff"` | Background uses `fill`, not `backgroundColor` |
-| `I(parent, {id: "myId", ...})` | `myId=I(parent, {...})` | Don't set `id` — IDs are auto-generated. Use binding. |
+| `I(parent, {id: "myId", ...})` | `myId=I(parent, {...})` | Don't set `id` -- IDs are auto-generated. Use binding. |
 | `padding: {top: 8, left: 16}` | `padding: 16` | Padding is a single number, not an object |
 | `gap: "24px"` | `gap: 24` | Gap is a number, not a string |
 
----
-
-### Default Colors to Always Specify
+### Phase 8: Default Colors to Always Specify
 
 **Never rely on defaults for showcase frames.** Always set:
 
@@ -259,7 +273,7 @@ showcaseFrame=I(document, {
   layout: "vertical",
   gap: 24,
   padding: 32,
-  fill: "#ffffff",      // ← Always white for visibility
+  fill: "#ffffff",      // Always white for visibility
   width: 800,
   height: 600
 })
@@ -270,7 +284,7 @@ title=I(showcaseFrame, {
   content: "Title",
   fontSize: 24,
   fontWeight: "normal",
-  fill: "#1a1a1a"       // ← Always dark for contrast
+  fill: "#1a1a1a"       // Always dark for contrast
 })
 
 // Body text
@@ -279,15 +293,13 @@ body=I(showcaseFrame, {
   content: "Description",
   fontSize: 14,
   fontWeight: "normal",
-  fill: "#1a1a1a"       // ← Always dark for contrast
+  fill: "#1a1a1a"       // Always dark for contrast
 })
 ```
 
 **Why:** Token and component showcase frames are documentation artifacts, not theme-aware UI. They must be readable regardless of the project's light/dark mode preference.
 
----
-
-### Binding and Path Rules
+### Phase 9: Binding and Path Rules
 
 **Bindings** are variable names assigned to node IDs:
 
@@ -313,9 +325,7 @@ U(card+"/titleText", {content: "New Title"})
 - Paths use slash separators: `"instanceId/childId/grandchildId"`
 - Use bindings for parents: `I(container, ...)` not `I("container", ...)`
 
----
-
-### When to Use Each Node Type
+### Phase 10: When to Use Each Node Type
 
 | Use Case | Node Type | Reason |
 |----------|-----------|--------|
@@ -328,9 +338,7 @@ U(card+"/titleText", {content: "New Title"})
 | Button instance in screen | `ref` | References the reusable button |
 | Image placeholder | `frame` + `G()` | Frame with image fill applied |
 
----
-
-## Validation Checklist
+### Phase 11: Validation Checklist
 
 Before calling `batch_design`, verify:
 
@@ -345,15 +353,13 @@ Before calling `batch_design`, verify:
 - [ ] Reusable components have `reusable: true`
 - [ ] Component instances use `type: "ref"` with `ref: "componentId"`
 
----
+**Checkpoint**: Validation checklist passed before executing batch_design.
 
-## Loading This Reference
+## Output
 
-Load during tokens mode (Step 2) and mockups mode (Step 2) before any `batch_design` calls:
-
-```markdown
-1. Call `get_guidelines("design-system")` for component composition best practices
-2. Read `references/pencil-schema-quick-ref.md` for property syntax
-3. Read `references/pencil-templates.md` for copy-paste examples
-4. Begin batch_design operations
-```
+- **Primary artifact**: Correct `batch_design` calls with proper Pencil schema properties
+- **Loading instructions**: Load during tokens mode (Step 2) and mockups mode (Step 2) before any `batch_design` calls:
+  1. Call `get_guidelines("design-system")` for component composition best practices
+  2. Read `references/pencil-schema-quick-ref.md` for property syntax
+  3. Read `references/pencil-templates.md` for copy-paste examples
+  4. Begin batch_design operations

@@ -1,18 +1,55 @@
+---
+mode: mockups
+tier: guided
+depends-on:
+  - tokens-mode.md
+  - pencil-schema-quick-ref.md
+  - pencil-templates.md
+  - visual-quality-rules.md
+  - behavioral-walkthrough.md
+  - design-checklist.md
+state-files:
+  - DESIGN_PROGRESS.md
+  - DESIGN_SYSTEM.md
+  - UI_SCREENS.md
+---
+
 ## Mockups Mode
 
 Generates screen mockups using the design system. Produces UI_SCREENS.md with
 screen-to-feature mappings and navigation flow.
 
-**Gate**: Tokens mode must be complete. Check for:
-- `{docsRoot}/specs/DESIGN_SYSTEM.md` exists
-- DESIGN_PROGRESS.md shows `Tokens` status is `Complete`
+## Variables
 
-If tokens are incomplete: "Design system hasn't been generated yet. Run `/cl-designer tokens`
-first to create the component library, then come back for mockups."
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | `.clarity-loop.json` | Yes | Root directory for design artifacts |
+| DESIGN_SYSTEM.md | `{docsRoot}/specs/` | Yes | Must exist with token and component catalogs |
+| DESIGN_PROGRESS.md | `{docsRoot}/designs/` | Yes | Must show Tokens status Complete |
+| PRD | `docs/system/` or equivalent | Yes | Requirements doc for screen inventory |
+| .pen filename | DESIGN_PROGRESS.md | Yes (Pencil path) | Name of the .pen file from tokens mode |
+| ux.reviewStyle | `.clarity-loop.json` | No | Review mode: `"batch"` (default), `"serial"`, or `"minimal"` |
+| ux.parallelGeneration | `.clarity-loop.json` | No | Whether to pre-generate during user review (default: `true`) |
+| ux.autoDefaults | `.clarity-loop.json` | No | Auto-proceed boundary for checkpoint tiers |
 
----
+## Guidelines
 
-### Step 1: Screen Inventory (All Paths)
+1. **Gate**: Tokens mode must be complete. Check for `{docsRoot}/specs/DESIGN_SYSTEM.md` exists and DESIGN_PROGRESS.md shows Tokens status Complete.
+2. If tokens are incomplete: "Design system hasn't been generated yet. Run `/cl-designer tokens` first to create the component library, then come back for mockups."
+3. Use `ref` nodes to instantiate design system components in screens — never recreate components from raw shapes.
+4. Apply auto-layout properties to all container frames (single-column: `layout: "vertical"`; multi-pane: `layout: "horizontal"`).
+5. Add real-ish content, not "Lorem ipsum" — use plausible text that reflects the feature.
+6. Keep every element inside its screen frame. No floating elements on the canvas.
+7. Keep `batch_design` calls to ~25 operations each.
+8. Apply Gestalt constraints during layout composition (proximity, similarity, closure, hierarchy) per `references/visual-quality-rules.md`.
+9. Run the visual verification protocol after each `batch_design` call (layout integrity, Gestalt compliance, accessibility spot check, visual confirmation).
+10. Load `references/pencil-schema-quick-ref.md` and `references/pencil-templates.md` before any mockup generation.
+11. Never have two agents write to the same .pen file — Pencil MCP does not support concurrent writes.
+12. After visual approval, run the behavioral walkthrough for each screen per `references/behavioral-walkthrough.md`.
+
+## Process
+
+### Phase 1: Screen Inventory
 
 Read the PRD features and cross-reference with DESIGN_SYSTEM.md components to identify all
 screens/views needed.
@@ -35,11 +72,9 @@ Add, remove, or reorder?"
 
 Wait for user confirmation.
 
----
+**Checkpoint**: User confirms screen inventory before generation begins.
 
-### Pencil Path
-
-#### Step 2: Generate Mockups
+### Phase 2: Generate Mockups (Pencil Path)
 
 **Load references first:**
 
@@ -70,7 +105,7 @@ Before any mockup generation, read:
 
 3. For each screen in the confirmed inventory:
    - Create a labeled frame inside the correct group at the appropriate viewport size
-     (desktop: 1440×900, mobile: 390×844)
+     (desktop: 1440x900, mobile: 390x844)
    - **Use `ref` nodes to instantiate design system components — never recreate components
      from raw shapes.** A `ref` node references a reusable component created during tokens
      mode. This means: if the user later updates a Button in the design system, every screen
@@ -110,9 +145,9 @@ Before any mockup generation, read:
    - Keep `batch_design` calls to ~25 operations each
    - **Apply Gestalt constraints during layout composition** (see
      `references/visual-quality-rules.md`):
-     - **Proximity**: Use smaller gaps within groups (8–12px), larger gaps between groups
-       (24–32px). A form label and its input use 4–8px gap; adjacent form groups use 16–24px.
-       Related actions (Save + Cancel) share a tight container; unrelated sections have ≥32px.
+     - **Proximity**: Use smaller gaps within groups (8-12px), larger gaps between groups
+       (24-32px). A form label and its input use 4-8px gap; adjacent form groups use 16-24px.
+       Related actions (Save + Cancel) share a tight container; unrelated sections have >=32px.
      - **Similarity**: Same-function elements share visual treatment. All nav items use the
        same font size + weight. All cards at the same level share shadow + radius + padding.
        If you're placing three feature cards side by side, they must be visually identical
@@ -137,7 +172,7 @@ Before any mockup generation, read:
 5. **Run the visual verification protocol after each `batch_design` call** (see
    `references/visual-quality-rules.md` for the full protocol):
 
-   **Step 1 — Layout integrity**: Call `snapshot_layout`. Check for overlapping bounding
+   **Step 1 -- Layout integrity**: Call `snapshot_layout`. Check for overlapping bounding
    boxes, elements escaping containers, zero-size elements. Common issues:
    - Text labels overlapping adjacent components (especially with long text content)
    - Nav items packed too tightly with no gap
@@ -145,41 +180,43 @@ Before any mockup generation, read:
    - Cards or list items stacked without adequate vertical gap
    Fix overlaps with another `batch_design` call before proceeding.
 
-   **Step 2 — Gestalt compliance**: Review the layout structure:
+   **Step 2 -- Gestalt compliance**: Review the layout structure:
    - Are related elements grouped with tight spacing, unrelated ones separated wider?
    - Do same-function elements share visual attributes?
    - Are related groups contained in bounded parent frames?
    - Is there one clear focal point per section?
 
-   **Step 3 — Accessibility spot check**:
+   **Step 3 -- Accessibility spot check**:
    - Text contrast against backgrounds (especially secondary text, disabled states, text
      on colored cards or banners)
-   - Interactive element sizes ≥ 24×24px
+   - Interactive element sizes >= 24x24px
    - Every input has a visible label
    - Heading sizes descend correctly (H1 > H2 > H3)
 
-   **Step 4 — Visual confirmation**: Call `get_screenshot` and self-check before presenting.
+   **Step 4 -- Visual confirmation**: Call `get_screenshot` and self-check before presenting.
 
    If any step reveals issues, fix before proceeding to the next screen or presenting to
    the user. Don't accumulate quality debt across screens.
 
-5. Present the screenshot from Step 4 to user with:
+6. Present the screenshot from Step 4 to user with:
    - Screen name and which PRD features it covers
    - Which design system components are used and where
    - Brief walkthrough of the layout: "Top bar with nav, sidebar with filters, main area
      showing a card grid of tasks"
 
-#### Screen Review
+**Checkpoint**: All screens generated with verification protocol passed.
+
+### Phase 3: Screen Review
 
 **Check the review style** from `.clarity-loop.json` (`ux.reviewStyle`). Default is
 `"batch"`. If `"serial"`, use the serial path below. If the value is unrecognized, fall
 back to `"batch"` and warn the user.
 
-##### Batch Review (Default)
+#### Batch Review (Default)
 
 Generate ALL screens before presenting any for review:
 
-1. **Generate all screens** (Step 2 per-screen generation above). Run `snapshot_layout`
+1. **Generate all screens** (Phase 2 per-screen generation above). Run `snapshot_layout`
    after each `batch_design` call. Fix overlaps immediately but don't stop for user
    feedback.
 
@@ -201,7 +238,7 @@ Generate ALL screens before presenting any for review:
 
 5. **Record** batch-approved and revised screens in DESIGN_PROGRESS.md.
 
-##### Serial Review (Opt-in)
+#### Serial Review (Opt-in)
 
 When `ux.reviewStyle` is `"serial"`: present one screen at a time with the existing
 feedback loop (Approved / Needs changes / Major rework).
@@ -225,7 +262,7 @@ can parallelize screen generation — but carefully:
      planning-heavy part of screen generation
 
 3. **If using per-screen .pen files**, subagents can each write to their own file safely.
-   Each subagent: create file → open_document → batch_design → get_screenshot. But the
+   Each subagent: create file -> open_document -> batch_design -> get_screenshot. But the
    feedback loop still happens in the main context — subagents generate, main context
    presents screenshots and gathers feedback.
 
@@ -233,20 +270,22 @@ can parallelize screen generation — but carefully:
    concurrent writes. If a subagent starts a `batch_design` operation, you cannot interrupt
    or revert it until it completes.
 
-5. **Sequential is fine for <5 screens.** Don't over-optimize. The generate → screenshot →
+5. **Sequential is fine for <5 screens.** Don't over-optimize. The generate -> screenshot ->
    feedback loop is inherently sequential per screen anyway. Parallelization helps most
    when you can batch the generation and then review sequentially.
 
-#### Step 3: Behavioral Walkthrough (Per Screen)
+**Checkpoint**: All screens reviewed and approved by user.
+
+### Phase 4: Behavioral Walkthrough (Per Screen)
 
 After visual approval, run the behavioral walkthrough for each screen. For the full
 walkthrough process, read `references/behavioral-walkthrough.md`.
 
----
+**Checkpoint**: Behavioral walkthrough completed for all screens, decisions recorded in DESIGN_PROGRESS.md.
 
-### Markdown Fallback
+### Phase 5: Markdown Fallback
 
-#### Step 2: Document Screens
+#### Document Screens
 
 For each screen, produce a structured description:
 
@@ -272,31 +311,21 @@ For each screen, produce a structured description:
 | ... | ... | ... |
 
 **Key Interactions**:
-1. [User action] → [result]
-2. [User action] → [result]
+1. [User action] -> [result]
+2. [User action] -> [result]
 ```
 
 Present all screen specs as a set with a summary table. The user flags items needing
 changes rather than reviewing each screen sequentially. Same batch/serial/minimal review
 pattern as the Pencil path above applies here.
 
-#### Step 3: Behavioral Walkthrough (Per Screen)
+#### Behavioral Walkthrough (Markdown Path)
 
 Same behavioral walkthrough process as the Pencil path. For the full walkthrough process,
 read `references/behavioral-walkthrough.md`. The only difference is that all states are
 described in structured text rather than generated as visual variants.
 
----
-
-#### Behavioral Walkthrough
-
-After screen review, run the behavioral walkthrough. Read
-`references/behavioral-walkthrough.md` for the full process, including batch mode
-(generate-confirm, default), serial mode (conversational, opt-in), and hybrid approaches.
-
----
-
-### All Paths: Responsive States
+### Phase 6: Responsive States (All Paths)
 
 If the user requested responsive design or the PRD specifies multiple viewports:
 
@@ -305,11 +334,11 @@ If the user requested responsive design or the PRD specifies multiple viewports:
    - **Pencil**: Generate additional frames at mobile/tablet breakpoints
    - **Markdown**: Document layout changes per breakpoint
 3. Focus on layout shifts, component visibility changes, and navigation pattern changes
-   (e.g., sidebar → hamburger menu)
+   (e.g., sidebar -> hamburger menu)
 
 Ask the user: "Which screens need responsive variants? All of them, or specific ones?"
 
-### All Paths: Generate UI_SCREENS.md
+### Phase 7: Generate UI_SCREENS.md (All Paths)
 
 After all screens are complete, generate `{docsRoot}/specs/UI_SCREENS.md`:
 
@@ -361,10 +390,10 @@ flowchart TD
 **Screen States**:
 | State | Trigger | Visual | Content | Components Used |
 |-------|---------|--------|---------|-----------------|
-| Default | Data loaded | [default mockup ref] | — | [primary components] |
+| Default | Data loaded | [default mockup ref] | -- | [primary components] |
 | Empty (first-use) | No data | [variant ref or "described"] | "[actual copy, e.g., Create your first task]" | EmptyState, Button |
 | Empty (filtered) | No filter matches | [variant ref or "described"] | "[actual copy, e.g., No tasks match your filters]" | EmptyState |
-| Loading | Fetch in progress | [variant ref or "described"] | — | Skeleton |
+| Loading | Fetch in progress | [variant ref or "described"] | -- | Skeleton |
 | Error | Fetch failed | [variant ref or "described"] | "[actual copy, e.g., Couldn't load tasks. Try again?]" | ErrorBanner, Button |
 
 States that don't apply to this screen are omitted (not marked N/A).
@@ -392,9 +421,9 @@ States that don't apply to this screen are omitted (not marked N/A).
 
 | Design System Component | Used In Screens | Not Used |
 |------------------------|----------------|----------|
-| Button | Dashboard, Task List, Task Detail | — |
-| Card | Dashboard, Task List | — |
-| [unused component] | — | Not used in any screen |
+| Button | Dashboard, Task List, Task Detail | -- |
+| Card | Dashboard, Task List | -- |
+| [unused component] | -- | Not used in any screen |
 ```
 
 ### Parallelization Hints
@@ -412,17 +441,21 @@ When `ux.parallelGeneration` is `true` (default):
 behavioral specs. This is the highest-value parallelization -- behavioral specs are
 derived from DECISIONS.md + PRD + mockups, and the mockup batch is rarely rejected wholesale.
 
-### Checklist Gate
+### Phase 8: Checklist Gate
 
 Read `references/design-checklist.md` and run the Mockups Checklist. Present results to user.
 
-### Update Tracking
+### Phase 9: Update Tracking
 
 1. Update DESIGN_PROGRESS.md:
    - Set `Mockups` status to `Complete`
    - Record screen list with approval status
    - Add `Last updated` date
 
-Tell the user: "Screen mockups complete. UI_SCREENS.md generated at
-`{docsRoot}/specs/UI_SCREENS.md`. Run `/cl-designer build-plan` to generate implementation
-tasks from the design system and screens."
+**Checkpoint**: Mockups checklist passed and DESIGN_PROGRESS.md updated.
+
+## Output
+
+- **Primary artifact**: `{docsRoot}/specs/UI_SCREENS.md` (screen-to-feature mapping, behavioral contracts, test scenarios, navigation flow)
+- **Additional outputs**: Screen mockups in .pen file (Pencil path), DESIGN_PROGRESS.md updates, responsive variants (if applicable)
+- **Next step**: "Screen mockups complete. UI_SCREENS.md generated at `{docsRoot}/specs/UI_SCREENS.md`. Run `/cl-designer build-plan` to generate implementation tasks from the design system and screens."

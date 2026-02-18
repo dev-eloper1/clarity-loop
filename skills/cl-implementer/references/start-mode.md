@@ -1,3 +1,10 @@
+---
+mode: start
+tier: structured
+depends-on: [spec-mode.md, spec-consistency-check.md]
+state-files: [TASKS.md, .spec-manifest.md, DECISIONS.md, PARKING.md, DESIGN_TASKS.md, TEST_SPEC.md, .context-manifest.md]
+---
+
 ## Start Mode
 
 Generates a unified `TASKS.md` from all spec artifacts. This is the entry point for
@@ -7,61 +14,93 @@ If TASKS.md already exists: "An implementation plan already exists with [N] task
 complete). Re-running start will regenerate from current specs and reset incomplete tasks.
 Continue? This is usually only needed if specs were regenerated from scratch."
 
----
+## Variables
 
-### Step 1: Pre-Checks
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | Project config / .clarity-loop.json | Yes | Root path for all documentation artifacts |
+| .spec-manifest.md | {docsRoot}/specs/ | Yes | Spec manifest with file list, hashes, and dependencies |
+| TASKS.md | {docsRoot}/specs/ | No | Existing task plan (if regenerating) |
+| DESIGN_TASKS.md | {docsRoot}/specs/ | No | Design tasks from cl-designer build-plan mode |
+| TEST_SPEC.md | {docsRoot}/specs/ | No | Test specification for generating test tasks |
+| DECISIONS.md | {docsRoot}/ | No | Decisions for testing framework, conventions |
+| PARKING.md | {docsRoot}/ | No | Parked architectural items |
+| .context-manifest.md | {docsRoot}/context/ | No | Library context for freshness checks |
+| package.json | project root | No | Dependency file for context version alignment |
+| .manifest.md | {docsRoot}/system/ | No | System doc manifest for spec coverage checks |
+| .clarity-loop.json | project root | No | Project config for parallel execution settings |
 
-Run these checks before generating anything:
+## Workflow
 
-1. **Specs exist** — Read `{docsRoot}/specs/.spec-manifest.md`. If it doesn't exist:
-   "No specs found. Run `/cl-implementer spec` first to create implementation specs."
-   Stop.
+### Phase 1: Pre-Checks
 
-2. **Spec review** — Check if any spec review output exists (from `/cl-implementer spec-review`).
-   If not: "Specs haven't been reviewed for consistency. Consider running `/cl-implementer
-   review` before implementation to catch cross-spec issues. Continue anyway? [Y/n]"
+**Step 1.** Specs exist — Read `{docsRoot}/specs/.spec-manifest.md`. If it doesn't exist:
+"No specs found. Run `/cl-implementer spec` first to create implementation specs."
+Stop.
 
-3. **Git repository** — Check if the project root is a git repository (`git rev-parse
-   --git-dir`). If not:
-   "This project isn't a git repository. Git enables implementation tracking — change
-   detection, reconciliation on resume, regression identification. Initialize now? [Y/n]"
-   - If yes: run `git init`. Offer to create an initial commit: "Create an initial commit
-     with the current project state? This gives reconciliation a clean baseline. [Y/n]"
-   - If no: warn "Without git, reconciliation accuracy is reduced. External changes may be
-     missed or misattributed. The implementer will fall back to file modification timestamps."
+**Verify**: .spec-manifest.md exists and is readable.
+**On failure**: Stop with message directing user to run spec mode.
 
-4. **Spec coverage** — Cross-reference system doc areas against spec coverage. Read the
-   system doc manifest (`{docsRoot}/system/.manifest.md`) and compare topics covered in
-   system docs vs topics covered in specs. Warn on significant gaps:
-   - "Your PRD describes [X] but no spec covers it. This area won't have implementation
-     tasks. Intentional?"
-   - Special case: if `TEST_SPEC.md` exists in `{docsRoot}/specs/`, test tasks will be
-     generated automatically (see Step 3). If `TEST_SPEC.md` does NOT exist but system docs
-     mention testing requirements (search PRD for "test", "coverage", "CI", "CI/CD"), warn:
-     "System docs mention testing but no TEST_SPEC.md exists. Options:
-     a) Regenerate specs with `/cl-implementer spec` — this will produce TEST_SPEC.md
-     b) Add test tasks manually to TASKS.md after generation
-     c) Skip — implement features first, address testing later"
+**Step 2.** Spec review — Check if any spec review output exists (from `/cl-implementer spec-review`).
+If not: "Specs haven't been reviewed for consistency. Consider running `/cl-implementer
+review` before implementation to catch cross-spec issues. Continue anyway? [Y/n]"
 
-5. **Context freshness** — If `{docsRoot}/context/.context-manifest.md` exists:
-   - Read the manifest, get all library entries
-   - For each library: compare version in `_meta.md` against `package.json` (or equivalent
-     dependency file). Flag mismatches:
-     "Context for [library] covers version [X] but package.json has [Y]. Context may be
-     stale. Options:
-     a) Run `/cl-researcher context [library]` to update
-     b) Continue with current context (your call — may cause build issues)
-     c) Skip context for this library"
-   - Check `Last verified` dates against freshness thresholds (default: 7 days). Warn on
-     stale context but don't block.
-   - If no context manifest exists: "No context files found. Context files help avoid stale
-     library knowledge during implementation. Run `/cl-researcher context` to create them,
-     or continue without. [Continue/Create context]"
+**Verify**: Spec review output exists.
+**On failure**: Advisory warning; user can proceed.
 
-6. **Transition advisory** — Read PARKING.md Active section. If any `architectural` items
-   exist, surface them:
-   "There are [N] architectural items parked: [list]. These may affect implementation tasks."
-   Never block. The user can always say "proceed."
+**Step 3.** Git repository — Check if the project root is a git repository (`git rev-parse
+--git-dir`). If not:
+"This project isn't a git repository. Git enables implementation tracking — change
+detection, reconciliation on resume, regression identification. Initialize now? [Y/n]"
+- If yes: run `git init`. Offer to create an initial commit: "Create an initial commit
+  with the current project state? This gives reconciliation a clean baseline. [Y/n]"
+- If no: warn "Without git, reconciliation accuracy is reduced. External changes may be
+  missed or misattributed. The implementer will fall back to file modification timestamps."
+
+**Verify**: Git repository status is determined.
+**On failure**: User decides; fall back to timestamp-based tracking.
+
+**Step 4.** Spec coverage — Cross-reference system doc areas against spec coverage. Read the
+system doc manifest (`{docsRoot}/system/.manifest.md`) and compare topics covered in
+system docs vs topics covered in specs. Warn on significant gaps:
+- "Your PRD describes [X] but no spec covers it. This area won't have implementation
+  tasks. Intentional?"
+- Special case: if `TEST_SPEC.md` exists in `{docsRoot}/specs/`, test tasks will be
+  generated automatically (see Phase 3). If `TEST_SPEC.md` does NOT exist but system docs
+  mention testing requirements (search PRD for "test", "coverage", "CI", "CI/CD"), warn:
+  "System docs mention testing but no TEST_SPEC.md exists. Options:
+  a) Regenerate specs with `/cl-implementer spec` — this will produce TEST_SPEC.md
+  b) Add test tasks manually to TASKS.md after generation
+  c) Skip — implement features first, address testing later"
+
+**Verify**: All system doc topics have corresponding spec coverage or acknowledged gaps.
+**On failure**: Present gaps to user for acknowledgment.
+
+**Step 5.** Context freshness — If `{docsRoot}/context/.context-manifest.md` exists:
+- Read the manifest, get all library entries
+- For each library: compare version in `_meta.md` against `package.json` (or equivalent
+  dependency file). Flag mismatches:
+  "Context for [library] covers version [X] but package.json has [Y]. Context may be
+  stale. Options:
+  a) Run `/cl-researcher context [library]` to update
+  b) Continue with current context (your call — may cause build issues)
+  c) Skip context for this library"
+- Check `Last verified` dates against freshness thresholds (default: 7 days). Warn on
+  stale context but don't block.
+- If no context manifest exists: "No context files found. Context files help avoid stale
+  library knowledge during implementation. Run `/cl-researcher context` to create them,
+  or continue without. [Continue/Create context]"
+
+**Verify**: Context versions aligned with package.json or acknowledged as stale.
+**On failure**: Advisory; user decides per library.
+
+**Step 6.** Transition advisory — Read PARKING.md Active section. If any `architectural` items
+exist, surface them:
+"There are [N] architectural items parked: [list]. These may affect implementation tasks."
+Never block. The user can always say "proceed."
+
+**Verify**: PARKING.md read and architectural items surfaced.
+**On failure**: If file missing, skip advisory.
 
 **Batch presentation**: Present all pre-check results as a single status table:
 
@@ -81,36 +120,47 @@ the batch in one response: "Specs not reviewed: recommend running spec-review fi
 not blocking. Git repo: initialized. Context for drizzle-orm: stale (7 days), recommend
 refresh. Proceed with these defaults, or adjust?"
 
----
+### Phase 2: Read All Spec Artifacts
 
-### Step 2: Read All Spec Artifacts
+**Step 7.** Parse `.spec-manifest.md` — extract the list of spec files, their source doc mappings,
+cross-spec dependencies, and the content hash.
 
-1. Parse `.spec-manifest.md` — extract the list of spec files, their source doc mappings,
-   cross-spec dependencies, and the content hash.
+**Verify**: Manifest parsed with complete file list and dependency graph.
+**On failure**: If manifest is malformed, report parse errors and stop.
 
-2. Read each spec file in full. For each, extract:
-   - Defined types, entities, interfaces, contracts
-   - Behavioral rules and constraints
-   - Dependencies on other specs
-   - Acceptance-testable conditions (these become task acceptance criteria)
+**Step 8.** Read each spec file in full. For each, extract:
+- Defined types, entities, interfaces, contracts
+- Behavioral rules and constraints
+- Dependencies on other specs
+- Acceptance-testable conditions (these become task acceptance criteria)
 
-3. Read `{docsRoot}/specs/DESIGN_TASKS.md` if it exists (from cl-designer build-plan mode).
-   Parse its task structure: IDs, phases, dependencies, acceptance criteria, design references.
+**Verify**: All spec files listed in manifest have been read and parsed.
+**On failure**: If a spec file fails to read, log error and continue with remaining specs.
 
-4. Read Architecture doc for tech stack context (framework, language, styling approach) —
-   this informs task descriptions and complexity estimates.
+**Step 9.** Read `{docsRoot}/specs/DESIGN_TASKS.md` if it exists (from cl-designer build-plan mode).
+Parse its task structure: IDs, phases, dependencies, acceptance criteria, design references.
 
-5. Read `{docsRoot}/specs/TEST_SPEC.md` if it exists. Parse its structure:
-   - Test architecture (mock boundaries, test data strategy, environment requirements)
-   - Per-module unit test cases
-   - Cross-spec integration contracts
-   - Contract test definitions
+**Verify**: DESIGN_TASKS.md parsed if present.
+**On failure**: If file missing, skip design task merge.
 
----
+**Step 10.** Read Architecture doc for tech stack context (framework, language, styling approach) —
+this informs task descriptions and complexity estimates.
 
-### Step 3: Generate Unified TASKS.md
+**Verify**: Architecture doc read for tech stack context.
+**On failure**: If missing, proceed with reduced context for complexity estimates.
 
-Write `{docsRoot}/specs/TASKS.md` with this structure:
+**Step 11.** Read `{docsRoot}/specs/TEST_SPEC.md` if it exists. Parse its structure:
+- Test architecture (mock boundaries, test data strategy, environment requirements)
+- Per-module unit test cases
+- Cross-spec integration contracts
+- Contract test definitions
+
+**Verify**: TEST_SPEC.md parsed if present.
+**On failure**: If file missing, skip test task generation.
+
+### Phase 3: Generate Unified TASKS.md
+
+**Step 12.** Write `{docsRoot}/specs/TASKS.md` with this structure:
 
 ```markdown
 # Implementation Tasks
@@ -247,7 +297,7 @@ flowchart TD
 
     ```markdown
     ### T-0XX: Data-API Integration Tests
-    - **Spec reference**: TEST_SPEC.md, Cross-Spec Integration Contracts > Data ↔ API
+    - **Spec reference**: TEST_SPEC.md, Cross-Spec Integration Contracts > Data <-> API
     - **Spec hash**: [hash]
     - **Dependencies**: T-001 (DB schema), T-002 (Auth service), T-003 (API endpoints), T-00X (Test Infrastructure)
     - **Status**: pending
@@ -353,11 +403,12 @@ flowchart TD
     - **Complexity**: Medium
     ```
 
----
+**Verify**: TASKS.md contains all spec-derived tasks with sequential IDs, acceptance criteria, and dependency graph.
+**On failure**: If any spec section was missed, add corresponding tasks.
 
-### Step 4: Identify Parallelizable Groups
+### Phase 4: Identify Parallelizable Groups
 
-Analyze the dependency graph and file paths to find independent task groups:
+**Step 13.** Analyze the dependency graph and file paths to find independent task groups:
 
 - Tasks with NO dependency relationship (direct or transitive) between them
 - Tasks that modify different files/directories (no shared code surface area)
@@ -372,11 +423,12 @@ Parallel execution uses Claude Code's fork capability. Approve? [Y/n/disable]"
 
 If user disables: note in TASKS.md Session Log that parallel execution is off.
 
----
+**Verify**: Parallel groups identified with no dependency conflicts.
+**On failure**: If dependency analysis is ambiguous, default to sequential execution.
 
-### Step 5: User Review and Reordering
+### Phase 5: User Review and Reordering
 
-Present the full plan:
+**Step 14.** Present the full plan:
 1. The dependency graph (Mermaid visualization)
 2. The suggested implementation order (topological sort)
 3. Parallelizable groups (if identified)
@@ -387,7 +439,10 @@ Present the full plan:
 skip, or add tasks. The dependency graph enforces hard constraints (can't build a component
 before its tokens). Within those constraints, the order is yours. Any changes?"
 
-Process user adjustments:
+**Verify**: User has reviewed and approved (or adjusted) the plan.
+**On failure**: Process user adjustments before proceeding.
+
+**Step 15.** Process user adjustments:
 - **Reorder**: Move tasks, update dependency graph if needed
 - **Split**: Break one task into subtasks, preserve spec references
 - **Merge**: Combine tasks, union acceptance criteria
@@ -399,11 +454,12 @@ Process user adjustments:
 
 After adjustments, regenerate the dependency graph if it changed.
 
----
+**Verify**: Dependency graph has no circular dependencies and no orphaned references.
+**On failure**: Report circular dependencies or orphans for user resolution.
 
-### Step 6: Initialize TASKS.md Session Log
+### Phase 6: Initialize Session Log
 
-Add the Session Log section to `{docsRoot}/specs/TASKS.md` (generated in Step 3) with
+**Step 16.** Add the Session Log section to `{docsRoot}/specs/TASKS.md` (generated in Phase 3) with
 initial metadata:
 
 ```markdown
@@ -413,14 +469,15 @@ initial metadata:
 | [date] | start | — | — | TASKS.md |
 ```
 
-Record the spec version, git tracking status (from Step 1), and parallel execution
-setting (from Step 4) as the first session entry.
+Record the spec version, git tracking status (from Phase 1), and parallel execution
+setting (from Phase 4) as the first session entry.
 
----
+**Verify**: Session log initialized with correct metadata.
+**On failure**: If metadata incomplete, fill in what is available.
 
-### Step 7: Populate Claude Code Tasks
+### Phase 7: Populate Claude Code Tasks
 
-For each task in TASKS.md, create a Claude Code task via `TaskCreate`:
+**Step 17.** For each task in TASKS.md, create a Claude Code task via `TaskCreate`:
 - `subject`: Task ID + name (e.g., "T-001: Create database schema")
 - `description`: Full task details including spec reference and acceptance criteria
 - `activeForm`: Present continuous (e.g., "Creating database schema")
@@ -431,15 +488,25 @@ This is the dual-write pattern: TASKS.md is the persistent source of truth (surv
 sessions, crashes, context compression). Claude Code tasks are the active session view
 (progress spinner, status display). Every state change must update both.
 
-**Parallelization hint**: While the user reviews the task list (Step 5), pre-populate
-Claude Code tasks (Step 7) for tasks that are dependency-free. If the user reorders,
+**Parallelization hint**: While the user reviews the task list (Phase 5), pre-populate
+Claude Code tasks (Phase 7) for tasks that are dependency-free. If the user reorders,
 update the task dependencies but the basic task entries are already created.
 Invalidation risk: Medium -- user may split/merge/reorder tasks.
 
----
+**Verify**: All TASKS.md tasks have corresponding Claude Code tasks with correct dependencies.
+**On failure**: Report any tasks that failed to create.
 
 ### Completion
 
 Tell the user:
 "Implementation plan ready. {N} tasks across {M} areas. Run `/cl-implementer run` to start
 processing the queue, or `/cl-implementer status` for an overview."
+
+## Report
+
+```
+START: COMPLETE | Tasks: N ready | Areas: M | Parallel groups: P
+START: COMPLETE | Tasks: N ready | Areas: M | Parallel: disabled
+START: BLOCKED | Reason: No specs found
+START: BLOCKED | Reason: [reason]
+```

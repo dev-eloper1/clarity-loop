@@ -1,32 +1,62 @@
+---
+mode: proposal-template
+tier: guided
+depends-on: []
+state-files: [PROPOSAL_TRACKER.md, RESEARCH_LEDGER.md, DECISIONS.md, .manifest.md]
+---
+
 # Proposal Generation Process & Template
 
 This reference covers the full process for generating a proposal from an approved research
 doc, and the template to use for the output.
 
+## Variables
+
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| Research doc | docs/research/R-NNN-TOPIC.md (approved) | Yes | The source of truth for what was researched |
+| System doc manifest | docs/system/.manifest.md | Yes | Document index -- file list, section headings with line ranges, cross-references |
+| Document plan | Locked structure plan (if any) | No | Confirmed structure from `/cl-researcher structure` |
+| Proposal tracker | docs/PROPOSAL_TRACKER.md | Yes | Existing proposals to check for conflicts and determine next ID |
+| Research ledger | docs/RESEARCH_LEDGER.md | Yes | Updated after proposal generation to reference the proposal |
+| System docs (targeted) | docs/system/*.md | No | Specific sections for deep-reads when research didn't thoroughly cover them |
+
+## Guidelines
+
+1. The Change Manifest is the backbone. Everything else in the proposal supports it. The reviewer will check every row. The verify step (post-merge) will use it to confirm every change landed. Make it precise and complete.
+2. Traceability is non-negotiable. Every change must trace to a research finding. Every design decision must trace to a rationale. If you can't explain why a change is needed, it shouldn't be in the proposal.
+3. Current -> Proposed diffs are gold. Showing "here's what the section says now, here's what it should say after" is the clearest way to communicate a change. The reviewer and the implementer both benefit from this.
+4. Scope boundary is a safety net. Explicitly stating what the proposal does NOT change protects against accidental over-application during the merge and gives the verify step a clear boundary to check against.
+5. Cross-proposal conflicts prevent merge disasters. Always check the tracker. Two proposals modifying the same section without coordination will produce inconsistent docs.
+6. Update tracking files. After generating a proposal, always add it to PROPOSAL_TRACKER.md and update the research entry in RESEARCH_LEDGER.md. The pipeline relies on these for state management.
+7. Design Decisions propagate at merge. The Design Decisions table in the proposal will be extracted and logged to `docs/DECISIONS.md` during the merge step (see merge-mode.md). Make sure each row has enough context (rationale, alternatives) to stand on its own -- the DECISIONS.md entry will reference this proposal but should be understandable without reading the full proposal.
+
 ## Process
 
-### Step 1: Load Everything
+### Phase 1: Load Context
 
-1. **Read the research doc** — The source of truth for what was researched. The research
-   doc's System Context section already contains detailed references to the relevant system
-   docs — this is your primary context. Don't re-read what the research already captured.
+Read the research doc -- the source of truth for what was researched. The research
+doc's System Context section already contains detailed references to the relevant system
+docs -- this is your primary context. Don't re-read what the research already captured.
 
-2. **Read the system doc manifest** — Read `docs/system/.manifest.md` for the document
-   index — file list, section headings with line ranges, and cross-references. This tells
-   you the lay of the land without reading every doc in full.
+Read the system doc manifest -- Read `docs/system/.manifest.md` for the document
+index -- file list, section headings with line ranges, and cross-references. This tells
+you the lay of the land without reading every doc in full.
 
-3. **Targeted deep-reads only** — If the proposal touches system docs that the research
-   didn't thoroughly cover (e.g., cross-cutting concerns or ripple effects), read those
-   specific sections using the line ranges from the manifest. Don't re-read docs that the
-   research already analyzed.
+Targeted deep-reads only -- If the proposal touches system docs that the research
+didn't thoroughly cover (e.g., cross-cutting concerns or ripple effects), read those
+specific sections using the line ranges from the manifest. Don't re-read docs that the
+research already analyzed.
 
-4. **Read the document plan** — If a structure plan was confirmed during the research phase
-   (via `/cl-researcher structure`), read it. The proposal must follow the locked structure.
+Read the document plan -- If a structure plan was confirmed during the research phase
+(via `/cl-researcher structure`), read it. The proposal must follow the locked structure.
 
-5. **Check the proposal tracker** — Read `docs/PROPOSAL_TRACKER.md` to check for in-flight
-   proposals that might conflict (same target sections).
+Check the proposal tracker -- Read `docs/PROPOSAL_TRACKER.md` to check for in-flight
+proposals that might conflict (same target sections).
 
-### Step 2: Build the Change Manifest
+**Checkpoint**: All context loaded -- research doc, manifest, document plan (if any), and tracker reviewed.
+
+### Phase 2: Build the Change Manifest
 
 This is the most important artifact in the proposal. Walk through the research doc's
 recommendations and for each one, determine:
@@ -39,7 +69,9 @@ recommendations and for each one, determine:
 The change manifest is what the cl-reviewer uses to verify the proposal is complete
 and that nothing was missed. It's the contract between the proposal and the system docs.
 
-### Step 3: Design the Changes
+**Checkpoint**: Change manifest complete -- every research recommendation mapped to specific doc/section changes.
+
+### Phase 3: Design the Changes
 
 For each entry in the change manifest, design the actual change:
 
@@ -48,7 +80,9 @@ For each entry in the change manifest, design the actual change:
 - Are cross-references to other system docs needed?
 - Does this change require updates to other system docs for consistency?
 
-### Step 4: Write the Proposal
+**Checkpoint**: Detailed design complete for every change manifest entry.
+
+### Phase 4: Write the Proposal
 
 Use the template below. Generate at:
 ```
@@ -62,13 +96,13 @@ research `R-001-MEMORY_LAYER.md` might produce proposal `P-001-MEMORY_SYSTEM_V2.
 To determine the next ID, check `docs/PROPOSAL_TRACKER.md` for the highest existing ID
 and increment.
 
-### Step 5: Update Tracking
+**Checkpoint**: Proposal file written to docs/proposals/.
+
+### Phase 5: Update Tracking and Handoff
 
 After generating the proposal:
 1. Add a row to `docs/PROPOSAL_TRACKER.md` with status `draft`
 2. Update the corresponding research entry in `docs/RESEARCH_LEDGER.md` to reference the proposal
-
-### Step 6: Present and Handoff
 
 After generating, tell the user:
 - Where the proposal is
@@ -78,6 +112,8 @@ After generating, tell the user:
 
 Tell the user: "Proposal generated. Read it over and let me know when you'd like to run
 it through the review gate."
+
+**Checkpoint**: PROPOSAL_TRACKER.md and RESEARCH_LEDGER.md updated, user notified.
 
 ---
 
@@ -254,33 +290,10 @@ Brief summary of the research findings for reviewers who want context without re
 the full research doc. Keep this to one page — point them to the research doc for details.
 ```
 
-## Key Principles
+## Output
 
-**The Change Manifest is the backbone.** Everything else in the proposal supports it. The
-reviewer will check every row. The verify step (post-merge) will use it to confirm every
-change landed. Make it precise and complete.
+**Primary artifact**: `docs/proposals/P-NNN-TOPIC.md`
 
-**Traceability is non-negotiable.** Every change must trace to a research finding. Every
-design decision must trace to a rationale. If you can't explain why a change is needed,
-it shouldn't be in the proposal.
-
-**Current -> Proposed diffs are gold.** Showing "here's what the section says now, here's
-what it should say after" is the clearest way to communicate a change. The reviewer and
-the implementer both benefit from this.
-
-**Scope boundary is a safety net.** Explicitly stating what the proposal does NOT change
-protects against accidental over-application during the merge and gives the verify step
-a clear boundary to check against.
-
-**Cross-proposal conflicts prevent merge disasters.** Always check the tracker. Two
-proposals modifying the same section without coordination will produce inconsistent docs.
-
-**Update tracking files.** After generating a proposal, always add it to PROPOSAL_TRACKER.md
-and update the research entry in RESEARCH_LEDGER.md. The pipeline relies on these for
-state management.
-
-**Design Decisions propagate at merge.** The Design Decisions table in the proposal will be
-extracted and logged to `docs/DECISIONS.md` during the merge step (see merge-mode.md).
-Make sure each row has enough context (rationale, alternatives) to stand on its own —
-the DECISIONS.md entry will reference this proposal but should be understandable without
-reading the full proposal.
+**Additional outputs**:
+- Updated `docs/PROPOSAL_TRACKER.md` (new row with status `draft`)
+- Updated `docs/RESEARCH_LEDGER.md` (research entry references the proposal)

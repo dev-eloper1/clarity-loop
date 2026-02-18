@@ -1,106 +1,122 @@
+---
+mode: context
+tier: structured
+depends-on: [bootstrap-guide.md]
+state-files: [.context-manifest.md]
+---
+
 ## Context Mode
 
-Creates and maintains per-library context files — curated knowledge that bridges the gap
+Creates and maintains per-library context files -- curated knowledge that bridges the gap
 between LLM training data and current library reality. Context files use a three-layer
 progressive disclosure model and are consumed by all skills through a standard loading
 protocol.
 
----
+## Variables
 
-### Entry Points
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| Library name(s) | User argument or Architecture doc tech stack | Yes | Which libraries to create/refresh context for |
+| Library version(s) | package.json or equivalent dependency manifest | Yes | Pinned version to research against |
+| Architecture doc | docs/system/ARCHITECTURE.md (or equivalent) | No | Tech stack section for post-bootstrap invocation |
+| Existing .context-manifest.md | {docsRoot}/context/.context-manifest.md | No | Current context state for comparison |
+| Existing _meta.md per library | {docsRoot}/context/{library}/_meta.md | No | Current context version and task dependency tracking |
+| docsRoot | .clarity-loop.json or convention | Yes | Root directory for docs (determines context file location) |
 
-1. **Manual**: `/cl-researcher context [library]` — create or refresh context for a
-   specific library, or all libraries if no argument given.
+## Workflow
 
-2. **Auto-offer during bootstrap (Step 2b, before presenting profile)**: After profile
-   detection produces a tech stack but before presenting it to the user, the bootstrap
-   validates versions and compatibility via quick web searches. The user is then shown the
-   full picture — detected version vs latest stable, compatibility status — and asked
-   whether they want to update. If they choose to update (or even if they keep current
-   versions), they're offered a full context download for the selected libraries.
+### Phase 1: Entry and Gate Check
 
-   This happens within Step 2b "Stack Validation and Context" — see `bootstrap-guide.md`
-   for the full process. The key property: context is downloaded BEFORE the defaults sheet
-   (Step 2c), so the tech stack the user confirms is already validated and context-backed.
-   All downstream docs (generated in Step 5) are written with accurate library knowledge.
+1. Determine entry point:
+   - **Manual**: `/cl-researcher context [library]` -- create or refresh context for a
+     specific library, or all libraries if no argument given.
+   - **Auto-offer during bootstrap (Step 2b, before presenting profile)**: After profile
+     detection produces a tech stack but before presenting it to the user, the bootstrap
+     validates versions and compatibility via quick web searches. The user is then shown the
+     full picture -- detected version vs latest stable, compatibility status -- and asked
+     whether they want to update. If they choose to update (or even if they keep current
+     versions), they're offered a full context download for the selected libraries.
+     This happens within Step 2b "Stack Validation and Context" -- see `bootstrap-guide.md`
+     for the full process. The key property: context is downloaded BEFORE the defaults sheet
+     (Step 2c), so the tech stack the user confirms is already validated and context-backed.
+     All downstream docs (generated in Step 5) are written with accurate library knowledge.
+   - **Feedback from cl-implementer**: When the cl-implementer classifies a build error as
+     `context-gap`, it prompts the user to invoke context mode for the affected library.
 
-3. **Feedback from cl-implementer**: When the cl-implementer classifies a build error as
-   `context-gap`, it prompts the user to invoke context mode for the affected library.
+2. Verify the tech stack is known. This can come from:
+   - **During bootstrap (Step 2b)**: The detected/researched tech stack from profile
+     detection -- system docs don't need to exist yet. The discovery conversation +
+     auto-detect/research provides enough to validate and download context.
+   - **Post-bootstrap**: An Architecture doc (or equivalent) with a tech stack section.
+   - **On failure**: If neither exists, report: "No tech stack information found. Run
+     `/cl-researcher bootstrap` first -- context files are derived from the tech stack
+     established during bootstrap discovery."
 
-### Gate
+3. **Verify**: Tech stack source identified and accessible before proceeding.
 
-The tech stack must be known. This can come from:
-- **During bootstrap (Step 2b)**: The detected/researched tech stack from profile
-  detection — system docs don't need to exist yet. The discovery conversation +
-  auto-detect/research provides enough to validate and download context.
-- **Post-bootstrap**: An Architecture doc (or equivalent) with a tech stack section.
+### Phase 2: Library Identification
 
-If neither exists: "No tech stack information found. Run `/cl-researcher bootstrap`
-first — context files are derived from the tech stack established during bootstrap discovery."
+4. Read the Architecture doc (or equivalent) for the tech stack section. Extract:
+   - Library/framework names
+   - Version constraints (from Architecture doc or `package.json` / equivalent)
+   - Usage context (e.g., "SQLite via better-sqlite3" tells you the adapter matters)
 
----
+5. If `{docsRoot}/context/.context-manifest.md` already exists, compare against it:
+   - **New libraries** (in Architecture, not in manifest): flag for creation
+   - **Removed libraries** (in manifest, not in Architecture): flag for cleanup
+   - **Version mismatches** (Architecture says v4, manifest says v3): flag for update
 
-### Step 1: Identify Libraries
+6. Present to user: "Your tech stack includes [N] libraries. Here's my recommendation:
 
-Read the Architecture doc (or equivalent) for the tech stack section. Extract:
-- Library/framework names
-- Version constraints (from Architecture doc or `package.json` / equivalent)
-- Usage context (e.g., "SQLite via better-sqlite3" tells you the adapter matters)
+   | Library | Version | Status | Recommendation | Action |
+   |---------|---------|--------|---------------|--------|
+   | [A] | v[X] | No context | Create | **Create** |
+   | [B] | v[Y] | Current | Skip | Skip |
+   | [C] | v[Z] | Stale (v[old]) | Update | **Update** |
+   | [D] | v[W] | Current, fresh | Skip | Skip |
 
-If `{docsRoot}/context/.context-manifest.md` already exists, compare against it:
-- **New libraries** (in Architecture, not in manifest): flag for creation
-- **Removed libraries** (in manifest, not in Architecture): flag for cleanup
-- **Version mismatches** (Architecture says v4, manifest says v3): flag for update
+   I'll process the bolded items. Change any actions, or proceed?"
 
-Present to user: "Your tech stack includes [N] libraries. Here's my recommendation:
+   The user can confirm ("proceed"), adjust ("skip C, add B"), or expand ("process all").
+   Default: process recommended items only.
 
-| Library | Version | Status | Recommendation | Action |
-|---------|---------|--------|---------------|--------|
-| [A] | v[X] | No context | Create | **Create** |
-| [B] | v[Y] | Current | Skip | Skip |
-| [C] | v[Z] | Stale (v[old]) | Update | **Update** |
-| [D] | v[W] | Current, fresh | Skip | Skip |
+7. **Verify**: User has confirmed which libraries to process.
 
-I'll process the bolded items. Change any actions, or proceed?"
+### Phase 3: Research
 
-The user can confirm ("proceed"), adjust ("skip C, add B"), or expand ("process all").
-Default: process recommended items only.
+8. For each library the user selected, web search official docs: `WebSearch` for
+   "[library] [version] documentation", "[library] [version] migration guide",
+   "[library] [version] changelog"
 
----
-
-### Step 2: Research Each Library
-
-For each library the user selected:
-
-1. **Web search official docs**: `WebSearch` for "[library] [version] documentation",
-   "[library] [version] migration guide", "[library] [version] changelog"
-
-2. **Fetch official doc pages**: `WebFetch` for the API reference, getting started guide,
+9. Fetch official doc pages: `WebFetch` for the API reference, getting started guide,
    and any migration/upgrade guide. Focus on:
    - Import paths (these change between major versions)
    - Configuration format (e.g., Tailwind v4 switched from JS to CSS)
    - Breaking changes from previous major version
    - Common gotchas and error messages
 
-3. **Optionally search context7.com**: `WebSearch` for "site:context7.com [library]" to
-   find their LLM-friendly documentation. If available, `WebFetch` the page. Context7
-   pre-processes library docs into a concise, LLM-friendly format — use this as a
-   supplement to official docs, not a replacement.
+10. Optionally search context7.com: `WebSearch` for "site:context7.com [library]" to
+    find their LLM-friendly documentation. If available, `WebFetch` the page. Context7
+    pre-processes library docs into a concise, LLM-friendly format -- use this as a
+    supplement to official docs, not a replacement.
+    - **On failure**: If context7 has no entry for the library, skip -- this is supplementary.
 
-   **Important**: Use context7 as a **website** (WebSearch/WebFetch), NOT as an MCP. The
-   MCP dumps large amounts of content into the session context. The website lets you fetch
-   once and distill into curated files.
+    **Important**: Use context7 as a **website** (WebSearch/WebFetch), NOT as an MCP. The
+    MCP dumps large amounts of content into the session context. The website lets you fetch
+    once and distill into curated files.
 
-4. **Check for breaking changes and errata**: `WebSearch` for "[library] [version] breaking
-   changes", "[library] [version] known issues"
+11. Check for breaking changes and errata: `WebSearch` for "[library] [version] breaking
+    changes", "[library] [version] known issues"
 
-5. **Read existing codebase** (if code exists): Check `package.json` (or equivalent) for
-   the actual installed version. Look at how the library is currently used in the code —
-   this tells you which APIs matter most.
+12. Read existing codebase (if code exists): Check `package.json` (or equivalent) for
+    the actual installed version. Look at how the library is currently used in the code --
+    this tells you which APIs matter most.
 
-### What to Keep vs. Discard
+13. **Verify**: Research complete for all selected libraries.
 
-**Keep** (the delta — what the LLM likely gets wrong):
+#### What to Keep vs. Discard
+
+**Keep** (the delta -- what the LLM likely gets wrong):
 - Version pinning: exact version range this context covers
 - Breaking changes from previous versions
 - Correct import paths (these change frequently)
@@ -116,147 +132,140 @@ For each library the user selected:
 - Exhaustive type definitions (just cover the commonly-used ones)
 - History/changelog (just the breaking changes for the relevant version)
 
----
+### Phase 4: User Review
 
-### Step 3: Present to User for Review
+14. Before writing any files, present the distilled context to the user:
 
-Before writing any files, present the distilled context to the user:
+    "Here's what I found for [library] [version]:
 
-"Here's what I found for [library] [version]:
+    **Breaking changes**: [list]
+    **Key gotchas**: [list]
+    **Correct import paths**: [list]
+    **File plan**: I'll create [N] files:
+      - `overview.md` -- key patterns and gotchas
+      - `[topic].md` -- [description]
+      - `[topic].md` -- [description]
 
-**Breaking changes**: [list]
-**Key gotchas**: [list]
-**Correct import paths**: [list]
-**File plan**: I'll create [N] files:
-  - `overview.md` — key patterns and gotchas
-  - `[topic].md` — [description]
-  - `[topic].md` — [description]
+    Does this look right? Anything to add or remove?"
 
-Does this look right? Anything to add or remove?"
+15. Incorporate user feedback before writing.
 
-Incorporate user feedback before writing.
+16. **Verify**: User has approved the distilled context and file plan.
 
----
+### Phase 5: Write Context Files
 
-### Step 4: Write Context Files
+17. Create the file structure:
 
-#### File Structure
+    ```
+    {docsRoot}/context/
+      .context-manifest.md               # Layer 1: index of all libraries
+      {library-name}/
+        _meta.md                         # Layer 2: overview + file inventory
+        overview.md                      # Key patterns, gotchas, breaking changes
+        {topic}.md                       # Specific topic files
+        {topic}.md
+    ```
 
-```
-{docsRoot}/context/
-  .context-manifest.md               # Layer 1: index of all libraries
-  {library-name}/
-    _meta.md                         # Layer 2: overview + file inventory
-    overview.md                      # Key patterns, gotchas, breaking changes
-    {topic}.md                       # Specific topic files
-    {topic}.md
-```
+    Use kebab-case for library folder names. Include the major version if the library has
+    fundamentally different APIs across versions (e.g., `tailwind-v4/` not `tailwind/` if v3
+    and v4 are radically different).
 
-Use kebab-case for library folder names. Include the major version if the library has
-fundamentally different APIs across versions (e.g., `tailwind-v4/` not `tailwind/` if v3
-and v4 are radically different).
+18. Write `.context-manifest.md` (Layer 1) -- the index file loaded by every skill at task
+    start to know what context exists. Keep it minimal (~50 tokens per library):
 
-#### `.context-manifest.md` (Layer 1)
+    ```markdown
+    # Context Manifest
 
-This is the index file — loaded by every skill at task start to know what context exists.
-Keep it minimal (~50 tokens per library).
+    **Last updated**: [date]
 
-```markdown
-# Context Manifest
+    ## Libraries
 
-**Last updated**: [date]
+    | Library | Version | Path | Tags | Last Verified |
+    |---------|---------|------|------|---------------|
+    | Drizzle ORM | 0.38.x | drizzle-orm/ | database, orm, sqlite | 2026-02-09 |
+    | Tailwind CSS | 4.x | tailwind-v4/ | styling, css, theme | 2026-02-09 |
+    | Next.js | 14.x | nextjs-14/ | framework, react, ssr | 2026-02-09 |
+    ```
 
-## Libraries
+19. Write `_meta.md` (Layer 2) per library -- loaded when a skill determines this library
+    is relevant to the current task. Contains both human-readable context and
+    machine-readable file inventory:
 
-| Library | Version | Path | Tags | Last Verified |
-|---------|---------|------|------|---------------|
-| Drizzle ORM | 0.38.x | drizzle-orm/ | database, orm, sqlite | 2026-02-09 |
-| Tailwind CSS | 4.x | tailwind-v4/ | styling, css, theme | 2026-02-09 |
-| Next.js | 14.x | nextjs-14/ | framework, react, ssr | 2026-02-09 |
-```
+    ```markdown
+    # [Library Name]
 
-#### `_meta.md` (Layer 2)
+    **Version**: [version range, e.g., 0.38.x]
+    **Pinned to**: [dependency file field, e.g., "drizzle-orm": "^0.38.0" in package.json]
+    **Last verified**: [date]
+    **Sources**: [URLs used during research]
+    **Tags**: [freeform, comma-separated]
+    **Freshness threshold**: [default: 7 days -- override per library if needed]
 
-Per-library overview. Loaded when a skill determines this library is relevant to the
-current task. Contains both human-readable context and machine-readable file inventory.
+    ## Overview
 
-```markdown
-# [Library Name]
+    [2-4 paragraph summary: what the LLM gets wrong about this library at this version.
+    Key breaking changes, critical gotchas, correct patterns. This section alone should
+    prevent the most common errors.]
 
-**Version**: [version range, e.g., 0.38.x]
-**Pinned to**: [dependency file field, e.g., "drizzle-orm": "^0.38.0" in package.json]
-**Last verified**: [date]
-**Sources**: [URLs used during research]
-**Tags**: [freeform, comma-separated]
-**Freshness threshold**: [default: 7 days — override per library if needed]
+    ## Tasks Implemented With This Context
 
-## Overview
+    [Populated by the cl-implementer as tasks are completed. Format:]
 
-[2-4 paragraph summary: what the LLM gets wrong about this library at this version.
-Key breaking changes, critical gotchas, correct patterns. This section alone should
-prevent the most common errors.]
+    | Task | Date | Notes |
+    |------|------|-------|
+    | T-005 | 2026-02-10 | Database schema creation |
+    | T-006 | 2026-02-10 | Migration setup |
 
-## Tasks Implemented With This Context
+    ## Files
 
-[Populated by the cl-implementer as tasks are completed. Format:]
+    | File | Tags | Load When |
+    |------|------|-----------|
+    | overview.md | core | Any task using this library |
+    | sqlite-patterns.md | sqlite, database | SQLite-specific implementation |
+    | migration-guide.md | migration | Creating or running migrations |
+    ```
 
-| Task | Date | Notes |
-|------|------|-------|
-| T-005 | 2026-02-10 | Database schema creation |
-| T-006 | 2026-02-10 | Migration setup |
+    **Tags are freeform and library-dependent.** An ORM needs tags like `schema`, `migration`,
+    `queries`. A UI framework needs `components`, `theming`, `responsive`. Aim for consistency
+    across similar library types but don't enforce a rigid taxonomy. The researcher uses
+    judgment based on the library's domain.
 
-## Files
+20. Write detail files (Layer 3). Each detail file follows this format:
 
-| File | Tags | Load When |
-|------|------|-----------|
-| overview.md | core | Any task using this library |
-| sqlite-patterns.md | sqlite, database | SQLite-specific implementation |
-| migration-guide.md | migration | Creating or running migrations |
-```
+    ```markdown
+    # [Library]: [Topic]
 
-**Tags are freeform and library-dependent.** An ORM needs tags like `schema`, `migration`,
-`queries`. A UI framework needs `components`, `theming`, `responsive`. Aim for consistency
-across similar library types but don't enforce a rigid taxonomy. The researcher uses
-judgment based on the library's domain.
+    **Applies to**: [library] [version range]
+    **Verified**: [date]
 
-#### Detail Files (Layer 3)
+    ## [Section]
 
-Each detail file follows this format:
+    [Content -- correct patterns, code examples, gotchas]
 
-```markdown
-# [Library]: [Topic]
+    ## [Section]
 
-**Applies to**: [library] [version range]
-**Verified**: [date]
+    [Content]
 
-## [Section]
+    ## Common Errors
 
-[Content — correct patterns, code examples, gotchas]
+    ### [Error message or pattern]
+    [Cause + fix]
+    ```
 
-## [Section]
+    Each section should be independently useful -- loadable alone without losing meaning.
+    This enables the loading protocol to pull just the sections relevant to the current task.
 
-[Content]
+21. **Verify**: All context files written to `{docsRoot}/context/`.
 
-## Common Errors
+### Phase 6: Finalize
 
-### [Error message or pattern]
-[Cause + fix]
-```
+22. Create or update `.context-manifest.md` -- add/update entries for each library
+    processed.
 
-Each section should be independently useful — loadable alone without losing meaning. This
-enables the loading protocol to pull just the sections relevant to the current task.
+23. Report to user: "Context files created for [N] libraries in `{docsRoot}/context/`.
+    These will be loaded automatically during spec generation and implementation."
 
----
-
-### Step 5: Update Manifest and Tracking
-
-After writing all context files:
-
-1. **Create or update `.context-manifest.md`** — add/update entries for each library
-   processed.
-
-2. **Report to user**: "Context files created for [N] libraries in `{docsRoot}/context/`.
-   These will be loaded automatically during spec generation and implementation."
+24. **Verify**: Manifest updated and user notified.
 
 ---
 
@@ -264,46 +273,46 @@ After writing all context files:
 
 When invoked for a library that already has context files:
 
-1. **Check version**: Does `_meta.md` version match `package.json`?
-   - **Same version**: This is a freshness refresh. Update content in place. Verify
-     against official docs. Update `Last verified` date.
-   - **New version, no tasks depend on current context**: Update content in place. Update
-     version in `_meta.md` and manifest.
-   - **New version, tasks depend on current context**: Version the context. Keep the
-     existing folder (rename to include version if needed, e.g., `drizzle-orm-0.38/`).
-     Create a new folder for the new version. Update manifest to point to the new folder.
-     Log: "Context versioned: [old] preserved for existing tasks, [new] created for
-     future tasks."
+25. **Check version**: Does `_meta.md` version match `package.json`?
+    - **Same version**: This is a freshness refresh. Update content in place. Verify
+      against official docs. Update `Last verified` date.
+    - **New version, no tasks depend on current context**: Update content in place. Update
+      version in `_meta.md` and manifest.
+    - **New version, tasks depend on current context**: Version the context. Keep the
+      existing folder (rename to include version if needed, e.g., `drizzle-orm-0.38/`).
+      Create a new folder for the new version. Update manifest to point to the new folder.
+      Log: "Context versioned: [old] preserved for existing tasks, [new] created for
+      future tasks."
 
-2. **Re-research**: Follow Step 2 with the updated version. Focus on what changed between
-   the old and new versions.
+26. Re-research: Follow steps 8-12 with the updated version. Focus on what changed between
+    the old and new versions.
 
-3. **Present changes to user**: Show a diff summary — "Here's what changed in the context
-   for [library] between [old version] and [new version]: [changes]."
+27. Present changes to user: Show a diff summary -- "Here's what changed in the context
+    for [library] between [old version] and [new version]: [changes]."
 
 ---
 
 ### Standard Loading Protocol
 
 All skills follow this protocol to consume context files. This section is the canonical
-reference — skills link here rather than duplicating the logic.
+reference -- skills link here rather than duplicating the logic.
 
 ```
 1. Read {docsRoot}/context/.context-manifest.md (Layer 1)
-   → Know what libraries have context, their versions and tags
-   → If manifest doesn't exist: no context available, proceed without
+   -> Know what libraries have context, their versions and tags
+   -> If manifest doesn't exist: no context available, proceed without
 
 2. Determine relevant libraries for current task:
-   - cl-implementer: task → spec reference → libraries mentioned in spec + task description
+   - cl-implementer: task -> spec reference -> libraries mentioned in spec + task description
    - Spec-gen: all libraries in Architecture doc tech stack
    - UI-designer: styling/component libraries from Architecture doc
    - Researcher: libraries relevant to research topic
 
 3. For each relevant library:
-   a. Read _meta.md (Layer 2) — overview + file inventory
+   a. Read _meta.md (Layer 2) -- overview + file inventory
    b. Match task context against file tags in the inventory:
-      - Task mentions "database schema" → match files tagged "schema", "database"
-      - Task mentions "migration" → match files tagged "migration"
+      - Task mentions "database schema" -> match files tagged "schema", "database"
+      - Task mentions "migration" -> match files tagged "migration"
       - When in doubt, load the "core" tagged files
    c. Load matching detail files (Layer 3)
    d. If no specific match, load overview.md (always safe)
@@ -405,7 +414,7 @@ details:
 - **ORM**: Drizzle ORM (see context/drizzle-orm/ for version details and API patterns)
 ```
 
-This is optional — not mandatory. Architecture docs can use either style, or both. When
+This is optional -- not mandatory. Architecture docs can use either style, or both. When
 both an inline version and a context file reference exist, the context file is the
 authoritative source for version and API details.
 
@@ -414,3 +423,19 @@ needed for a version bump.
 
 **Risk**: Architecture doc becomes less self-contained. Mitigate by keeping the library
 name in the Architecture doc (just not the version-specific details).
+
+## Report
+
+Output: Per-library context files in `{docsRoot}/context/` with manifest
+
+### On success
+
+```
+CONTEXT: LOADED | Sources: N | Libraries: [list] | Files: [count]
+```
+
+### On failure
+
+```
+CONTEXT: FAILED | Reason: [reason]
+```

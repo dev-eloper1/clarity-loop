@@ -1,15 +1,47 @@
+---
+mode: spec
+tier: guided
+depends-on: [spec-mode.md, cross-cutting-specs.md]
+state-files: [DECISIONS.md, CONFIG_SPEC.md, .spec-manifest.md, .context-manifest.md]
+---
+
 ## Operational and Backend Policy Specifications
 
 Reference for generating operational specification artifacts during spec mode (Step 4e).
 Loaded on-demand from `cross-cutting-specs.md` when the system has deployment targets,
 external integrations, data persistence, or backend endpoints.
 
-### Config Spec (CONFIG_SPEC.md)
+## Variables
+
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | Project config / .clarity-loop.json | Yes | Root path for all documentation artifacts |
+| DECISIONS.md | {docsRoot}/ | No | Captured decisions for deployment, config, observability, performance, data |
+| Architecture doc | {docsRoot}/system/ | Yes | System architecture for extracting operational concerns |
+| .context-manifest.md | {docsRoot}/context/ | No | Library context manifest for compatibility checks |
+| package.json | project root | No | Dependency file for compatibility sub-check |
+
+## Guidelines
+
+1. Extract all operational decisions from DECISIONS.md using category tags (`deployment`, `config`, `observability`, `performance`, `data-modeling`, `data-lifecycle`, `dependencies`).
+2. Mark unspecified concerns with `[DECISION NEEDED]` markers throughout.
+3. Generate CONFIG_SPEC.md whenever the system has any environment-dependent behavior.
+4. Generate migration notes for each data spec that defines a schema.
+5. Generate observability sections for each service/module spec.
+6. Generate integration specs for each external service the system integrates with.
+7. Generate backend policies whenever the system has backend API endpoints — error responses reference the error taxonomy from cross-cutting-specs.
+8. For brownfield projects, detect conventions from the existing codebase; for greenfield, use framework conventions as defaults.
+9. If no performance decisions exist, flag as advisory rather than blocking.
+10. Dependency compatibility checks are advisory — the user can proceed with awareness.
+
+## Process
+
+### Phase 1: Config Spec
 
 If the system has any environment-dependent behavior (different DB URLs, feature flags,
 API keys), generate `{docsRoot}/specs/CONFIG_SPEC.md`:
 
-#### Environment Variables
+**Environment Variables**
 
 Table of every environment variable the system needs:
 
@@ -22,7 +54,7 @@ Table of every environment variable the system needs:
 Extracted from Architecture doc, DECISIONS.md (`deployment`, `config` categories), and
 per-module specs. Missing values get `[DECISION NEEDED]` markers.
 
-#### Deployment Targets
+**Deployment Targets**
 
 | Target | Config Differences | Feature Flags | Notes |
 |--------|-------------------|---------------|-------|
@@ -30,13 +62,13 @@ per-module specs. Missing values get `[DECISION NEEDED]` markers.
 | staging | Managed DB, info logging | All enabled | Mirrors prod |
 | production | Managed DB, warn logging, CDN | Per-flag config | Rate limiting active |
 
-#### Feature Flags
+**Feature Flags**
 
 | Flag | Type | Default | Scope | Description |
 |------|------|---------|-------|-------------|
 | [flag name] | boolean | false | [who controls] | [what it toggles] |
 
-#### Config Validation
+**Config Validation**
 
 Specify what happens at startup when configuration is invalid:
 - Missing required variable: crash with clear error message listing missing vars
@@ -44,11 +76,13 @@ Specify what happens at startup when configuration is invalid:
 - Missing optional variable: use default, log warning
 - Unknown variable: ignore (forward compatibility)
 
-### Migration Strategy
+**Checkpoint**: CONFIG_SPEC.md covers all environment variables, deployment targets, feature flags, and validation behavior.
+
+### Phase 2: Migration Strategy
 
 For each data spec that defines a schema, add a migration notes section:
 
-#### Per-Schema Migration Notes
+**Per-Schema Migration Notes**
 
 | Concern | Specification |
 |---------|--------------|
@@ -61,11 +95,13 @@ For each data spec that defines a schema, add a migration notes section:
 | **Zero-downtime notes** | [Can this migration run while old code serves? Additive-only?] |
 | **Data transformation** | [Any column type changes, splits, or merges requiring data migration] |
 
-### Observability
+**Checkpoint**: Every data schema has migration notes with tool, ordering, rollback, and seed data specified.
+
+### Phase 3: Observability
 
 For each service/module spec, add an observability section:
 
-#### Per-Module Observability
+**Per-Module Observability**
 
 | Concern | Specification |
 |---------|--------------|
@@ -75,7 +111,7 @@ For each service/module spec, add an observability section:
 | **Health check** | [What this module contributes to health status] |
 | **Tracing** | [Span name, attributes, parent span expectations] |
 
-#### System-Level Observability
+**System-Level Observability**
 
 If the architecture doc or DECISIONS.md describes observability strategy:
 
@@ -87,12 +123,14 @@ If the architecture doc or DECISIONS.md describes observability strategy:
 | **Metrics collection** | [from DECISIONS.md or default: application metrics via structured logs] |
 | **Error tracking** | [Sentry, Bugsnag, or structured error logs — from DECISIONS.md] |
 
-### Integration Contracts (Per External Service)
+**Checkpoint**: Every service module has observability notes; system-level observability is specified.
+
+### Phase 4: Integration Contracts
 
 For each external service the system integrates with (Stripe, Twilio, Auth0, AWS S3,
 etc.), generate a spec in `{docsRoot}/specs/integrations/`:
 
-#### Integration Spec Structure
+**Integration Spec Structure**
 
 ```
 # [Service Name] Integration Spec
@@ -142,12 +180,14 @@ etc.), generate a spec in `{docsRoot}/specs/integrations/`:
 | [code] | [meaning] | [yes/no + strategy] | [what our system does] |
 ```
 
-### Backend Policies (Cross-Cutting)
+**Checkpoint**: Each external service has an integration spec with endpoints, payload contracts, and error handling.
+
+### Phase 5: Backend Policies
 
 If the system has backend API endpoints, generate a backend policies section that all
 endpoint specs inherit:
 
-#### Idempotency
+**Idempotency**
 
 | Concern | Policy |
 |---------|--------|
@@ -156,7 +196,7 @@ endpoint specs inherit:
 | **Key storage** | [Cache/DB with TTL — from DECISIONS.md or default: 24h] |
 | **Duplicate handling** | Return cached response, don't re-execute |
 
-#### Transaction Boundaries
+**Transaction Boundaries**
 
 | Concern | Policy |
 |---------|--------|
@@ -164,16 +204,16 @@ endpoint specs inherit:
 | **Partial failure** | [Rollback entire transaction, no partial state] |
 | **Distributed transactions** | [Saga pattern, compensation, or avoid — from architecture] |
 
-#### Caching Strategy
+**Caching Strategy**
 
 | Concern | Policy |
 |---------|--------|
 | **Cache layer** | [In-memory, Redis, CDN — from DECISIONS.md or architecture] |
 | **Cache keys** | [Key naming convention] |
 | **Invalidation** | [TTL-based, event-based, or manual — per resource type] |
-| **Cache-aside pattern** | [Read: check cache → miss → DB → populate cache] |
+| **Cache-aside pattern** | [Read: check cache -> miss -> DB -> populate cache] |
 
-#### Validation Authority
+**Validation Authority**
 
 | Layer | Validates | Authoritative For |
 |-------|-----------|------------------|
@@ -182,9 +222,11 @@ endpoint specs inherit:
 | Service | Business logic, cross-entity | Complex validation (authoritative) |
 | Database | Constraints, uniqueness, FK | Data integrity (last resort) |
 
-Error responses reference the error taxonomy (from P3's Step 4b).
+Error responses reference the error taxonomy (from cross-cutting-specs Step 4b).
 
-### Data Modeling (Per Entity)
+**Checkpoint**: Backend policies cover idempotency, transactions, caching, and validation authority.
+
+### Phase 6: Data Modeling
 
 For each entity in the data spec, add a data modeling section:
 
@@ -200,7 +242,9 @@ For each entity in the data spec, add a data modeling section:
 Extracted from DECISIONS.md (`data-modeling`, `data-lifecycle` categories) and
 architecture doc. Unspecified concerns get `[DECISION NEEDED]` markers.
 
-### Code Conventions
+**Checkpoint**: Every entity has data modeling notes with deletion, cascade, temporal, and volume projections.
+
+### Phase 7: Code Conventions
 
 If no code convention decisions exist in DECISIONS.md, generate defaults from the
 project's existing codebase (brownfield) or framework conventions (greenfield):
@@ -214,7 +258,9 @@ project's existing codebase (brownfield) or framework conventions (greenfield):
 | **Test file location** | [Co-located / __tests__ directory — from TEST_SPEC.md or DECISIONS.md] |
 | **Naming conventions** | [Service naming: getX/fetchX/listX — from existing patterns or DECISIONS.md] |
 
-### Performance Criteria
+**Checkpoint**: Code conventions are either detected from codebase or flagged for decision.
+
+### Phase 8: Performance Criteria
 
 For each spec, add performance acceptance criteria extracted from DECISIONS.md
 (`performance` category):
@@ -229,7 +275,9 @@ For each spec, add performance acceptance criteria extracted from DECISIONS.md
 If no performance decisions exist, flag as advisory: "No performance budgets found in
 DECISIONS.md. Consider recording targets during bootstrap or before implementation."
 
-### Dependency Compatibility
+**Checkpoint**: Performance criteria are populated from decisions or flagged as advisory gaps.
+
+### Phase 9: Dependency Compatibility
 
 During the waterfall gate check (Step 1 of spec-mode.md), add a compatibility sub-check:
 
@@ -243,3 +291,10 @@ During the waterfall gate check (Step 1 of spec-mode.md), add a compatibility su
    `| Dependency compatibility | Warning | [library A] and [library B] may conflict: [reason] |`
 
 This is advisory — the user can proceed with awareness.
+
+**Checkpoint**: All library pairs checked for known incompatibilities.
+
+## Output
+
+- **Primary**: `{docsRoot}/specs/CONFIG_SPEC.md`
+- **Additional**: Migration notes (per data spec), observability sections (per service spec), integration specs (in `{docsRoot}/specs/integrations/`), backend policies section, data modeling sections (per entity spec), code conventions section, performance criteria (per spec), dependency compatibility notes

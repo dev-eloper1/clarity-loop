@@ -1,3 +1,12 @@
+---
+mode: audit
+tier: guided
+depends-on: []
+state-files:
+  - docs/DECISIONS.md
+  - docs/PARKING.md
+---
+
 ## Audit Mode
 
 A rigorous, comprehensive review of the entire system documentation set. Unlike other modes
@@ -12,38 +21,69 @@ Run an audit when:
 - When something feels "off" but you can't pinpoint it
 - Periodically as hygiene (e.g., every N proposals merged)
 
-### Step 1: Load Everything
+## Variables
 
-This is the one mode where you read EVERYTHING fresh — no manifest, no shortcuts. The whole
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| All system docs | `docs/system/` | Yes | Every file read fresh -- no manifest shortcuts |
+| Previous audit reports | `docs/reviews/audit/AUDIT_*.md` | No | Prior audits for drift analysis and trend comparison |
+| Research history | `docs/research/` | No | Sequence of changes that brought system docs to current state |
+| Proposal history | `docs/proposals/` | No | Proposal sequence for understanding intentional evolution |
+| DECISIONS.md | `docs/DECISIONS.md` | No | Decision log for judgment calls during audit |
+| PARKING.md | `docs/PARKING.md` | No | Parking lot for emerged concepts |
+| Spec gaps | `{docsRoot}/specs/TASKS.md` | No | L1 assumption tracking if spec file exists |
+| Audit output path | `docs/reviews/audit/AUDIT_[YYYY-MM-DD].md` | Yes | Where the audit report is written |
+
+## Guidelines
+
+1. This is the most expensive operation in the pipeline. Don't run it casually. It reads everything, researches external claims, and produces the most detailed report. Reserve it for meaningful checkpoints.
+
+2. Research is part of the audit. Unlike other modes where you're checking consistency, here you're checking correctness. Use web search. Verify technology claims. Check if libraries still work the way the docs say they do.
+
+3. Drift is the most important finding. Individual inconsistencies are fixable. But if the system docs have gradually drifted away from the original vision, that's a deeper problem that individual fixes won't solve. Call it out clearly.
+
+4. Be honest about the health score. Don't grade on a curve. If the docs are in rough shape, say so. The user needs an accurate picture.
+
+5. Track trends. The most valuable audits are the ones that can compare to previous audits. If this is the first audit, note that everything is a baseline. If it's the second+, always include the trend analysis.
+
+6. Don't try to fix everything in the audit. The audit identifies problems. Fixes go through the normal research -> proposal pipeline (or targeted corrections for small issues). The audit report is the input to deciding what to fix next.
+
+## Process
+
+### Phase 1: Load Everything
+
+This is the one mode where you read EVERYTHING fresh -- no manifest, no shortcuts. The whole
 point is to see the docs with clean eyes.
 
-1. **Read every file in `docs/system/`** — Dispatch subagents in parallel, one per doc.
-   Each subagent produces:
-   - Full content summary
-   - All defined terms and their definitions
-   - All architectural decisions and stated rationale
-   - All cross-references to other system docs
-   - Any claims about external technologies or patterns
-   - Anything that reads as aspirational vs. decided
+**Checkpoint**: All inputs loaded before analysis begins.
 
-2. **Read all previous audit reports** — Check `docs/reviews/audit/AUDIT_*.md` for
-   prior audits. These form your baseline for drift analysis.
+Read every file in `docs/system/` -- dispatch subagents in parallel, one per doc.
+Each subagent produces:
+- Full content summary
+- All defined terms and their definitions
+- All architectural decisions and stated rationale
+- All cross-references to other system docs
+- Any claims about external technologies or patterns
+- Anything that reads as aspirational vs. decided
 
-3. **Read the research and proposal history** — Skim `docs/research/` and `docs/proposals/`
-   to understand the sequence of changes that brought the system docs to their current state.
-   This helps distinguish intentional evolution from accidental drift.
+Read all previous audit reports -- check `docs/reviews/audit/AUDIT_*.md` for
+prior audits. These form your baseline for drift analysis.
 
-### Step 2: Eight-Dimension Analysis
+Read the research and proposal history -- skim `docs/research/` and `docs/proposals/`
+to understand the sequence of changes that brought the system docs to their current state.
+This helps distinguish intentional evolution from accidental drift.
 
-Audit is more rigorous than review. You're not checking one proposal against the system —
+### Phase 2: Nine-Dimension Analysis
+
+Audit is more rigorous than review. You're not checking one proposal against the system --
 you're checking the system against itself, against reality, and against its own stated goals.
 
 Use subagents for parallel analysis where dimensions are independent.
 
-#### 1. Internal Consistency (Cross-Document)
+**Checkpoint**: Each dimension assessed independently before producing the report.
 
-Check every pair of system docs for contradictions. This is the most mechanically
-intensive check — dispatch subagents per doc pair if needed.
+**Dimension 1: Internal Consistency (Cross-Document)** -- Check every pair of system docs for contradictions. This is the most mechanically
+intensive check -- dispatch subagents per doc pair if needed.
 
 Look for:
 - **Contradictory statements**: Doc A says X, Doc B says not-X
@@ -52,31 +92,27 @@ Look for:
 - **Stale cross-references**: Doc A references Section X of Doc B, but that section
   was restructured or removed
 - **Redundant specifications**: Same behavior specified in two places with subtle
-  differences — which is authoritative?
+  differences -- which is authoritative?
 - **Architectural inconsistencies**: One doc describes a flow that another doc can't support
 - **Version skew**: One doc was updated by a recent proposal but a related doc wasn't,
   leaving them out of sync
 
-#### 2. Internal Consistency (Within-Document)
-
-Check each doc against itself:
+**Dimension 2: Internal Consistency (Within-Document)** -- Check each doc against itself:
 - Later sections contradicting earlier ones
 - Definitions that shift meaning partway through
 - Sections that no longer fit the doc's stated scope
 - Orphaned references to removed content
 - TODOs, TBDs, or placeholder content that was never filled in
 
-#### 3. Technical Correctness
-
-This is where the "research" aspect comes in. Don't just check if docs are consistent
-with each other — check if what they claim is actually correct.
+**Dimension 3: Technical Correctness** -- This is where the "research" aspect comes in. Don't just check if docs are consistent
+with each other -- check if what they claim is actually correct.
 
 - **Technology claims**: If a doc makes claims about a specific technology's capabilities,
   verify that's accurate. Use web search for current capabilities.
 - **Architecture claims**: If a doc claims a certain pattern provides specific guarantees,
   research the actual guarantees and failure modes. Flag overstated claims.
 - **Pattern claims**: If a doc references a design pattern or industry standard, verify
-  it's applied correctly — not just name-dropped.
+  it's applied correctly -- not just name-dropped.
 - **Feasibility**: Are there sections that describe something that sounds good on paper
   but has known implementation challenges? Flag with evidence.
 - **Security claims**: Any security-related claims should be verified against current
@@ -85,9 +121,7 @@ with each other — check if what they claim is actually correct.
 Use web search to validate technical claims. This is the one mode where external research
 is part of the review itself.
 
-#### 4. Goal Alignment & Drift
-
-This is the most valuable and least mechanical check. Read the PRD (or equivalent goal
+**Dimension 4: Goal Alignment & Drift** -- This is the most valuable and least mechanical check. Read the PRD (or equivalent goal
 document) and ask: do the system docs as a whole still serve these goals?
 
 - **Feature creep in docs**: Have proposals added complexity that wasn't in the original
@@ -114,39 +148,33 @@ document) and ask: do the system docs as a whole still serve these goals?
   - Are communication patterns as described? (e.g., architecture says event-driven but
     implementation uses direct calls)
   - Do module boundaries in code match the architecture's descriptions?
-  - This catches the most insidious form of drift — where individual tasks are correct
+  - This catches the most insidious form of drift -- where individual tasks are correct
     but collectively alter the architecture.
 
 If previous audit reports exist, compare: are the drift issues getting better or worse?
 Are the same concerns being flagged repeatedly without resolution?
 
-#### 5. Completeness
-
-Is anything obviously missing?
+**Dimension 5: Completeness** -- Is anything obviously missing?
 - Features described in requirements but not covered in architecture or technical design
 - Architectural components referenced in one doc but never defined anywhere
 - Integration points mentioned but not specified
-- Error handling and failure modes — are they addressed or hand-waved?
-- Migration and upgrade paths — are they specified for breaking changes?
-- Operational specifications — are deployment, configuration, observability, and
+- Error handling and failure modes -- are they addressed or hand-waved?
+- Migration and upgrade paths -- are they specified for breaking changes?
+- Operational specifications -- are deployment, configuration, observability, and
   migration concerns addressed? (CONFIG_SPEC.md, observability sections, migration notes)
-- Backend policy specifications — are cross-cutting concerns like idempotency,
+- Backend policy specifications -- are cross-cutting concerns like idempotency,
   transactions, and caching specified system-wide rather than per-endpoint?
-- Data modeling behavioral decisions — are deletion strategy, cascade behavior, and
+- Data modeling behavioral decisions -- are deletion strategy, cascade behavior, and
   temporal requirements specified per entity rather than left to implementer judgment?
 
-#### 6. Coherence of Abstraction Level
-
-Do the docs maintain consistent abstraction levels?
+**Dimension 6: Coherence of Abstraction Level** -- Do the docs maintain consistent abstraction levels?
 - Is the architecture doc staying architectural, or does it dive into implementation details
   that belong in technical design?
 - Is the technical design staying technical, or does it re-state requirement-level content?
-- Are there docs that try to be everything — part spec, part tutorial, part rationale?
+- Are there docs that try to be everything -- part spec, part tutorial, part rationale?
 - Is the separation of concerns between docs clear and maintained?
 
-#### 7. Design Completeness
-
-If system docs reference UI features (search for "interface", "dashboard", "UI", "frontend",
+**Dimension 7: Design Completeness** -- If system docs reference UI features (search for "interface", "dashboard", "UI", "frontend",
 "screen", "page", "view", "component", "layout"), check for corresponding design artifacts:
 
 - Does `{docsRoot}/designs/` exist and contain design files?
@@ -163,23 +191,23 @@ Flag findings:
 
 If system docs don't reference UI features, skip this dimension entirely.
 
-#### 8. Staleness
-
-Are there parts of the docs that appear to be outdated?
+**Dimension 8: Staleness** -- Are there parts of the docs that appear to be outdated?
 - References to approaches or tools that have been superseded
 - Sections that describe "planned" or "future" features that should have been resolved
 - Content that predates major architectural decisions and hasn't been updated
 - Dates, version numbers, or status fields that are clearly stale
 
-#### 9. Parking Lot Health
-
+**Dimension 9: Parking Lot Health** --
 1. Count active items. 0-14: healthy. 15-24: suggest triage. 25+: flag.
 2. Architectural items older than 3 days: re-surface with emphasis.
 3. Items not referenced since parking: flag as potentially stale.
 4. Pull-based check: any active items that a completed mode could have addressed?
 
-### Step 3: Produce the Audit Report
+### Phase 3: Produce the Audit Report
 
+**Checkpoint**: All dimensions assessed before writing the report.
+
+Create the report at:
 ```
 docs/reviews/audit/AUDIT_[DATE].md
 ```
@@ -213,7 +241,7 @@ concerns?
 | Design completeness | ... | ... | ... |
 | Staleness | ... | ... | ... |
 
-Trend column requires a previous audit. For the first audit, use "—" (baseline).
+Trend column requires a previous audit. For the first audit, use "--" (baseline).
 
 ## Critical Findings
 
@@ -227,7 +255,7 @@ docs that contain these errors.
 - **Finding**: What's wrong
 - **Evidence**: Specific quotes, section references, or research results
 - **Impact**: What goes wrong if this isn't fixed
-- **Recommended action**: How to fix — this may require a targeted proposal
+- **Recommended action**: How to fix -- this may require a targeted proposal
 
 ## Warnings
 
@@ -281,9 +309,9 @@ A matrix showing consistency status between every pair of system docs:
 
 |  | Doc A | Doc B | Doc C | ... |
 |--|-------|-------|-------|-----|
-| **Doc A** | — | Status | Status | ... |
-| **Doc B** | | — | Status | ... |
-| **Doc C** | | | — | ... |
+| **Doc A** | -- | Status | Status | ... |
+| **Doc B** | | -- | Status | ... |
+| **Doc C** | | | -- | ... |
 
 Detail any tension or conflict entries in the findings sections above.
 
@@ -297,9 +325,9 @@ Detail any tension or conflict entries in the findings sections above.
 ## Recommendations
 
 Prioritized list of actions. Distinguish between:
-1. **Immediate** — fix before merging new proposals (critical findings)
-2. **Next cycle** — address in the next proposal round (warnings)
-3. **Hygiene** — clean up when convenient (staleness, minor inconsistencies)
+1. **Immediate** -- fix before merging new proposals (critical findings)
+2. **Next cycle** -- address in the next proposal round (warnings)
+3. **Hygiene** -- clean up when convenient (staleness, minor inconsistencies)
 
 For significant fixes, note whether they should go through the full research -> proposal
 pipeline or can be handled as targeted corrections.
@@ -317,40 +345,25 @@ Are the previous audit's recommendations being addressed, or are they accumulati
 List any unresolved recommendations from the previous audit.
 ```
 
-### Step 4: Update Tracking
+### Phase 4: Update Tracking
 
 After writing the audit report:
-1. If the audit reveals emerged concepts, add them to PARKING.md per the parking protocol
-2. **Log audit decisions to DECISIONS.md** — For each finding that required a judgment
-   call, log a Decision entry:
-   - Fix-vs-research: "This drift needs a correction" vs. "This needs a full research cycle"
-   - Severity assessment: "This is critical and blocks implementation" vs. "This is cosmetic"
-   - Deprecation: "This section is no longer accurate and should be removed or rewritten"
-   Use Pipeline Phase `audit`, Source the audit report finding number. Every "Confirmed
-   drift" and "Recommend action" that involves choosing a course of action should have a
-   corresponding entry
 
-### Guidelines for Audit Mode
+If the audit reveals emerged concepts, add them to PARKING.md per the parking protocol.
 
-- **This is the most expensive operation in the pipeline.** Don't run it casually. It
-  reads everything, researches external claims, and produces the most detailed report.
-  Reserve it for meaningful checkpoints.
+**Log audit decisions to DECISIONS.md** -- For each finding that required a judgment
+call, log a Decision entry:
+- Fix-vs-research: "This drift needs a correction" vs. "This needs a full research cycle"
+- Severity assessment: "This is critical and blocks implementation" vs. "This is cosmetic"
+- Deprecation: "This section is no longer accurate and should be removed or rewritten"
+Use Pipeline Phase `audit`, Source the audit report finding number. Every "Confirmed
+drift" and "Recommend action" that involves choosing a course of action should have a
+corresponding entry.
 
-- **Research is part of the audit.** Unlike other modes where you're checking consistency,
-  here you're checking correctness. Use web search. Verify technology claims. Check if
-  libraries still work the way the docs say they do.
+## Output
 
-- **Drift is the most important finding.** Individual inconsistencies are fixable. But
-  if the system docs have gradually drifted away from the original vision, that's a
-  deeper problem that individual fixes won't solve. Call it out clearly.
+Primary artifact: `docs/reviews/audit/AUDIT_[YYYY-MM-DD].md`
 
-- **Be honest about the health score.** Don't grade on a curve. If the docs are in rough
-  shape, say so. The user needs an accurate picture.
-
-- **Track trends.** The most valuable audits are the ones that can compare to previous
-  audits. If this is the first audit, note that everything is a baseline. If it's the
-  second+, always include the trend analysis.
-
-- **Don't try to fix everything in the audit.** The audit identifies problems. Fixes go
-  through the normal research -> proposal pipeline (or targeted corrections for small
-  issues). The audit report is the input to deciding what to fix next.
+Additional outputs:
+- PARKING.md entries for emerged concepts
+- DECISIONS.md entries for audit judgment calls

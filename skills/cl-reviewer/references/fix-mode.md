@@ -1,9 +1,26 @@
+---
+mode: fix
+tier: structured
+depends-on:
+  - re-review-mode.md
+state-files:
+  - docs/PROPOSAL_TRACKER.md
+---
+
 ## Fix Mode
 
 Fix mode helps the user address blocking issues identified in a proposal review. Instead of
 the user reading a review and figuring out what to change themselves, fix mode reads the
 review, explains each issue in context, suggests specific edits, and applies them to the
 proposal. After all fixes are applied, it auto-triggers a re-review.
+
+## Variables
+
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| Proposal file | `docs/proposals/P-NNN-slug.md` | Yes | The proposal to fix |
+| Latest review | `docs/reviews/proposals/REVIEW_P-NNN_v[highest].md` | Yes | Source of blocking issues to address |
+| All review files | `docs/reviews/proposals/REVIEW_P-NNN_v*.md` | No | Previous reviews for context on recurring issues |
 
 ### When to Use
 
@@ -16,67 +33,80 @@ Fix mode triggers when:
 
 ### Prerequisites
 
-1. **A proposal exists** — Read the proposal file from `docs/proposals/`
-2. **A review exists** — At least one `REVIEW_P-NNN_v*.md` in `docs/reviews/proposals/`
-3. **The review has blocking issues** — If the latest review is APPROVE with no blocking
-   issues, there's nothing to fix. Tell the user: "The latest review is APPROVE — no
+1. **A proposal exists** -- Read the proposal file from `docs/proposals/`
+2. **A review exists** -- At least one `REVIEW_P-NNN_v*.md` in `docs/reviews/proposals/`
+3. **The review has blocking issues** -- If the latest review is APPROVE with no blocking
+   issues, there's nothing to fix. Tell the user: "The latest review is APPROVE -- no
    blocking issues to fix. Ready for merge."
 
-### Process
+## Workflow
 
-#### Step 1: Read the Review and Proposal
+### Phase 1: Read the Review and Proposal
 
-1. Read the latest review file (`REVIEW_P-NNN_v[highest].md`)
-2. Read the proposal file
-3. Extract all **Blocking Issues** from the review — these are the items that must be
-   resolved before the proposal can be approved
+1. Read the latest review file (`REVIEW_P-NNN_v[highest].md`).
+2. Read the proposal file.
+3. Extract all **Blocking Issues** from the review -- these are the items that must be
+   resolved before the proposal can be approved.
 
-#### Step 2: Present the Issues
+**Verify**: Latest review and proposal loaded. Blocking issues extracted.
 
-For each blocking issue, present it to the user with context:
+**On failure**: If no review exists, stop and tell the user to run a review first. If review is APPROVE with no blocking issues, inform user and suggest merge.
 
-```
-## Blocking Issue #1: [Title from review]
+### Phase 2: Present the Issues
 
-**Dimension**: [which review dimension — value, coherence, consistency, etc.]
-**Where in proposal**: [section/line reference]
-**The issue**: [what the reviewer found]
-**Why it matters**: [impact on the system]
+4. For each blocking issue, present it to the user with context:
 
-**Suggested fix**: [your specific suggestion for how to edit the proposal to resolve this]
-```
+   ```
+   ## Blocking Issue #1: [Title from review]
 
-After presenting all issues, ask: "I'll apply these fixes to the proposal. Want me to
-proceed with all of them, or do you want to discuss any first?"
+   **Dimension**: [which review dimension -- value, coherence, consistency, etc.]
+   **Where in proposal**: [section/line reference]
+   **The issue**: [what the reviewer found]
+   **Why it matters**: [impact on the system]
 
-#### Step 3: Apply Fixes
+   **Suggested fix**: [your specific suggestion for how to edit the proposal to resolve this]
+   ```
 
-For each approved fix:
-1. Read the relevant section of the proposal
-2. Apply the edit — this modifies the proposal file in `docs/proposals/`, NOT system docs
-3. No hook bypass needed — proposals aren't protected
+5. After presenting all issues, ask: "I'll apply these fixes to the proposal. Want me to
+   proceed with all of them, or do you want to discuss any first?"
 
-Keep fixes focused on the blocking issue. Don't restructure the proposal, don't add new
-content beyond what's needed to resolve the issue, and don't change things the review
-didn't flag.
+**Verify**: All blocking issues presented to user with suggested fixes. User approval obtained.
 
-#### Step 4: Summary and Re-Review
+### Phase 3: Apply Fixes
 
-After all fixes are applied:
-1. Summarize what was changed: "Applied [N] fixes to P-NNN: [brief list]"
-2. Tell the user: "Proposal updated. Running re-review to check the fixes and scan for
-   regressions."
-3. Auto-trigger re-review mode (see `references/re-review-mode.md`)
+6. For each approved fix:
+   1. Read the relevant section of the proposal
+   2. Apply the edit -- this modifies the proposal file in `docs/proposals/`, NOT system docs
+   3. No hook bypass needed -- proposals aren't protected
 
-### Non-Blocking Suggestions
+7. Keep fixes focused on the blocking issue. Don't restructure the proposal, don't add new
+   content beyond what's needed to resolve the issue, and don't change things the review
+   didn't flag.
+
+**Verify**: Each fix applied to the correct section of the proposal. No unrelated changes made.
+
+**On failure**: If a fix can't be applied cleanly, flag to user before proceeding.
+
+### Phase 4: Handle Non-Blocking Suggestions
 
 The review may also have **Non-Blocking Suggestions**. These are improvements that aren't
 required for approval. During fix mode:
 
-- Present them separately from blocking issues
-- Ask the user if they want to address any of them while we're editing
-- If yes, include them in the fix batch
-- If no, they can be ignored — the proposal can still be approved without them
+8. Present them separately from blocking issues.
+9. Ask the user if they want to address any of them while we're editing.
+10. If yes, include them in the fix batch.
+11. If no, they can be ignored -- the proposal can still be approved without them.
+
+### Phase 5: Summary and Re-Review
+
+After all fixes are applied:
+
+12. Summarize what was changed: "Applied [N] fixes to P-NNN: [brief list]"
+13. Tell the user: "Proposal updated. Running re-review to check the fixes and scan for
+    regressions."
+14. Auto-trigger re-review mode (see `references/re-review-mode.md`).
+
+**Verify**: All fixes summarized. Re-review auto-triggered.
 
 ### Edge Cases
 
@@ -87,10 +117,24 @@ clear header, then non-blocking suggestions separately. Don't mix them.
 issues may already be resolved. The latest review's issue list is the current state.
 
 **User disagrees with a blocking issue**: If the user says "that's not actually a problem",
-don't apply the fix. Instead, note it as a discussion point — the re-review will assess
+don't apply the fix. Instead, note it as a discussion point -- the re-review will assess
 whether the reviewer's concern was valid. The user can add a rationale to the proposal
 explaining why they disagree.
 
 **Fix introduces a new problem**: If while fixing issue A you notice the fix creates a
 tension with another part of the proposal, flag it to the user before applying. Don't
 silently introduce new issues.
+
+## Report
+
+Output: Updated proposal at `docs/proposals/P-NNN-slug.md` plus auto-triggered re-review
+
+### On success
+```
+FIX: COMPLETE | Issues: N/N resolved
+```
+
+### On failure
+```
+FIX: PARTIAL | Resolved: M/N
+```

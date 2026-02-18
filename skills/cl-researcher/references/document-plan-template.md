@@ -1,33 +1,53 @@
+---
+mode: document-plan-template
+tier: guided
+depends-on: [bootstrap-guide.md]
+state-files: [.manifest.md]
+---
+
 # Document Structure Plan Template
 
 Use this template when the user has approved research (status = `approved`) and is ready
 to plan the document structure before generating a proposal.
 
-## Purpose
+## Variables
 
-Document structure planning answers: "What docs do I need, and how do they relate?"
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| Approved research doc | docs/research/R-NNN-TOPIC.md | Yes | The research doc driving this structure plan |
+| System doc manifest | docs/system/.manifest.md | Yes | Current document landscape -- what exists, sections, cross-references |
+| docs/system/ contents | Filesystem scan | Yes | Whether system docs exist (determines which heuristic to apply) |
 
-This happens AFTER research is approved but BEFORE proposal generation. The structure is
-suggested by the skill, confirmed by the human, and then locked — the proposal must follow
-the locked structure.
+## Guidelines
+
+1. Don't over-structure. If the research scope maps cleanly to modifications in 1-2 existing docs, the plan is just a table with 2 rows. Don't create new docs when existing ones will do.
+2. Respect the existing landscape. The plan should fit naturally into the project's current doc structure. Don't reorganize everything just because one new topic was researched.
+3. Section outlines are just outlines. Don't write content -- that's the proposal's job. The plan establishes structure; the proposal fills it in.
+4. Lock means lock. Once the user confirms, the structure is fixed. If the proposal generation process reveals that the structure needs changes, stop and ask the user rather than silently restructuring.
 
 ## Process
 
-### Step 1: Read the Manifest
+### Phase 1: Context Gathering
+
+#### Step 1: Read the Manifest
 
 Read `docs/system/.manifest.md` to understand the current document landscape:
 - What system docs exist
 - What sections each contains
 - How they cross-reference each other
 
-### Step 2: Analyze Research Scope
+#### Step 2: Analyze Research Scope
 
 From the approved research doc, determine:
 - How many system docs would this touch?
 - Does this need new docs or just modifications to existing ones?
 - Are there cross-cutting concerns that span multiple docs?
 
-### Step 3: Apply the Organic Growth Heuristic
+**Checkpoint**: Manifest read, research scope analyzed, impact assessment complete.
+
+### Phase 2: Structure Decision
+
+#### Step 3: Apply the Organic Growth Heuristic
 
 First, determine which heuristic applies based on the current doc landscape:
 
@@ -52,7 +72,7 @@ Single idea
         -> Restructure proposal: split/merge/reorganize existing docs
 ```
 
-**When no system docs exist yet** (empty landscape — post-bootstrap or first research):
+**When no system docs exist yet** (empty landscape -- post-bootstrap or first research):
 
 ```
 Research scope
@@ -77,7 +97,11 @@ The empty-landscape heuristic is about "what docs does this project need?" rathe
 docs (or only has stubs from bootstrap). Once the project has substantive system docs,
 always use the existing-landscape heuristic above.
 
-### Step 4: Suggest and Confirm
+**Checkpoint**: Appropriate heuristic selected and applied, structure draft ready.
+
+### Phase 3: Confirmation
+
+#### Step 4: Suggest and Confirm
 
 Present the suggested structure to the user with rationale. The user can:
 - **Approve** as-is -> structure is locked
@@ -85,6 +109,8 @@ Present the suggested structure to the user with rationale. The user can:
 - **Reject** -> suggest alternative -> loop
 
 Once locked, the structure doesn't change unless the user explicitly requests a restructure.
+
+**Checkpoint**: Structure locked by user confirmation.
 
 ## Template
 
@@ -150,18 +176,9 @@ Brief rationale for the overall document organization:
 [ ] Structure is locked — proposal generation may proceed
 ```
 
-## Guidance
+## Output
 
-**Don't over-structure.** If the research scope maps cleanly to modifications in 1-2
-existing docs, the plan is just a table with 2 rows. Don't create new docs when existing
-ones will do.
+**Primary artifact**: Document structure plan (presented to user, not written to a file unless requested)
 
-**Respect the existing landscape.** The plan should fit naturally into the project's
-current doc structure. Don't reorganize everything just because one new topic was researched.
-
-**Section outlines are just outlines.** Don't write content — that's the proposal's job.
-The plan establishes structure; the proposal fills it in.
-
-**Lock means lock.** Once the user confirms, the structure is fixed. If the proposal
-generation process reveals that the structure needs changes, stop and ask the user rather
-than silently restructuring.
+**Additional outputs**:
+- Locked structure that constrains proposal generation

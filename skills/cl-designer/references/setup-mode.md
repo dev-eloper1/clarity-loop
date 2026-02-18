@@ -1,17 +1,39 @@
+---
+mode: setup
+tier: guided
+depends-on: []
+state-files:
+  - DESIGN_PROGRESS.md
+  - DECISIONS.md
+---
+
 ## Setup Mode
 
 Entry point for the cl-designer skill. Two phases: MCP detection and design discovery.
 Always runs first — other modes gate on setup completion recorded in `DESIGN_PROGRESS.md`.
 
-### Re-Running Setup
+## Variables
 
-If `DESIGN_PROGRESS.md` already exists with completed phases beyond setup (tokens, mockups,
-or build plan), warn the user: "Design progress exists with [completed phases]. Re-running
-setup will reset the design direction — but your generated artifacts (DESIGN_SYSTEM.md,
-UI_SCREENS.md, DESIGN_TASKS.md) will remain. Continue?"
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | `.clarity-loop.json` | Yes | Root directory for design artifacts |
+| DESIGN_PROGRESS.md | `{docsRoot}/designs/` | No | Existing progress file (checked for re-run warning) |
+| DECISIONS.md | `{docsRoot}/decisions/` | No | Existing decisions in categories `design-direction`, `accessibility`, `responsive` |
+| PRD | `docs/system/` or equivalent | Yes | Requirements doc with UI features |
+| Architecture doc | `docs/system/` or equivalent | No | Tech stack context (Tailwind, React, Next.js) |
 
-If the user confirms, overwrite DESIGN_PROGRESS.md and reset all phase statuses to Pending.
-If they cancel, exit setup.
+## Guidelines
+
+1. Always run setup before any other mode — other modes gate on setup completion recorded in `DESIGN_PROGRESS.md`.
+2. If `DESIGN_PROGRESS.md` already exists with completed phases beyond setup (tokens, mockups, or build plan), warn the user before overwriting.
+3. Only Pencil MCP is currently supported for design generation. Figma MCP integration is planned for a future version.
+4. A PRD (or equivalent requirements doc with UI features) must exist before design discovery can proceed. If none exists, direct the user to create system docs first.
+5. Visual references and concrete input short-circuit abstract design preference questions — stop asking as soon as you have enough to work with.
+6. When a component library is named, trigger a mini research cycle to extract default token values, saving significant back-and-forth.
+7. Read DECISIONS.md before asking design preference questions — use existing decisions as defaults.
+8. If Pencil MCP is not available, the same discovery conversation runs, but output is structured markdown specs instead of visual artifacts.
+
+## Process
 
 ### Phase 1: MCP Detection
 
@@ -35,6 +57,8 @@ integration (read/extract from existing Figma files) is planned for a future ver
   instead — same information, no visual artifacts. You can add Pencil MCP later and
   regenerate visuals."
 
+**Checkpoint**: MCP detection results reported to user before proceeding to Phase 2.
+
 ### Phase 2: Design Discovery Conversation
 
 **Gate**: A PRD (or equivalent requirements doc with UI features) must exist in system docs.
@@ -43,8 +67,6 @@ it exists — tech stack context (Tailwind? React? Next.js?) informs design toke
 
 If no PRD exists: "I need a PRD or requirements doc with UI features to design against.
 Run `/cl-researcher research` to create system docs first, then come back for design."
-
----
 
 #### Step 1: Visual References and Inspiration
 
@@ -96,6 +118,8 @@ Ask (in this order — stop as soon as you have enough to work with):
    - Ask follow-up: "What specifically do you like about [app]? The layout? Colors?
      How it feels to use?"
 
+**Checkpoint**: Sufficient visual input gathered (screenshots, component library, or inspiration) before moving to design preferences.
+
 #### Step 2: Design Preferences (Generate-Confirm)
 
 **Read DECISIONS.md first.** Check for existing decisions in categories `design-direction`,
@@ -140,6 +164,8 @@ conversation:
 After the freeform conversation, still generate the summary table (Step 4: Confirm
 Design Direction) for explicit confirmation.
 
+**Checkpoint**: Design preferences confirmed (via generate-confirm table or freeform conversation summary).
+
 #### Step 3: Style Guide (Pencil path only)
 
 If Pencil MCP is available:
@@ -160,7 +186,7 @@ Summarize everything: "Based on our discussion, here's the design direction:
 
 Does this capture what you're looking for?"
 
----
+**Checkpoint**: User confirms design direction before recording to DESIGN_PROGRESS.md.
 
 #### Markdown Fallback Note
 
@@ -169,9 +195,7 @@ Pencil MCP isn't available, I'll capture your preferences and produce structured
 specs. These document the same design decisions — tokens, components, screens — just without
 visual artifacts."
 
----
-
-### Record to DESIGN_PROGRESS.md
+### Phase 3: Record to DESIGN_PROGRESS.md
 
 After completing both phases, write `{docsRoot}/designs/DESIGN_PROGRESS.md`:
 
@@ -227,5 +251,18 @@ After completing both phases, write `{docsRoot}/designs/DESIGN_PROGRESS.md`:
 - **Status**: Pending
 ```
 
-Tell the user: "Setup complete. Design direction captured. Run `/cl-designer tokens` to
-generate the design system."
+### Re-Running Setup
+
+If `DESIGN_PROGRESS.md` already exists with completed phases beyond setup (tokens, mockups,
+or build plan), warn the user: "Design progress exists with [completed phases]. Re-running
+setup will reset the design direction — but your generated artifacts (DESIGN_SYSTEM.md,
+UI_SCREENS.md, DESIGN_TASKS.md) will remain. Continue?"
+
+If the user confirms, overwrite DESIGN_PROGRESS.md and reset all phase statuses to Pending.
+If they cancel, exit setup.
+
+## Output
+
+- **Primary artifact**: `{docsRoot}/designs/DESIGN_PROGRESS.md` (with Setup status set to Complete)
+- **Additional outputs**: MCP detection results, design direction summary, component library research (if applicable)
+- **Next step**: "Setup complete. Design direction captured. Run `/cl-designer tokens` to generate the design system."

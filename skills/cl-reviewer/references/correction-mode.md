@@ -1,8 +1,27 @@
+---
+mode: correction
+tier: guided
+depends-on: []
+state-files:
+  - docs/DECISIONS.md
+  - docs/system/.pipeline-authorized
+---
+
 ## Correction Mode
 
 A lightweight path for targeted fixes that don't warrant the full research -> proposal
 pipeline. Corrections are for issues that already have a clear diagnosis and an obvious
-fix — the audit report or spec review IS the justification.
+fix -- the audit report or spec review IS the justification.
+
+## Variables
+
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| Source finding | Audit, verify, spec review, re-review, or user-identified | Yes | The diagnosis that justifies the fix |
+| Target system docs | `docs/system/` | Yes | Files being corrected |
+| Authorization marker | `docs/system/.pipeline-authorized` | Yes | Created during correction, removed after |
+| DECISIONS.md | `docs/DECISIONS.md` | No | Log judgment calls made during correction |
+| Corrections log | `docs/reviews/proposals/CORRECTIONS_[DATE].md` | Yes | Where the corrections are documented |
 
 ### When to Use Corrections (vs. Full Pipeline)
 
@@ -14,7 +33,7 @@ fix — the audit report or spec review IS the justification.
 - Factual errors caught by audit's technical verification
 - Consistency fixes (align doc B to match doc A when A is authoritative)
 - Orphaned TODOs, stale dates, placeholder content
-- Typos that change meaning (not cosmetic typos — those can wait)
+- Typos that change meaning (not cosmetic typos -- those can wait)
 
 **Use the full pipeline for:**
 - Adding new concepts or capabilities
@@ -29,7 +48,7 @@ explore options or make tradeoffs, it's a research topic.
 
 ### Inputs
 
-Corrections require a **source finding** — the diagnosis that justifies the fix. Valid
+Corrections require a **source finding** -- the diagnosis that justifies the fix. Valid
 sources:
 
 | Source | File Pattern | Example |
@@ -42,15 +61,25 @@ sources:
 If the user asks for corrections without a source finding, ask: "What audit, review, or
 spec check identified these issues? I need a finding to trace the correction back to."
 
-Ad-hoc corrections (user spots something themselves) are also valid — the user's
+Ad-hoc corrections (user spots something themselves) are also valid -- the user's
 observation is the source. Just document it as "User-identified" in the corrections log.
 
-### Process
+## Guidelines
 
-#### Step 1: Build the Corrections Manifest
+1. The manifest is the audit trail. Every correction traces to a source finding. There's no "just change this because I feel like it" -- that goes through the pipeline.
+2. User approves every correction. The manifest is presented before any edits happen. The user can reject individual corrections or all of them.
+3. Scope is strict. Corrections fix what the finding identified. If you notice something else while making corrections, don't fix it in the same session -- capture it as a new finding and handle it separately (either as another correction with user approval, or as a research topic if it's non-trivial).
+4. The marker is temporary. It exists only while corrections are actively being applied. If a session crashes mid-correction, the marker persists -- the next session should check for it, review what was done, and either finish or clean up.
+5. Keep changes minimal and surgical. Don't "improve" surrounding content. Don't restructure. Just fix what the manifest says.
 
-Read the source finding(s) and build a corrections manifest — a lightweight table of
-what needs to change:
+## Process
+
+### Phase 1: Build the Corrections Manifest
+
+Read the source finding(s) and build a corrections manifest -- a lightweight table of
+what needs to change.
+
+**Checkpoint**: Manifest built and ready for user review.
 
 ```markdown
 # Corrections Manifest
@@ -69,41 +98,45 @@ what needs to change:
 ```
 
 Present this to the user: "Here are the corrections I'd make based on [source]. Review
-the manifest — once you approve, I'll make the edits."
+the manifest -- once you approve, I'll make the edits."
 
-#### Step 2: User Approval Gate
+### Phase 2: User Approval Gate
 
-**Wait for explicit user approval.** The corrections manifest IS the proposal — it's just
+Wait for explicit user approval. The corrections manifest IS the proposal -- it's just
 lighter weight. The user must approve before any system doc is touched.
 
+**Checkpoint**: User has approved the corrections (all or subset).
+
 The user can:
-- **Approve all** — proceed with all corrections
-- **Approve some** — remove rows they don't want, proceed with the rest
-- **Reject** — "Actually, correction #2 needs more thought. Let's research that one."
+- **Approve all** -- proceed with all corrections
+- **Approve some** -- remove rows they don't want, proceed with the rest
+- **Reject** -- "Actually, correction #2 needs more thought. Let's research that one."
   Remove it from the manifest and handle it through the full pipeline.
 
-#### Step 3: Create Marker and Apply Corrections
+### Phase 3: Create Marker and Apply Corrections
 
 Once approved:
 
-1. **Create the authorization marker** — Write `docs/system/.pipeline-authorized` with:
+**Checkpoint**: Marker created, corrections applied, marker removed.
 
-   ```
-   operation: correct
-   source: [audit report / verify report / spec review filename]
-   authorized_by: user
-   timestamp: [ISO 8601]
-   ```
+Create the authorization marker -- write `docs/system/.pipeline-authorized` with:
 
-   This tells the PreToolUse hook to allow edits to system docs.
+```
+operation: correct
+source: [audit report / verify report / spec review filename]
+authorized_by: user
+timestamp: [ISO 8601]
+```
 
-2. **Apply each correction** — Edit the system docs. Keep changes minimal and surgical.
-   Don't "improve" surrounding content. Don't restructure. Just fix what the manifest says.
+This tells the PreToolUse hook to allow edits to system docs.
 
-3. **Remove the marker** — Delete `docs/system/.pipeline-authorized` after all
-   corrections are applied.
+Apply each correction -- edit the system docs. Keep changes minimal and surgical.
+Don't "improve" surrounding content. Don't restructure. Just fix what the manifest says.
 
-#### Step 4: Spot-Check Verification
+Remove the marker -- delete `docs/system/.pipeline-authorized` after all
+corrections are applied.
+
+### Phase 4: Spot-Check Verification
 
 Run a lightweight verification on just the corrected sections:
 
@@ -117,11 +150,11 @@ check on the specific lines that changed.
 If the spot-check reveals issues, fix them in the same corrections session (the marker
 is still present) or flag them for the user.
 
-#### Step 5: Log and Update Tracking
+### Phase 5: Log and Update Tracking
 
 After corrections are applied:
 
-1. **Write a corrections log entry** — Append to `docs/reviews/proposals/CORRECTIONS_[DATE].md`:
+Write a corrections log entry -- append to `docs/reviews/proposals/CORRECTIONS_[DATE].md`:
 
 ```markdown
 # Corrections: [DATE]
@@ -138,43 +171,26 @@ After corrections are applied:
 
 ## Spot-Check Result
 
-[CLEAN — all corrections verified / ISSUES — describe]
+[CLEAN -- all corrections verified / ISSUES -- describe]
 ```
 
-2. **Update DECISIONS.md** — Log a Decision entry for corrections that involved judgment:
-   - Reconciling two conflicting doc sections (which version wins?)
-   - Choosing between multiple valid ways to fix an issue
-   - Deciding that code behavior is correct and docs should match it (or vice versa)
-   Skip for mechanical corrections: broken cross-references, typos, formatting, stale dates.
+Update DECISIONS.md -- log a Decision entry for corrections that involved judgment:
+- Reconciling two conflicting doc sections (which version wins?)
+- Choosing between multiple valid ways to fix an issue
+- Deciding that code behavior is correct and docs should match it (or vice versa)
+Skip for mechanical corrections: broken cross-references, typos, formatting, stale dates.
 
-3. **Tell the user**: "Corrections applied. [N] fixes across [M] files. Spot-check: [result].
-   Corrections log at `docs/reviews/proposals/CORRECTIONS_[DATE].md`."
+Tell the user: "Corrections applied. [N] fixes across [M] files. Spot-check: [result].
+Corrections log at `docs/reviews/proposals/CORRECTIONS_[DATE].md`."
 
 ### What Corrections Mode Does NOT Do
 
-- **No research** — the finding is the research
-- **No proposal** — the corrections manifest is the proposal (lightweight)
-- **No full review** — the audit/spec review already did the analysis
-- **No full verify** — spot-check only, covering just the changed sections
-- **No tracking file ceremony** — corrections don't get RESEARCH_LEDGER or PROPOSAL_TRACKER
+- **No research** -- the finding is the research
+- **No proposal** -- the corrections manifest is the proposal (lightweight)
+- **No full review** -- the audit/spec review already did the analysis
+- **No full verify** -- spot-check only, covering just the changed sections
+- **No tracking file ceremony** -- corrections don't get RESEARCH_LEDGER or PROPOSAL_TRACKER
   entries (they're not research or proposals). They're logged in the corrections file.
-
-### Safety Rails
-
-- **The marker is temporary.** It exists only while corrections are actively being applied.
-  If a session crashes mid-correction, the marker persists — the next session should check
-  for it, review what was done, and either finish or clean up.
-
-- **The manifest is the audit trail.** Every correction traces to a source finding. There's
-  no "just change this because I feel like it" — that goes through the pipeline.
-
-- **User approves every correction.** The manifest is presented before any edits happen.
-  The user can reject individual corrections or all of them.
-
-- **Scope is strict.** Corrections fix what the finding identified. If you notice something
-  else while making corrections, don't fix it in the same session — capture it as a new
-  finding and handle it separately (either as another correction with user approval, or as
-  a research topic if it's non-trivial).
 
 ### Edge Cases
 
@@ -190,3 +206,11 @@ remaining corrections.
 **Large correction sets**: If an audit produces 20+ corrections, batch them. Present
 5-10 at a time for user approval. This prevents a single massive manifest that's hard
 to review.
+
+## Output
+
+Primary artifact: `docs/reviews/proposals/CORRECTIONS_[DATE].md`
+
+Additional outputs:
+- Updated system docs in `docs/system/`
+- DECISIONS.md entries for judgment calls

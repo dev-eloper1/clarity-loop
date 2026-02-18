@@ -1,3 +1,10 @@
+---
+mode: sync
+tier: structured
+depends-on: [start-mode.md, run-mode.md]
+state-files: [TASKS.md, .spec-manifest.md]
+---
+
 ## Sync Mode
 
 Handles spec changes mid-implementation. When upstream changes (new research cycle, audit
@@ -8,19 +15,36 @@ queue to reflect the new reality.
 `.spec-manifest.md` hash differs from TASKS.md's recorded hash). If hashes match:
 "Specs haven't changed since TASKS.md was generated. Nothing to sync."
 
----
+## Variables
 
-### Step 1: Identify Changes
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | Project config / .clarity-loop.json | Yes | Root path for all documentation artifacts |
+| TASKS.md | {docsRoot}/specs/ | Yes | Task tracker with recorded spec version hash and task statuses |
+| .spec-manifest.md | {docsRoot}/specs/ | Yes | Current spec manifest with file list and content hashes |
 
-1. Read current `.spec-manifest.md` — extract file list, content hash, per-section hashes.
-2. Read TASKS.md header — extract recorded spec version hash.
-3. Compare overall hashes. If they differ, proceed to per-task analysis.
+## Workflow
 
----
+### Phase 1: Identify Changes
 
-### Step 2: Per-Task Spec Hash Comparison
+**Step 1.** Read current `.spec-manifest.md` — extract file list, content hash, per-section hashes.
 
-For each task in TASKS.md:
+**Verify**: Manifest read and parsed with all hashes.
+**On failure**: If manifest is malformed, report parse errors and stop.
+
+**Step 2.** Read TASKS.md header — extract recorded spec version hash.
+
+**Verify**: TASKS.md header contains spec version hash.
+**On failure**: If hash missing from TASKS.md, treat all tasks as potentially stale.
+
+**Step 3.** Compare overall hashes. If they differ, proceed to per-task analysis.
+
+**Verify**: Hash comparison complete.
+**On failure**: If hashes match, report "Nothing to sync" and stop.
+
+### Phase 2: Per-Task Spec Hash Comparison
+
+**Step 4.** For each task in TASKS.md:
 
 1. Read the task's `Spec hash` field (recorded hash of the spec section it derives from).
 2. Compute the current hash of that same spec section.
@@ -39,14 +63,15 @@ For each task in TASKS.md:
 | `externally-managed` | Any | External | No action (user owns this) |
 | `user-added` (source) | N/A | User task | No action (no spec to compare against) |
 
----
+**Verify**: Every task in TASKS.md categorized against current spec hashes.
+**On failure**: If a task references a spec section that cannot be found, mark as superseded.
 
-### Step 3: Handle New Spec Sections
+### Phase 3: Handle New Spec Sections
 
-If the new `.spec-manifest.md` contains spec sections that have NO corresponding task in
+**Step 5.** If the new `.spec-manifest.md` contains spec sections that have NO corresponding task in
 TASKS.md:
 
-1. Generate new tasks from the new spec sections (same rules as start-mode Step 3).
+1. Generate new tasks from the new spec sections (same rules as start-mode Phase 3).
 2. Assign sequential IDs continuing from the highest existing ID.
 3. Determine dependencies:
    - Does the new task depend on existing tasks? (Check spec cross-references)
@@ -55,11 +80,12 @@ TASKS.md:
 4. Insert into TASKS.md at the dependency-appropriate position.
 5. Mark new tasks as `source: spec-derived`.
 
----
+**Verify**: All new spec sections have corresponding tasks with correct IDs and dependencies.
+**On failure**: If dependency analysis is ambiguous, flag for user review.
 
-### Step 4: Process Re-Verifications
+### Phase 4: Process Re-Verifications
 
-For tasks marked `needs-re-verification` in Step 2:
+**Step 6.** For tasks marked `needs-re-verification` in Phase 2:
 
 1. Read the task's updated acceptance criteria (from new spec).
 2. Check each criterion against the current code.
@@ -72,16 +98,20 @@ For tasks marked `needs-re-verification` in Step 2:
    - **Criteria fundamentally changed**: Re-queue as `pending`. The old implementation
      doesn't apply to the new spec.
 
-For tasks marked `superseded`:
+**Verify**: All re-verification tasks checked against updated criteria.
+**On failure**: Present failures to user with options.
+
+**Step 7.** For tasks marked `superseded`:
 - If the task was `pending`: Remove from queue (or mark `superseded` for audit trail).
 - If the task was `done`: Flag to user: "T-003 was completed but its spec section no longer
   exists. The implemented code may need cleanup. Review? [Y/n/ignore]"
 
----
+**Verify**: All superseded tasks handled with user input where needed.
+**On failure**: If user does not respond, keep superseded tasks flagged.
 
-### Step 5: Cascade Analysis
+### Phase 5: Cascade Analysis
 
-After all direct task updates:
+**Step 8.** After all direct task updates:
 
 1. Check transitive dependencies: if a task was re-queued as `pending`, its dependents may
    now be blocked. Update their status.
@@ -90,20 +120,22 @@ After all direct task updates:
 3. Deduplicate: if a task appears in multiple cascade chains, it only needs one
    re-verification.
 
----
+**Verify**: All transitive dependency impacts identified and deduplicated.
+**On failure**: If circular dependencies detected, report for user resolution.
 
-### Step 6: Regenerate Dependency Graph
+### Phase 6: Regenerate Dependency Graph
 
-If tasks were added, removed, or had dependencies changed:
+**Step 9.** If tasks were added, removed, or had dependencies changed:
 
 1. Regenerate the Mermaid dependency graph in TASKS.md.
 2. Re-identify parallelizable groups (if parallel execution is enabled).
 
----
+**Verify**: Dependency graph reflects current task set with no orphaned references.
+**On failure**: If graph generation fails, flag inconsistencies.
 
-### Step 7: Present Changes to User
+### Phase 7: Present Changes to User
 
-Show a summary of all changes before applying:
+**Step 10.** Show a summary of all changes before applying:
 
 ```
 Sync summary (specs changed from [old-hash] to [new-hash]):
@@ -132,9 +164,12 @@ history, update Claude Code tasks.
 
 If user wants adjustments: process their feedback before applying.
 
----
+**Verify**: User has reviewed and approved (or adjusted) the sync plan.
+**On failure**: Process user feedback before applying.
 
-### Step 8: Update Tracking
+### Phase 8: Update Tracking
+
+**Step 11.** Finalize tracking updates:
 
 1. Update TASKS.md header with new spec version hash.
 2. Add entry to TASKS.md Spec Sync History:
@@ -143,5 +178,16 @@ If user wants adjustments: process their feedback before applying.
    ```
 3. Update Claude Code tasks to reflect any status changes.
 
+**Verify**: TASKS.md header hash matches current .spec-manifest.md hash, sync history entry added.
+**On failure**: If Claude Code task updates fail, log and continue (TASKS.md is source of truth).
+
 Tell the user: "Sync complete. [N] tasks updated, [M] new tasks added, [K] tasks
 superseded. Run `/cl-implementer run` to continue implementation."
+
+## Report
+
+```
+SYNC: COMPLETE | Files: N synced | Modified: M | New: P | Superseded: K
+SYNC: COMPLETE | Files: N synced | Re-verified: R (all pass)
+SYNC: DRIFT | Drifted: N | Re-verification failures: M | New tasks: P
+```

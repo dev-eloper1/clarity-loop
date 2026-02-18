@@ -400,6 +400,19 @@ After initialization, your project has this structure:
   PARKING.md
 ```
 
+## Reference File Structure
+
+Reference files are the mode instruction files that skills load when a mode is invoked.
+Each reference file follows one of two template tiers:
+
+- **Tier 1: Structured** — Deterministic modes with fixed step sequences
+- **Tier 2: Guided** — Judgment-driven modes with flexible execution
+
+All reference files begin with YAML frontmatter and a Variables table. This allows quick
+scanning of a mode's interface without reading the full file.
+
+See SYSTEM_DESIGN.md Section 1 (Reference File Convention) for the full specification.
+
 ---
 
 ## Related

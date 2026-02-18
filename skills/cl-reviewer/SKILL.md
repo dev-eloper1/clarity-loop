@@ -155,6 +155,11 @@ Before running any mode, check the pipeline state to orient yourself and the use
 This orientation should be brief — 2-3 sentences max. Don't dump the full state on the
 user. Just highlight what's actionable.
 
+**Reference file convention**: When loading a reference file, read its YAML frontmatter
+to understand the mode's tier (structured or guided), dependencies, and state files.
+Follow the file's Workflow section (Tier 1: Structured) or Process section (Tier 2:
+Guided). Consult the Variables table for the mode's inputs and outputs.
+
 ---
 
 ## Mode Detection

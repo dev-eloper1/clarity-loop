@@ -1,13 +1,34 @@
+---
+mode: spec
+tier: structured
+depends-on: []
+state-files: [RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md, .spec-manifest.md, DECISIONS.md, PARKING.md]
+---
+
 ## Spec Generation Mode
 
 Reference for the `cl-implementer spec` mode. Generates structured, implementation-ready
 specs from verified system documentation. This is the bridge between documentation and
 implementation — the final derivation step before tasks can be generated.
 
-### Critical Principle: Waterfall Gate
+## Variables
 
-**Specs are generated ONLY after ALL system docs are complete and verified.** This is
-intentionally NOT iterative. The reasoning:
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | Project config / .clarity-loop.json | Yes | Root path for all documentation artifacts |
+| RESEARCH_LEDGER.md | docs/ | No | Active research cycles tracker |
+| PROPOSAL_TRACKER.md | docs/ | No | In-flight proposals tracker |
+| .spec-manifest.md | {docsRoot}/specs/ | No | Generated spec manifest (output of this mode) |
+| DECISIONS.md | {docsRoot}/ | No | Captured decisions for testing, security, API, etc. |
+| PARKING.md | {docsRoot}/ | No | Parked architectural items |
+| .context-manifest.md | {docsRoot}/context/ | No | Library context manifest for freshness checks |
+| package.json | project root | No | Dependency file for version alignment checks |
+
+## Workflow
+
+### Phase 1: Waterfall Gate Check
+
+**Critical Principle**: Specs are generated ONLY after ALL system docs are complete and verified. This is intentionally NOT iterative. The reasoning:
 
 1. If you generate specs from partially-complete docs, later doc changes require spec merging
 2. Spec merging across features/tasks is extremely messy — conflicts, stale references
@@ -17,47 +38,71 @@ intentionally NOT iterative. The reasoning:
 If system docs change later (new research cycle), specs should be regenerated from scratch,
 not patched.
 
-### Step 1: Waterfall Gate Check
+**Step 1.** Check RESEARCH_LEDGER.md — Are there active research cycles? If any research has
+status `draft` or `in-discussion`, warn the user: "There's active research in progress
+(R-NNN). Generating specs now means they'll be stale when that research produces changes.
+Continue anyway?"
 
-Before generating anything, verify the pipeline is clear:
+**Verify**: RESEARCH_LEDGER.md exists and has been read.
+**On failure**: If file missing, note advisory and proceed (no research tracker found).
 
-1. **Check RESEARCH_LEDGER.md** — Are there active research cycles? If any research has
-   status `draft` or `in-discussion`, warn the user: "There's active research in progress
-   (R-NNN). Generating specs now means they'll be stale when that research produces changes.
-   Continue anyway?"
+**Step 2.** Check PROPOSAL_TRACKER.md — Are there in-flight proposals? If any proposal has status
+`draft`, `in-review`, or `merging`, warn the user: "There are in-flight proposals
+(P-NNN). Specs generated now won't reflect those changes. Continue anyway?"
 
-2. **Check PROPOSAL_TRACKER.md** — Are there in-flight proposals? If any proposal has status
-   `draft`, `in-review`, or `merging`, warn the user: "There are in-flight proposals
-   (P-NNN). Specs generated now won't reflect those changes. Continue anyway?"
+**Verify**: PROPOSAL_TRACKER.md exists and has been read.
+**On failure**: If file missing, note advisory and proceed.
 
-3. **Check for unverified merges** — Are there proposals with status `approved` but not
-   `verified`? If so, warn: "Proposal P-NNN was approved but not yet verified. Run
-   `/cl-reviewer verify` first to ensure system docs are consistent."
+**Step 3.** Check for unverified merges — Are there proposals with status `approved` but not
+`verified`? If so, warn: "Proposal P-NNN was approved but not yet verified. Run
+`/cl-reviewer verify` first to ensure system docs are consistent."
 
-4. **Check context freshness** — If `{docsRoot}/context/.context-manifest.md` exists,
-   check version alignment and freshness dates for all libraries. If any context is stale
-   (version mismatch with `package.json` or past freshness threshold), warn: "Context for
-   [library] may be stale. Specs generated with stale context may produce implementation
-   issues. Run `/cl-researcher context [library]` to update, or continue anyway?"
-   If no context exists but system docs reference a tech stack, note (advisory only):
-   "No context files found. Context files improve implementation accuracy. Consider
-   running `/cl-researcher context` before or after spec generation."
+**Verify**: No proposals stuck in approved-but-unverified state.
+**On failure**: Present as blocker in batch table.
 
-5. **Transition advisory** — Before presenting the gate check batch, read PARKING.md and
-   DECISIONS.md:
+**Step 4.** Check context freshness — If `{docsRoot}/context/.context-manifest.md` exists,
+check version alignment and freshness dates for all libraries. If any context is stale
+(version mismatch with `package.json` or past freshness threshold), warn: "Context for
+[library] may be stale. Specs generated with stale context may produce implementation
+issues. Run `/cl-researcher context [library]` to update, or continue anyway?"
+If no context exists but system docs reference a tech stack, note (advisory only):
+"No context files found. Context files improve implementation accuracy. Consider
+running `/cl-researcher context` before or after spec generation."
 
-   a. Filter PARKING.md Active section for `architectural` items. If any:
-      "There are [N] architectural items parked: [list]. These may affect spec generation."
+**Verify**: Context manifest read and versions compared against package.json.
+**On failure**: If no context manifest, note advisory and proceed.
 
-   b. Check intent (from DECISIONS.md):
-      - Ship: proceed unless architectural blockers exist
-      - Quality: mention areas without deliberate decisions
-      - Rigor: highlight all gaps
+**Step 5.** Transition advisory — Before presenting the gate check batch, read PARKING.md and
+DECISIONS.md:
 
-   c. Never block. The user can always say "proceed."
+a. Filter PARKING.md Active section for `architectural` items. If any:
+   "There are [N] architectural items parked: [list]. These may affect spec generation."
 
-If all clear, proceed. If warnings were issued and the user confirms, proceed with a note
-in the spec manifest about the caveat.
+b. Check intent (from DECISIONS.md):
+   - Ship: proceed unless architectural blockers exist
+   - Quality: mention areas without deliberate decisions
+   - Rigor: highlight all gaps
+
+c. Never block. The user can always say "proceed."
+
+**Verify**: PARKING.md and DECISIONS.md read.
+**On failure**: If files missing, skip advisory.
+
+**Step 6.** Code-doc alignment — Run a lightweight, targeted sync check on the system
+docs that will be used for spec generation. Check structural and technology claims only:
+file paths, dependency names, module structure, export shapes. Skip behavioral claims
+(too expensive for a gate check).
+
+- **Clear**: All checked claims match the codebase
+- **Advisory**: Minor drift detected (e.g., file renamed but logic unchanged) — note and proceed
+- **Warning**: Structural drift detected (e.g., docs describe a module that no longer exists) —
+  suggest running `/cl-reviewer sync` or `/cl-reviewer correct` before proceeding
+
+This is advisory, not blocking. The user can always proceed. But structural drift means
+specs will describe a system that doesn't match reality.
+
+**Verify**: Structural claims spot-checked against codebase.
+**On failure**: If codebase not accessible, skip with advisory.
 
 **Batch presentation**: Present all gate check results as a single status table rather
 than sequential warnings:
@@ -73,39 +118,36 @@ than sequential warnings:
 
 "Gate check complete. [N issues found / All clear]. Proceed?"
 
-**Check 6: Code-doc alignment** — Run a lightweight, targeted sync check on the system
-docs that will be used for spec generation. Check structural and technology claims only:
-file paths, dependency names, module structure, export shapes. Skip behavioral claims
-(too expensive for a gate check).
-
-- **Clear**: All checked claims match the codebase
-- **Advisory**: Minor drift detected (e.g., file renamed but logic unchanged) — note and proceed
-- **Warning**: Structural drift detected (e.g., docs describe a module that no longer exists) —
-  suggest running `/cl-reviewer sync` or `/cl-reviewer correct` before proceeding
-
-This is advisory, not blocking. The user can always proceed. But structural drift means
-specs will describe a system that doesn't match reality.
-
 The user makes one go/no-go decision for the batch. If any check is a hard blocker
 (e.g., unverified merge), call it out prominently: "1 blocker: unverified merge for
 P-003 must be resolved before spec generation. 2 advisories: context staleness."
 
-### Step 2: Read All System Docs
+If all clear, proceed. If warnings were issued and the user confirms, proceed with a note
+in the spec manifest about the caveat.
 
-This is a heavy read — dispatch subagents in parallel to avoid context pressure:
+### Phase 2: Read All System Docs
 
-1. Read `{docsRoot}/system/.manifest.md` for the overall structure
-2. Dispatch subagents in parallel, one per system doc. Each subagent produces:
-   - Full content summary with key concepts
-   - All defined types, entities, and their properties
-   - All interfaces, contracts, and protocols
-   - All behavioral rules and constraints
-   - All cross-references to other docs
+**Step 7.** Read `{docsRoot}/system/.manifest.md` for the overall structure.
 
-### Step 3: Suggest Spec Format
+**Verify**: Manifest file exists and lists all system docs.
+**On failure**: If manifest missing, scan {docsRoot}/system/ directory for .md files.
 
-The spec format is NOT prescribed — it depends on what the system docs describe. Analyze
-the content and suggest the appropriate format(s):
+**Step 8.** Dispatch subagents in parallel, one per system doc. Each subagent produces:
+- Full content summary with key concepts
+- All defined types, entities, and their properties
+- All interfaces, contracts, and protocols
+- All behavioral rules and constraints
+- All cross-references to other docs
+
+**Verify**: All system docs listed in manifest have been read and summarized.
+**On failure**: If a doc fails to read, log error and continue with remaining docs.
+
+This is a heavy read — dispatch subagents in parallel to avoid context pressure.
+
+### Phase 3: Suggest Spec Format
+
+**Step 9.** Analyze the content and suggest the appropriate format(s). The spec format is NOT
+prescribed — it depends on what the system docs describe:
 
 | Content Type | Suggested Format | When |
 |-------------|-----------------|------|
@@ -120,11 +162,14 @@ Present your recommendation to the user: "Based on the system docs, I recommend 
 [format] specs because [reason]. The system docs describe [N] key areas that would produce
 [M] spec files. Does this format work for you, or would you prefer something different?"
 
+**Verify**: User has confirmed or overridden the format choice.
+**On failure**: If user does not respond, wait for confirmation before proceeding.
+
 The user confirms or overrides.
 
-### Step 4: Generate Specs
+### Phase 4: Generate Specs
 
-For each significant concept in the system docs, generate a spec file in `{docsRoot}/specs/`.
+**Step 10.** For each significant concept in the system docs, generate a spec file in `{docsRoot}/specs/`.
 
 Every spec must include:
 - **Source reference**: Which system doc section(s) it derives from
@@ -133,22 +178,25 @@ Every spec must include:
 - **Dependencies**: Which other specs this one references
 - **Implementability**: Each spec should be implementable in isolation (bounded context)
 
-### Step 4+: Generate Cross-Cutting Specs
+**Verify**: Each generated spec has source reference, concrete types, edge cases, dependencies.
+**On failure**: Flag specs missing required sections for user review.
 
-For cross-cutting spec generation (security, error handling, API conventions, shared types),
-read `references/cross-cutting-specs.md` and follow its process. This generates:
+**Step 11.** Generate Cross-Cutting Specs — For cross-cutting spec generation (security, error
+handling, API conventions, shared types), read `references/cross-cutting-specs.md` and follow
+its process. This generates:
 - SECURITY_SPEC.md (per-endpoint auth, system security, secure UX, dependency governance)
 - Error taxonomy (standard format, code system, propagation chain, per-endpoint catalog)
 - API conventions preamble (pagination, naming, filtering, envelope -- inherited by all endpoint specs)
 - Shared types inventory (cross-boundary types, serialization contracts, sharing strategy)
 - Per-spec edge cases and accessibility requirements sections
 
-### Step 4b: Generate Test Spec
+**Verify**: Cross-cutting specs generated for all applicable areas.
+**On failure**: If system docs don't describe applicable areas, skip with note.
 
-Generate `{docsRoot}/specs/TEST_SPEC.md` from the same system doc analysis used for
-implementation specs. The test spec is NOT test code — it's a specification that the
-implementer and autopilot use to write tests. It's generated alongside implementation
-specs, not as a separate step.
+**Step 12.** Generate Test Spec — Generate `{docsRoot}/specs/TEST_SPEC.md` from the same system
+doc analysis used for implementation specs. The test spec is NOT test code — it's a
+specification that the implementer and autopilot use to write tests. It's generated alongside
+implementation specs, not as a separate step.
 
 **Read testing decisions first**: Check `{docsRoot}/DECISIONS.md` for decisions with
 category tag `testing` (framework, mock boundaries, test data approach, coverage
@@ -215,7 +263,7 @@ layer unless a per-module override is specified.
 
 For every boundary between implementation specs, define the integration test contract.
 
-### [Spec A] ↔ [Spec B] Integration
+### [Spec A] <-> [Spec B] Integration
 
 **Boundary**: [What connects them — API endpoint, shared type, event, etc.]
 
@@ -237,12 +285,12 @@ For cross-layer contracts where a producer and consumer must agree on shapes.
 **Generation rules**:
 
 1. **Per-module unit test cases**: For each implementation spec, generate a companion
-   section in TEST_SPEC.md with function → input → output → edge cases (table format).
+   section in TEST_SPEC.md with function -> input -> output -> edge cases (table format).
    Extract these from the spec's concrete types, contracts, and edge cases — which were
-   already enumerated in Step 4.
+   already enumerated in Step 10.
 
 2. **Cross-spec integration contracts**: For every boundary in the cross-spec dependency
-   table (from Step 5), generate explicit integration test cases covering: full request
+   table (from Step 14), generate explicit integration test cases covering: full request
    lifecycle flows, error propagation chains, auth flows.
 
 3. **Contract tests**: For every producer/consumer relationship across specs (API returns
@@ -254,9 +302,28 @@ For cross-layer contracts where a producer and consumer must agree on shapes.
 5. **Test data**: For each entity in the data spec, define a factory function signature
    and key fixtures covering common states (valid, invalid, edge cases).
 
-### Step 5: Generate Spec Manifest
+**Verify**: TEST_SPEC.md contains per-module test cases, integration contracts, and contract tests.
+**On failure**: Flag missing sections; ensure at minimum the test architecture section is generated.
 
-Create `{docsRoot}/specs/.spec-manifest.md`:
+**Step 13.** Generate Operational and Backend Policy Specs — If the system has deployment
+targets, external service integrations, data persistence, or backend API endpoints, read
+`references/operational-specs.md` and follow its process. This generates:
+- CONFIG_SPEC.md (environment variables, secrets, feature flags, deployment targets)
+- Migration notes per data spec (ordering, rollback, seed data)
+- Observability section per service spec (logging, metrics, health checks)
+- Per-service integration specs (third-party endpoints, auth, payloads, rate limits)
+- Backend policies section (idempotency, transactions, caching, validation authority)
+- Data modeling section per entity spec (deletion, cascade, temporal, volume)
+- Code conventions section (file naming, directory structure, import patterns)
+- Performance acceptance criteria per spec
+- Dependency compatibility notes
+
+**Verify**: Operational specs generated for all applicable areas.
+**On failure**: If system docs don't describe applicable areas, skip with note.
+
+### Phase 5: Generate Spec Manifest
+
+**Step 14.** Create `{docsRoot}/specs/.spec-manifest.md`:
 
 ```markdown
 # Spec Manifest
@@ -291,14 +358,19 @@ Create `{docsRoot}/specs/.spec-manifest.md`:
 | ... | ... | ... |
 ```
 
-### Step 6: Update Tracking
+**Verify**: Manifest lists all generated specs with source mappings and cross-spec dependencies.
+**On failure**: If any spec is missing from manifest, add it before finalizing.
 
-After generating specs:
-1. Tell the user: "Specs generated in `{docsRoot}/specs/`. Run `/cl-implementer spec-review`
-   for a cross-spec consistency check before starting implementation."
+### Phase 6: Update Tracking
 
-**Parallelization hint**: While the user reviews the spec format suggestion (Step 3),
-pre-read all system docs in parallel (Step 2) using subagent dispatch. If the user
+**Step 15.** After generating specs, tell the user: "Specs generated in `{docsRoot}/specs/`. Run
+`/cl-implementer spec-review` for a cross-spec consistency check before starting implementation."
+
+**Verify**: All spec files exist in {docsRoot}/specs/ and manifest is complete.
+**On failure**: List any missing or incomplete specs.
+
+**Parallelization hint**: While the user reviews the spec format suggestion (Phase 3),
+pre-read all system docs in parallel (Phase 2) using subagent dispatch. If the user
 confirms the format, spec generation begins immediately with docs already loaded.
 Invalidation risk: Low -- format change only affects output structure, not content
 gathering.
@@ -320,6 +392,14 @@ gathering.
 - **Traceability enables maintenance.** Every spec must reference its source. When system
   docs change, traceability tells you which specs need regeneration.
 
-- **Use subagent dispatch for heavy reads.** Step 2 dispatches one subagent per system doc
+- **Use subagent dispatch for heavy reads.** Phase 2 dispatches one subagent per system doc
   to avoid overloading the main context. This provides the same isolation as a context fork
   without requiring the entire skill to run in a forked context.
+
+## Report
+
+```
+SPEC: COMPLETE | Specs: N generated | Format: [format] | Gate: CLEAR
+SPEC: COMPLETE | Specs: N generated | Format: [format] | Gate: CAVEATS (M warnings)
+SPEC: PARTIAL | Generated: M/N | Blocked: [reason]
+```

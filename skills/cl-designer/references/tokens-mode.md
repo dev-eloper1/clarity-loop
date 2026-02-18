@@ -1,22 +1,57 @@
+---
+mode: tokens
+tier: guided
+depends-on:
+  - setup-mode.md
+  - pencil-schema-quick-ref.md
+  - pencil-templates.md
+  - component-identification-process.md
+  - visual-quality-rules.md
+  - design-checklist.md
+state-files:
+  - DESIGN_PROGRESS.md
+  - DESIGN_SYSTEM.md
+  - DECISIONS.md
+---
+
 ## Tokens Mode
 
 Generates or extracts design tokens and a reusable component library. This is the most
 complex mode — two paths (Pencil and markdown fallback) converge on the same output
 artifacts.
 
-**Gate**: Setup must be complete. Check `{docsRoot}/designs/DESIGN_PROGRESS.md` for:
-- `Setup` status is `Complete`
-- MCP path is recorded
-- Design direction / user decisions are captured
+## Variables
 
-If setup is incomplete: "Setup hasn't been completed yet. Run `/cl-designer setup` first
-to detect design tools and establish the design direction."
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | `.clarity-loop.json` | Yes | Root directory for design artifacts |
+| DESIGN_PROGRESS.md | `{docsRoot}/designs/` | Yes | Must show Setup status Complete, MCP path, and design direction |
+| PRD | `docs/system/` or equivalent | Yes | Requirements doc to derive token values and identify components |
+| Architecture doc | `docs/system/` or equivalent | No | Tech stack details (framework, styling approach) |
+| DECISIONS.md | `{docsRoot}/decisions/` | No | Existing design decisions |
+| ux.reviewStyle | `.clarity-loop.json` | No | Review mode: `"batch"` (default), `"serial"`, or `"minimal"` |
+| ux.parallelGeneration | `.clarity-loop.json` | No | Whether to pre-generate during user review (default: `true`) |
+| ux.autoDefaults | `.clarity-loop.json` | No | Auto-proceed boundary for checkpoint tiers |
 
----
+## Guidelines
 
-### Pencil Path (generating from scratch)
+1. **Gate**: Setup must be complete before tokens mode runs. Check `{docsRoot}/designs/DESIGN_PROGRESS.md` for Setup status `Complete`, MCP path recorded, and design direction captured.
+2. If setup is incomplete: "Setup hasn't been completed yet. Run `/cl-designer setup` first to detect design tools and establish the design direction."
+3. Create separate top-level frames on the canvas — not one giant wrapper. Each section (Color Tokens, Typography, Spacing, Components) gets its own independent top-level frame.
+4. Arrange frames in a grid, not a vertical column. Use at least 100px gaps between frames in both directions.
+5. Set `layout: "vertical"` with explicit `gap` values on every frame. Auto-layout prevents text overlap issues that manual positioning causes.
+6. Always use light backgrounds (`fill: "#ffffff"`) with dark text (`fill: "#1a1a1a"`) for token/component showcase frames, regardless of the project's theme.
+7. Use `batch_design` for operations — keep to ~25 operations per call. Always `snapshot_layout` after each section before moving on.
+8. Run the pre-generation checklist before any `batch_design` calls (correct property names, string font weights, number gap/padding values, bindings on every Insert).
+9. Show tokens to the user one section at a time — don't screenshot the entire design system frame at once.
+10. Mark components with `reusable: true` so they can be referenced via `ref` nodes in mockups mode.
+11. Enforce accessibility hard constraints during component generation (target sizes, contrast, labels, focus indicators, similarity).
+12. Load `references/pencil-schema-quick-ref.md` and `references/pencil-templates.md` before any `batch_design` operations.
+13. Load `references/component-identification-process.md` for the full component identification methodology.
 
-#### Step 1: Derive Token Values
+## Process
+
+### Phase 1: Derive Token Values
 
 Map user preferences from DESIGN_PROGRESS.md to concrete token values. Read the PRD to
 understand what features need — an admin dashboard needs different tokens than a consumer
@@ -25,7 +60,7 @@ mobile app.
 Derive these token categories:
 
 **Colors:**
-- Primary (main brand color + shades: 50–950)
+- Primary (main brand color + shades: 50-950)
 - Secondary (supporting color + shades)
 - Accent (call-to-action, highlights)
 - Neutral (grays for text, borders, backgrounds)
@@ -54,7 +89,11 @@ design discussion. Review and adjust before I generate them: [table]"
 
 Wait for user confirmation or adjustments.
 
-#### Step 2: Create and Set Up the .pen File
+**Checkpoint**: User confirms token values before generation begins.
+
+### Phase 2: Generate Token Visuals (Pencil Path)
+
+#### Step 1: Create and Set Up the .pen File
 
 **Important**: Pencil MCP's `open_document("new")` creates a file in memory only — it does
 NOT write to disk. You must create the file on the filesystem first, then open it.
@@ -73,9 +112,9 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    blank canvas. The instinct is to create a single large frame that holds everything, but
    this forces the user to constantly zoom in and out of a massive container. Instead,
    create each section as its own independent top-level frame on the canvas:
-   - "Color Tokens" — sized to fit its content (e.g., 900×600)
-   - "Typography" — sized to fit its content (e.g., 600×500)
-   - "Spacing & Sizing" — sized to fit its content (e.g., 600×400)
+   - "Color Tokens" — sized to fit its content (e.g., 900x600)
+   - "Typography" — sized to fit its content (e.g., 600x500)
+   - "Spacing & Sizing" — sized to fit its content (e.g., 600x400)
    - "Components" — starts small, grows as components are added
    - **Arrange frames in a grid, not a vertical column.** A single column wastes the
      canvas width and forces endless scrolling. Use a layout like:
@@ -112,11 +151,11 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    - This structure is what the user will see. **Organization is not optional** — the user
      is not a designer, so clearly scoped, navigable sections are essential for them to
      understand and provide feedback on
-4. Call `set_variables` for all token values:
+5. Call `set_variables` for all token values:
    - Group by category (color, typography, spacing, etc.)
    - If light + dark themes: define theme axes with per-theme values
-5. Call `get_variables` to verify tokens were set correctly
-6. **Run pre-generation checklist** before any `batch_design` calls. Verify:
+6. Call `get_variables` to verify tokens were set correctly
+7. **Run pre-generation checklist** before any `batch_design` calls. Verify:
    - [ ] All auto-layout frames will use `layout: "vertical"` or `"horizontal"` (NOT `layoutMode`)
    - [ ] All showcase frames will have `fill: "#ffffff"` (white background)
    - [ ] All showcase text will have `fill: "#1a1a1a"` (dark text for contrast)
@@ -125,108 +164,119 @@ NOT write to disk. You must create the file on the filesystem first, then open i
    - [ ] Gap and padding are numbers: `24` not `"24px"`
    - [ ] Every Insert/Copy/Replace will have a binding: `foo=I(...)`
    - [ ] Property names match Pencil schema (check `pencil-schema-quick-ref.md` if unsure)
-7. **Populate each section frame with token visualizations.** This is the first visual
-   artifact the user sees — if it's a wall of unlabeled rectangles, they'll be lost.
-   Structure each section carefully:
 
-   **Color Tokens section** — organize as labeled rows, one row per color role:
-   - Set the frame to `layout: "vertical"` with `gap: 24` between rows
-   - Each row is a horizontal auto-layout container (`layout: "horizontal"`, `gap: 16`)
-   - Row label on the left (e.g., "Primary", "Secondary", "Neutral", "Success")
-   - Swatches in a horizontal strip from lightest to darkest (50 → 900)
-   - Only show 5-6 key shades per row, not all 10+ — too many swatches is noise
-   - Each swatch labeled with its token name and hex value — label goes below the swatch
-     with enough vertical space (the swatch + label together need ~80px height minimum)
-   - Semantic colors (success, warning, error, info) as a separate group below the
-     palette, with just base + light + dark variants each
-   - If light + dark themes: show them as two side-by-side sub-groups within the color
-     frame, not interleaved
-   - **After `batch_design`: call `snapshot_layout` and check for overlapping bounding
-     boxes.** If any swatch labels overlap adjacent swatches or row labels bleed into
-     the row below, fix spacing before proceeding.
-   - **Example structure** for Color Tokens frame:
-     ```javascript
-     colorFrame=I(document, {type: "frame", name: "Color Tokens", layout: "vertical",
-                              gap: 24, padding: 32, fill: "#ffffff", width: 900, height: 600,
-                              x: 100, y: 100})
-     title=I(colorFrame, {type: "text", content: "Color Tokens", fontSize: 24,
-                          fontWeight: "normal", fill: "#1a1a1a"})
-     // Then add rows, swatches, labels — all with explicit fill colors for visibility
-     ```
+**Checkpoint**: .pen file created, tokens set, pre-generation checklist passed.
 
-   **Typography section** — show as a vertical stack, largest to smallest:
-   - Set the frame to `layout: "vertical"` with `gap: 16`, `fill: "#ffffff"`, `padding: 32`
-   - Frame title and all text samples use `fill: "#1a1a1a"` (dark text on white background)
-   - One line per size level: "4xl — The quick brown fox" / "3xl — The quick brown fox" /
-     etc., each rendered at the actual font size
-   - **Give each line enough vertical space.** A 36px heading needs at least 50px of row
-     height (font size × 1.4). Don't pack lines tightly — overlap between large text and
-     the line below is the most common visual defect.
-   - Below the size stack, add a divider or 32px gap, then a "Weights" group showing the
-     same text in light / normal / medium / semibold / bold
-   - If showing multiple font families (e.g., sans + mono), separate them with a clear
-     label and 32px gap — don't let one family's last line overlap the next family's title
-   - Font family name as a label at the top of each family group
-   - **After `batch_design`: call `snapshot_layout`.** Typography is the highest-risk
-     section for overlap because text at different sizes renders at unpredictable heights.
-     Verify every line has clear separation.
+#### Step 2: Populate Token Visualizations
 
-   **Spacing & Sizing section** — show as a horizontal row of blocks:
-   - Set the frame to `layout: "vertical"` with `gap: 24` between sub-sections,
-     `fill: "#ffffff"`, `padding: 32`
-   - Frame title and all labels use `fill: "#1a1a1a"` (dark text)
-   - The spacing row itself is `layout: "horizontal"` with `gap: 16`
-   - Each block is a filled square sized to the spacing value (4px, 8px, 16px, etc.)
-   - Label below each block with token name and pixel value
-   - This row naturally reads left-to-right, small to large
-   - Below the spacing row, show border radius and shadow tokens as small example
-     rectangles with labels
-   - **After `batch_design`: call `snapshot_layout`** to verify no overlap between blocks
-     or labels.
+**Populate each section frame with token visualizations.** This is the first visual
+artifact the user sees — if it's a wall of unlabeled rectangles, they'll be lost.
+Structure each section carefully:
 
-   Use `batch_design` — keep to ~25 operations per call. Do one section at a time.
-   **Always `snapshot_layout` after each section before moving on.** Fix any overlaps
-   immediately — don't accumulate layout issues across sections.
+**Color Tokens section** — organize as labeled rows, one row per color role:
+- Set the frame to `layout: "vertical"` with `gap: 24` between rows
+- Each row is a horizontal auto-layout container (`layout: "horizontal"`, `gap: 16`)
+- Row label on the left (e.g., "Primary", "Secondary", "Neutral", "Success")
+- Swatches in a horizontal strip from lightest to darkest (50 -> 900)
+- Only show 5-6 key shades per row, not all 10+ — too many swatches is noise
+- Each swatch labeled with its token name and hex value — label goes below the swatch
+  with enough vertical space (the swatch + label together need ~80px height minimum)
+- Semantic colors (success, warning, error, info) as a separate group below the
+  palette, with just base + light + dark variants each
+- If light + dark themes: show them as two side-by-side sub-groups within the color
+  frame, not interleaved
+- **After `batch_design`: call `snapshot_layout` and check for overlapping bounding
+  boxes.** If any swatch labels overlap adjacent swatches or row labels bleed into
+  the row below, fix spacing before proceeding.
+- **Example structure** for Color Tokens frame:
+  ```javascript
+  colorFrame=I(document, {type: "frame", name: "Color Tokens", layout: "vertical",
+                           gap: 24, padding: 32, fill: "#ffffff", width: 900, height: 600,
+                           x: 100, y: 100})
+  title=I(colorFrame, {type: "text", content: "Color Tokens", fontSize: 24,
+                       fontWeight: "normal", fill: "#1a1a1a"})
+  // Then add rows, swatches, labels — all with explicit fill colors for visibility
+  ```
 
-   **Accessibility during token visualization:**
-   - When generating color swatches, note which foreground colors meet 4.5:1 contrast
-     against which background colors. Document safe pairings (e.g., "primary-900 text on
-     primary-50 background: ✓ 4.5:1") in the swatch labels or as a summary after the
-     color section. This prevents downstream contrast failures in components and screens.
-   - If any primary text/background combination fails 4.5:1, flag it to the user during
-     token review: "Warning: [token pair] has insufficient contrast ([ratio]). Adjust the
-     shade or plan to use it only for large text (3:1 threshold)."
+**Typography section** — show as a vertical stack, largest to smallest:
+- Set the frame to `layout: "vertical"` with `gap: 16`, `fill: "#ffffff"`, `padding: 32`
+- Frame title and all text samples use `fill: "#1a1a1a"` (dark text on white background)
+- One line per size level: "4xl — The quick brown fox" / "3xl — The quick brown fox" /
+  etc., each rendered at the actual font size
+- **Give each line enough vertical space.** A 36px heading needs at least 50px of row
+  height (font size x 1.4). Don't pack lines tightly — overlap between large text and
+  the line below is the most common visual defect.
+- Below the size stack, add a divider or 32px gap, then a "Weights" group showing the
+  same text in light / normal / medium / semibold / bold
+- If showing multiple font families (e.g., sans + mono), separate them with a clear
+  label and 32px gap — don't let one family's last line overlap the next family's title
+- Font family name as a label at the top of each family group
+- **After `batch_design`: call `snapshot_layout`.** Typography is the highest-risk
+  section for overlap because text at different sizes renders at unpredictable heights.
+  Verify every line has clear separation.
 
-7. **Show tokens to the user one section at a time.** Don't screenshot the entire design
-   system frame — it will be too dense to evaluate.
-   - `get_screenshot` of the Color Tokens section → present, gather feedback
-   - `get_screenshot` of the Typography section → present, gather feedback
-   - `get_screenshot` of the Spacing section → present, gather feedback
-   - For each: explain what they're looking at. "Here's your color palette. The top row
-     is your primary blue in 5 shades from light to dark. Below that are neutrals for
-     text and backgrounds, then semantic colors for status indicators."
-   - If the user wants changes to a section, apply them before moving to the next
+**Spacing & Sizing section** — show as a horizontal row of blocks:
+- Set the frame to `layout: "vertical"` with `gap: 24` between sub-sections,
+  `fill: "#ffffff"`, `padding: 32`
+- Frame title and all labels use `fill: "#1a1a1a"` (dark text)
+- The spacing row itself is `layout: "horizontal"` with `gap: 16`
+- Each block is a filled square sized to the spacing value (4px, 8px, 16px, etc.)
+- Label below each block with token name and pixel value
+- This row naturally reads left-to-right, small to large
+- Below the spacing row, show border radius and shadow tokens as small example
+  rectangles with labels
+- **After `batch_design`: call `snapshot_layout`** to verify no overlap between blocks
+  or labels.
 
-   **Batch option for token sections**: When `ux.reviewStyle` is `"batch"`, present all
-   three token sections (colors, typography, spacing) together with a summary table before
-   individual screenshots. "Here's your design token overview: [summary]. Want to see each
-   section in detail, or does the summary cover it?" If the user wants details, show
-   section-by-section screenshots. If the summary is sufficient, proceed to components.
-   Default for token sections is still sectional (colors then typography then spacing) because
-   the feedback on these tends to be substantive. The batch option is for experienced users
-   who know what they want.
+Use `batch_design` — keep to ~25 operations per call. Do one section at a time.
+**Always `snapshot_layout` after each section before moving on.** Fix any overlaps
+immediately — don't accumulate layout issues across sections.
 
-8. Record in DESIGN_PROGRESS.md: tokens generated, file reference, user approval per section
+**Accessibility during token visualization:**
+- When generating color swatches, note which foreground colors meet 4.5:1 contrast
+  against which background colors. Document safe pairings (e.g., "primary-900 text on
+  primary-50 background: check 4.5:1") in the swatch labels or as a summary after the
+  color section. This prevents downstream contrast failures in components and screens.
+- If any primary text/background combination fails 4.5:1, flag it to the user during
+  token review: "Warning: [token pair] has insufficient contrast ([ratio]). Adjust the
+  shade or plan to use it only for large text (3:1 threshold)."
 
-#### Step 3: Identify and Generate Reusable Components
+#### Step 3: Present Tokens for Review
+
+**Show tokens to the user one section at a time.** Don't screenshot the entire design
+system frame — it will be too dense to evaluate.
+- `get_screenshot` of the Color Tokens section -> present, gather feedback
+- `get_screenshot` of the Typography section -> present, gather feedback
+- `get_screenshot` of the Spacing section -> present, gather feedback
+- For each: explain what they're looking at. "Here's your color palette. The top row
+  is your primary blue in 5 shades from light to dark. Below that are neutrals for
+  text and backgrounds, then semantic colors for status indicators."
+- If the user wants changes to a section, apply them before moving to the next
+
+**Batch option for token sections**: When `ux.reviewStyle` is `"batch"`, present all
+three token sections (colors, typography, spacing) together with a summary table before
+individual screenshots. "Here's your design token overview: [summary]. Want to see each
+section in detail, or does the summary cover it?" If the user wants details, show
+section-by-section screenshots. If the summary is sufficient, proceed to components.
+Default for token sections is still sectional (colors then typography then spacing) because
+the feedback on these tends to be substantive. The batch option is for experienced users
+who know what they want.
+
+Record in DESIGN_PROGRESS.md: tokens generated, file reference, user approval per section.
+
+**Checkpoint**: All token sections reviewed and approved by user.
+
+### Phase 3: Identify and Generate Reusable Components
 
 **IMPORTANT:** Component identification is the foundation of the design system. A shallow
 analysis here causes downstream problems (missing components, duplicate effort, poor
 composition, incomplete behavioral specs). Invest 15-20 minutes in systematic identification.
 
+#### Step 1: Component Identification
+
 1. **Load component identification process:**
    Read `references/component-identification-process.md` for the full methodology. This guide
-   explains atomic design principles (atoms → molecules → organisms), pattern recognition,
+   explains atomic design principles (atoms -> molecules -> organisms), pattern recognition,
    and traceability validation.
 
 2. **Extract UI patterns from PRD** (feature-by-feature analysis):
@@ -273,12 +323,16 @@ composition, incomplete behavioral specs). Invest 15-20 minutes in systematic id
    - Molecules (X components) — table with composition, features served
    - Organisms (X components) — table with composition, features served, complexity
    - Behavioral specifications for key components
-   - Generation order (atoms → molecules → organisms)
+   - Generation order (atoms -> molecules -> organisms)
 
    Ask: "This is the complete design system based on the PRD. It covers all [N] features.
    Add, remove, or adjust components?"
 
    Wait for user confirmation or adjustments.
+
+**Checkpoint**: User confirms component plan before generation begins.
+
+#### Step 2: Generate Components
 
 10. **Load component templates:**
     Read `references/pencil-templates.md` for copy-paste examples of common atoms and
@@ -288,76 +342,80 @@ composition, incomplete behavioral specs). Invest 15-20 minutes in systematic id
 
 11. Call `get_guidelines("tailwind")` for additional styling best practices (if needed)
 
-4. Create a **separate top-level frame per component category** on the canvas (same
-   principle as token sections — no giant wrapper):
-   - "Components — Form Controls" (Button, Input, TextArea, Select, Checkbox)
-   - "Components — Layout" (Card, Nav/Sidebar, Modal/Dialog)
-   - "Components — Feedback" (Toast/Alert, Badge)
-   - "Components — Project-Specific" (whatever the PRD requires)
-   - **Arrange component categories in a grid (2 columns), not a vertical stack.**
-     Use `find_empty_space_on_canvas` to place them below the token frames but side
-     by side — e.g., Form Controls next to Data Display, Navigation next to Layout.
-     This cuts the vertical scrolling in half and lets the user see related categories
-     at the same zoom level.
-   - Size each category frame to fit its components (not oversized)
-   - **Use light backgrounds (`fill: "#ffffff"`) for component category frames** with dark
-     text for labels — same principle as token sections. This ensures components are visible
-     regardless of the project's theme.
-4. For each component:
-   - Create a labeled container group within its category frame
-   - Call `batch_design` with `reusable: true` — **this is critical.** The `reusable` flag
-     registers the component in Pencil's component library. During mockups mode, screens
-     will use `ref` nodes to instantiate these components instead of recreating them from
-     scratch. A component created without `reusable: true` can't be referenced — it's just
-     a one-off group of shapes.
-   - Apply tokens via variable references (not hardcoded values)
-   - Show all variants side-by-side within the container (e.g., Button: primary, secondary,
-     ghost — all in one row with labels)
-   - Keep operations to ~25 per `batch_design` call
-   - **Generate behavioral state variants** for components that have significant states
-     beyond visual variants. Not every component needs this — focus on components with
-     loading, error, or disabled states that affect user interaction:
-     - **Button**: idle, loading (spinner variant), disabled. Show loading variant with
-       spinner replacing or overlaying text.
-     - **Input**: empty, focused, filled, error (with error message), disabled. Show
-       error variant with inline error text.
-     - **Form group**: pristine, dirty, submitting, error. At minimum show error state.
-     - **List/Table**: populated, empty (with empty state component), loading (skeleton rows).
-     - **Modal**: open state with focus trap indicator (visual note, not animation).
-     - **Toast/Alert**: visible state with variants (success, error, warning, info).
-     Place behavioral state variants in a separate row below the visual variants within
-     the component group, labeled "States". Use `snapshot_layout` to prevent overlap.
-   - **Enforce accessibility hard constraints during generation** (see
-     `references/visual-quality-rules.md`):
-     - **Target sizes**: Button height ≥ 36px, icon buttons ≥ 32×32px, checkbox/radio/toggle
-       controls ≥ 20×20px with padding to reach 24×24px interactive area.
-     - **Contrast**: Text color on component backgrounds must meet 4.5:1 (regular) or 3:1
-       (large text ≥ 24px). Check especially: disabled state text, placeholder text, error
-       state text on colored backgrounds.
-     - **Labels**: Input, Select, TextArea components must include a label element in their
-       reusable structure (or be documented as requiring an external label). Placeholder text
-       alone is never sufficient.
-     - **Focus indicators**: Include a "focused" state variant for every interactive component
-       showing the design system's focus outline (color, offset, width from tokens). This
-       variant doesn't need to be a full behavioral state — a visual annotation showing the
-       focus ring is sufficient.
-     - **Similarity within component families**: All buttons share fill + font weight + corner
-       radius across variants (only the specific values change). All inputs share border style
-       + padding + label positioning. Use `search_all_unique_properties` after generating a
-       component category to detect unintended inconsistencies.
-5. **Every element must be inside its category frame.** Never create floating elements
-   on the root canvas. If a component doesn't fit existing categories, create a new
-   category frame for it.
+12. Create a **separate top-level frame per component category** on the canvas (same
+    principle as token sections — no giant wrapper):
+    - "Components — Form Controls" (Button, Input, TextArea, Select, Checkbox)
+    - "Components — Layout" (Card, Nav/Sidebar, Modal/Dialog)
+    - "Components — Feedback" (Toast/Alert, Badge)
+    - "Components — Project-Specific" (whatever the PRD requires)
+    - **Arrange component categories in a grid (2 columns), not a vertical stack.**
+      Use `find_empty_space_on_canvas` to place them below the token frames but side
+      by side — e.g., Form Controls next to Data Display, Navigation next to Layout.
+      This cuts the vertical scrolling in half and lets the user see related categories
+      at the same zoom level.
+    - Size each category frame to fit its components (not oversized)
+    - **Use light backgrounds (`fill: "#ffffff"`) for component category frames** with dark
+      text for labels — same principle as token sections. This ensures components are visible
+      regardless of the project's theme.
 
-#### Step 4: Component Validation
+13. For each component:
+    - Create a labeled container group within its category frame
+    - Call `batch_design` with `reusable: true` — **this is critical.** The `reusable` flag
+      registers the component in Pencil's component library. During mockups mode, screens
+      will use `ref` nodes to instantiate these components instead of recreating them from
+      scratch. A component created without `reusable: true` can't be referenced — it's just
+      a one-off group of shapes.
+    - Apply tokens via variable references (not hardcoded values)
+    - Show all variants side-by-side within the container (e.g., Button: primary, secondary,
+      ghost — all in one row with labels)
+    - Keep operations to ~25 per `batch_design` call
+    - **Generate behavioral state variants** for components that have significant states
+      beyond visual variants. Not every component needs this — focus on components with
+      loading, error, or disabled states that affect user interaction:
+      - **Button**: idle, loading (spinner variant), disabled. Show loading variant with
+        spinner replacing or overlaying text.
+      - **Input**: empty, focused, filled, error (with error message), disabled. Show
+        error variant with inline error text.
+      - **Form group**: pristine, dirty, submitting, error. At minimum show error state.
+      - **List/Table**: populated, empty (with empty state component), loading (skeleton rows).
+      - **Modal**: open state with focus trap indicator (visual note, not animation).
+      - **Toast/Alert**: visible state with variants (success, error, warning, info).
+      Place behavioral state variants in a separate row below the visual variants within
+      the component group, labeled "States". Use `snapshot_layout` to prevent overlap.
+    - **Enforce accessibility hard constraints during generation** (see
+      `references/visual-quality-rules.md`):
+      - **Target sizes**: Button height >= 36px, icon buttons >= 32x32px, checkbox/radio/toggle
+        controls >= 20x20px with padding to reach 24x24px interactive area.
+      - **Contrast**: Text color on component backgrounds must meet 4.5:1 (regular) or 3:1
+        (large text >= 24px). Check especially: disabled state text, placeholder text, error
+        state text on colored backgrounds.
+      - **Labels**: Input, Select, TextArea components must include a label element in their
+        reusable structure (or be documented as requiring an external label). Placeholder text
+        alone is never sufficient.
+      - **Focus indicators**: Include a "focused" state variant for every interactive component
+        showing the design system's focus outline (color, offset, width from tokens). This
+        variant doesn't need to be a full behavioral state — a visual annotation showing the
+        focus ring is sufficient.
+      - **Similarity within component families**: All buttons share fill + font weight + corner
+        radius across variants (only the specific values change). All inputs share border style
+        + padding + label positioning. Use `search_all_unique_properties` after generating a
+        component category to detect unintended inconsistencies.
+
+14. **Every element must be inside its category frame.** Never create floating elements
+    on the root canvas. If a component doesn't fit existing categories, create a new
+    category frame for it.
+
+**Checkpoint**: All components generated with proper accessibility constraints and behavioral states.
+
+### Phase 4: Component Validation
 
 **Check the review style** from `.clarity-loop.json` (`ux.reviewStyle`). Default is
 `"batch"`. If `"serial"`, use the serial path below. If the value is unrecognized, fall
 back to `"batch"` and warn the user.
 
-##### Batch Review (Default)
+#### Batch Review (Default)
 
-Generate ALL components first (Steps 3.1-3.5 above), then present them as a set:
+Generate ALL components first, then present them as a set:
 
 1. **Generate all components** before presenting any for review. Use `snapshot_layout`
    after each `batch_design` call to catch overlaps -- fix layout issues immediately, but
@@ -416,7 +474,7 @@ Generate ALL components first (Steps 3.1-3.5 above), then present them as a set:
 **Efficiency note**: Most components are approved without changes. Batch review turns
 N interruptions into 1 + K (where K is the number flagged for revision, typically 2-3).
 
-##### Serial Review (Opt-in)
+#### Serial Review (Opt-in)
 
 When `ux.reviewStyle` is `"serial"`, or when the user requests "I want to review each
 component individually":
@@ -437,20 +495,20 @@ For each component (or small batches of related components):
 4. Gather feedback: Approved / Needs changes / Rejected
 5. Record all decisions and iterations in DESIGN_PROGRESS.md
 
-##### Minimal Review (Opt-in)
+#### Minimal Review (Opt-in)
 
 When `ux.reviewStyle` is `"minimal"`:
 
 Generate all components, present a one-line summary per component, and auto-approve
 unless the user speaks up. Record with `[auto-approved]` tag in DESIGN_PROGRESS.md.
 
----
+**Checkpoint**: All components reviewed and approved by user (batch, serial, or minimal).
 
-### Markdown Fallback Path
+### Phase 5: Markdown Fallback Path
 
 #### Step 1: Derive Token Values
 
-Same process as Pencil Step 1 — map user preferences to concrete values, present table,
+Same process as Pencil Phase 1 — map user preferences to concrete values, present table,
 get confirmation.
 
 #### Step 2: Document Tokens
@@ -470,7 +528,7 @@ For each component identified from PRD features, document:
 
   | State | Trigger | Visual Change | Behavior |
   |-------|---------|---------------|----------|
-  | idle | default | — | Clickable, accepts focus |
+  | idle | default | -- | Clickable, accepts focus |
   | loading | form submit / async action | Spinner, text change or overlay | Prevents re-click, `aria-busy="true"` |
   | error | action failure | Error styling (red border, etc.) | Shows error message, allows retry |
   | disabled | [condition from PRD context] | Reduced opacity | Not focusable via click, `aria-disabled="true"` |
@@ -494,9 +552,7 @@ For each component identified from PRD features, document:
 
 Present each component spec to the user for feedback.
 
----
-
-### All Paths: Generate DESIGN_SYSTEM.md
+### Phase 6: Generate DESIGN_SYSTEM.md (All Paths)
 
 After tokens and components are complete (any path), generate
 `{docsRoot}/specs/DESIGN_SYSTEM.md`:
@@ -553,7 +609,7 @@ After tokens and components are complete (any path), generate
 **Behavioral States**:
 | State | Trigger | Visual Change | Behavior |
 |-------|---------|---------------|----------|
-| idle | default | — | [default behavior] |
+| idle | default | -- | [default behavior] |
 | loading | [trigger] | [visual change] | [behavioral change, e.g., prevents re-click] |
 | error | [trigger] | [visual change] | [behavioral change, e.g., shows error message] |
 | disabled | [trigger] | [visual change] | [behavioral change, e.g., not focusable] |
@@ -598,18 +654,21 @@ When `ux.parallelGeneration` is `true` (default):
 **Implementation**: Subagent dispatch for pre-generation. Main context handles user
 interaction. Discard pre-generated work if user feedback invalidates it.
 
-### Checklist Gate
+### Phase 7: Checklist Gate
 
 Read `references/design-checklist.md` and run the Tokens Checklist. Present results to user.
 
-### Update Tracking
+### Phase 8: Update Tracking
 
 1. Update DESIGN_PROGRESS.md:
    - Set `Tokens` status to `Complete`
    - Record component list with approval status
    - Add `Last updated` date
 
-Tell the user: "Design system complete. DESIGN_SYSTEM.md generated at
-`{docsRoot}/specs/DESIGN_SYSTEM.md`. Run `/cl-designer mockups` to generate screen
-mockups, or `/cl-designer build-plan` if you want to skip mockups and go straight to
-implementation tasks."
+**Checkpoint**: Tokens checklist passed and DESIGN_PROGRESS.md updated.
+
+## Output
+
+- **Primary artifact**: `{docsRoot}/specs/DESIGN_SYSTEM.md` (token catalog + component catalog + behavioral states)
+- **Additional outputs**: `.pen` file with token visualizations and reusable components (Pencil path), DESIGN_PROGRESS.md updates
+- **Next step**: "Design system complete. DESIGN_SYSTEM.md generated at `{docsRoot}/specs/DESIGN_SYSTEM.md`. Run `/cl-designer mockups` to generate screen mockups, or `/cl-designer build-plan` if you want to skip mockups and go straight to implementation tasks."

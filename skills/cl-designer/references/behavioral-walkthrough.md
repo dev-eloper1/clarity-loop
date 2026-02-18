@@ -1,16 +1,47 @@
+---
+mode: behavioral-walkthrough
+tier: guided
+depends-on:
+  - mockups-mode.md
+  - tokens-mode.md
+state-files:
+  - DESIGN_PROGRESS.md
+  - DECISIONS.md
+  - UI_SCREENS.md
+---
+
 ## Behavioral Walkthrough
 
 After visual approval, walk through each screen's behavioral requirements. This is a
-conversation — propose behaviors, ask clarifying questions, and record decisions. The
+conversation -- propose behaviors, ask clarifying questions, and record decisions. The
 walkthrough extends the mockup feedback loop, not replaces it.
 
 **Do NOT skip this step.** The walkthrough is what prevents the "looks right but works
 wrong" failure mode. Without it, the implementer makes 50+ behavioral micro-decisions
 per screen, many of which will be wrong.
 
----
+## Variables
 
-### Review Style Integration
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| Approved screen mockups | Pencil .pen file or markdown specs | Yes | Visually approved screens to walk through |
+| DESIGN_PROGRESS.md | `{docsRoot}/designs/` | Yes | Tracks walkthrough status per screen |
+| DECISIONS.md | `{docsRoot}/decisions/` | No | Existing decisions to inform behavioral defaults |
+| PRD | `docs/system/` or equivalent | Yes | Feature requirements for interaction context |
+| ux.reviewStyle | `.clarity-loop.json` | No | Review mode: `"batch"` (default) or `"serial"` |
+
+## Guidelines
+
+1. Do NOT skip the behavioral walkthrough. It prevents the "looks right but works wrong" failure mode.
+2. The walkthrough is a conversation -- propose behaviors, ask clarifying questions, and record decisions.
+3. Not every screen needs every state. Skip states that don't apply (e.g., a settings page with no data fetch doesn't need a loading state).
+4. Pin down actual content for non-default states -- not "No items" but "Create your first task to get started".
+5. For screens that share a layout pattern (e.g., all list views, all form pages), conduct the walkthrough on the first screen of each pattern, then confirm the pattern applies to similar screens.
+6. Walkthrough decisions flow into UI_SCREENS.md when generating the output artifact.
+
+## Process
+
+### Phase 1: Review Style Selection
 
 **Check the review style** from `.clarity-loop.json` (`ux.reviewStyle`):
 
@@ -31,9 +62,9 @@ below per screen.
 
 **Hybrid**: Batch-approve most screens, serial walkthrough for 1-2 complex screens.
 
----
+**Checkpoint**: Review style determined and approach selected.
 
-### 1. Screen States
+### Phase 2: Screen States
 
 For each approved screen, identify all states it can be in:
 
@@ -60,7 +91,9 @@ the design system components (EmptyState, Skeleton, ErrorBanner, etc.) via `ref`
 components by name: "Empty state uses the EmptyState component with illustration and
 'Create your first task' CTA button."
 
-### 2. Interaction Flows
+**Checkpoint**: All applicable screen states identified with user decisions recorded.
+
+### Phase 3: Interaction Flows
 
 Walk through each significant user interaction on the screen:
 
@@ -76,12 +109,14 @@ Present interactions as a table for the user to confirm:
 ```
 | User Action | Expected Behavior | Error Case |
 |-------------|-------------------|------------|
-| Click "Add Task" | Modal opens | — |
+| Click "Add Task" | Modal opens | -- |
 | Submit form | Optimistic add to list, toast confirmation | Error toast, form data preserved |
 | Delete item | Confirm dialog, then remove with undo toast | Error toast, item restored |
 ```
 
-### 3. Navigation Context
+**Checkpoint**: All significant interactions documented with happy path, error path, and loading feedback.
+
+### Phase 4: Navigation Context
 
 For each screen, capture:
 - **Route**: URL path (e.g., `/tasks`, `/tasks/:id`)
@@ -90,21 +125,25 @@ For each screen, capture:
 - **State persistence**: What's preserved when navigating away and returning? (scroll, filters, form data)
 - **Focus on arrival**: Where does focus go when this screen loads? (heading, first interactive element, search input)
 
-### 4. Content Decisions
+**Checkpoint**: Navigation context defined for all screens.
+
+### Phase 5: Content Decisions
 
 Pin down actual content for non-default states:
-- Empty state copy (not "No items" — actual text: "Create your first task to get started")
-- Error message text (not "Error" — actual text: "Couldn't load your tasks. Try again?")
-- Confirmation dialog text (not "Are you sure?" — actual text: "Delete 'Project Alpha'? This can't be undone.")
+- Empty state copy (not "No items" -- actual text: "Create your first task to get started")
+- Error message text (not "Error" -- actual text: "Couldn't load your tasks. Try again?")
+- Confirmation dialog text (not "Are you sure?" -- actual text: "Delete 'Project Alpha'? This can't be undone.")
 - Loading text if applicable ("Fetching your tasks..." vs. no text, just skeleton)
 - Help text, tooltips, inline guidance
 
-### 5. Record and Continue
+**Checkpoint**: Actual content text decided for all non-default states.
+
+### Phase 6: Record and Continue
 
 Record all walkthrough decisions in DESIGN_PROGRESS.md under the screen entry:
 
 ```markdown
-### [Screen Name] — Behavioral Walkthrough
+### [Screen Name] -- Behavioral Walkthrough
 
 **Screen States**: [list of applicable states with decisions]
 **Interaction Flows**: [table of interactions]
@@ -119,3 +158,11 @@ mockups-mode.md "All Paths: Generate UI_SCREENS.md").
 **Efficiency tip**: For screens that share a layout pattern (e.g., all list views, all
 form pages), conduct the walkthrough on the first screen of each pattern, then confirm
 the pattern applies to similar screens with brief per-screen adjustments.
+
+**Checkpoint**: All walkthrough decisions recorded in DESIGN_PROGRESS.md.
+
+## Output
+
+- **Primary artifact**: Behavioral walkthrough entries in DESIGN_PROGRESS.md (per screen: states, interactions, navigation, content)
+- **Additional outputs**: Pencil variant frames for non-default states (Pencil path), interaction flow tables
+- **Downstream**: Decisions flow into UI_SCREENS.md generation in mockups mode

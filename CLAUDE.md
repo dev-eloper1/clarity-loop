@@ -111,6 +111,25 @@ CLARITY_LOOP_PROJECT_ROOT=/path/to/project node scripts/init.js
 | `CLAUDE_PLUGIN_ROOT` | hooks.json | Resolves hook script paths (set by Claude Code) |
 | `CLARITY_LOOP_PROJECT_ROOT` | init.js, generate-manifest.js | Override project root (defaults to cwd) |
 
+## Diagram Conventions
+
+- **Use Mermaid** (`\`\`\`mermaid`) for all diagrams. Avoid ASCII art.
+- **Always set `color:#000`** on styled nodes. Mermaid defaults to inheriting text color
+  from stroke color, which produces unreadable text in dark mode (e.g., red text on light
+  red background). Every `style` directive with a custom `fill` or `stroke` must include
+  `color:#000` explicitly.
+- **Use Tailwind-scale hex colors** for fills — they have enough contrast in both light and
+  dark themes:
+  - Success/added: `fill:#dcfce7,stroke:#16a34a,color:#000` (green-100/green-600)
+  - Error/gap: `fill:#fee2e2,stroke:#b91c1c,color:#000` (red-100/red-700)
+  - Info/neutral: `fill:#dbeafe,stroke:#2563eb,color:#000` (blue-100/blue-600)
+  - Warning: `fill:#fef9c3,stroke:#ca8a04,color:#000` (yellow-100/yellow-600)
+- **Avoid `<b>`, `<i>`, special characters in node text** — they render inconsistently
+  across Mermaid viewers. Use plain text. If emphasis is needed, use CAPS or prefix labels
+  (e.g., "NEW: ...", "GAP: ...").
+- **Diagram types**: `flowchart` for flows, `graph` for architecture, `sequenceDiagram` for
+  interactions, `erDiagram` for schemas, `stateDiagram-v2` for state machines.
+
 ## Key Design Decisions
 
 - **Skills use markdown, not code.** SKILL.md files are prompts, not programs. They instruct Claude Code how to behave. References are loaded lazily to minimize context usage.

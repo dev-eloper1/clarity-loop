@@ -107,6 +107,11 @@ All paths (`docs/system/`, `docs/specs/`, etc.) resolve relative to the configur
    - What was the last significant decision? (from DECISIONS.md)
    Keep it brief. The user will say what they want to do.
 
+**Reference file convention**: When loading a reference file, read its YAML frontmatter
+to understand the mode's tier (structured or guided), dependencies, and state files.
+Follow the file's Workflow section (Tier 1: Structured) or Process section (Tier 2:
+Guided). Consult the Variables table for the mode's inputs and outputs.
+
 ---
 
 ## Mode Detection

@@ -1,10 +1,43 @@
+---
+mode: verify
+tier: guided
+depends-on: [verify-mode.md]
+state-files: [TASKS.md, DECISIONS.md, CONFIG_SPEC.md, ARCHITECTURE.md]
+---
+
 ## Governance and Operational Verification Checks
 
 Reference for Dimension 7 of verify mode and for audit mode sub-dimensions. These checks
 address infrastructure completeness, code quality conventions, and long-term governance
 concerns that the first six dimensions don't cover.
 
-### Sub-Check 7a: Config Completeness
+## Variables
+
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | Project config / .clarity-loop.json | Yes | Root path for all documentation artifacts |
+| CONFIG_SPEC.md | {docsRoot}/specs/ | No | Environment variables and config validation spec |
+| DECISIONS.md | {docsRoot}/ | No | Active decisions to reconcile against code |
+| TASKS.md | {docsRoot}/specs/ | Yes | Task tracker with L1 assumptions and spec gaps |
+| ARCHITECTURE.md | {docsRoot}/system/ | No | Architecture doc for alignment checks |
+| .env.example | project root | No | Environment variable template |
+| package.json | project root | No | Dependencies for compatibility checks |
+| .context-manifest.md | {docsRoot}/context/ | No | Library context for version pin checks |
+
+## Guidelines
+
+1. Not every sub-check applies to every project. Skip sub-checks whose prerequisite specs do not exist, with a note in the output.
+2. Sub-check 7i (Architecture Alignment) is the most judgment-heavy — flag findings as advisory rather than pass/fail.
+3. L1 assumption categories with 5+ assumptions are flagged as systemic gaps and suggest batch promotion.
+4. Distinguish intentional evolution from accidental drift in DECISIONS.md reconciliation (7j).
+5. Config completeness (7a) should scan for hardcoded secrets — patterns like API keys, passwords, connection strings in non-env files.
+6. Performance budget checks (7e) require build tools or a running server; flag budgets that cannot be verified without specific tooling.
+7. Present Dimension 7 as a grouped report in verify mode.
+8. For audit mode, feed findings into Dimension 4 (Goal Alignment & Drift) and Dimension 5 (Completeness).
+
+## Process
+
+### Phase 1: Config Completeness (7a)
 
 If CONFIG_SPEC.md exists:
 1. Compare CONFIG_SPEC.md variables against actual `.env.example` or config files
@@ -15,7 +48,9 @@ If CONFIG_SPEC.md exists:
 
 Report: config variables covered / total specified, hardcoded secrets found (if any).
 
-### Sub-Check 7b: Observability Coverage
+**Checkpoint**: All config variables accounted for, no hardcoded secrets detected.
+
+### Phase 2: Observability Coverage (7b)
 
 If observability specs exist:
 1. Verify health endpoint exists and returns expected shape
@@ -25,7 +60,9 @@ If observability specs exist:
 
 Report: observability features implemented / specified.
 
-### Sub-Check 7c: Dependency Compatibility
+**Checkpoint**: Observability features match spec.
+
+### Phase 3: Dependency Compatibility (7c)
 
 1. Run the project's package manager install in dry-run mode
 2. Check for peer dependency warnings
@@ -34,7 +71,9 @@ Report: observability features implemented / specified.
 
 Report: compatibility issues found (if any).
 
-### Sub-Check 7d: Code Organization Consistency
+**Checkpoint**: No peer dependency conflicts or known incompatibilities.
+
+### Phase 4: Code Organization Consistency (7d)
 
 If code conventions spec exists:
 1. Scan source files for naming pattern consistency (are all files kebab-case? Mixed?)
@@ -44,7 +83,9 @@ If code conventions spec exists:
 
 Report: pattern violations found / files scanned.
 
-### Sub-Check 7e: Performance Budget
+**Checkpoint**: Code organization matches conventions spec.
+
+### Phase 5: Performance Budget (7e)
 
 If performance criteria exist in specs:
 1. Check bundle size (if build tools available): `npm run build` and measure output
@@ -54,7 +95,9 @@ If performance criteria exist in specs:
 
 Report: budgets met / budgets specified / budgets not measurable.
 
-### Sub-Check 7f: L1 Assumption Scan
+**Checkpoint**: Measurable budgets are within target.
+
+### Phase 6: L1 Assumption Scan (7f)
 
 Scan TASKS.md for all L1 assumptions:
 1. Group by category
@@ -66,7 +109,9 @@ Scan TASKS.md for all L1 assumptions:
 
 Report: total L1 assumptions, per-category counts, systemic gaps flagged.
 
-### Sub-Check 7g: Backend Policy Adherence
+**Checkpoint**: Systemic gaps identified and promotion suggested where applicable.
+
+### Phase 7: Backend Policy Adherence (7g)
 
 If backend policies spec exists:
 1. Check idempotency: Do POST/PUT endpoints that create resources accept an
@@ -79,7 +124,9 @@ If backend policies spec exists:
 
 Report: policies implemented / policies specified.
 
-### Sub-Check 7h: Data Model Consistency
+**Checkpoint**: Backend policies are implemented as specified.
+
+### Phase 8: Data Model Consistency (7h)
 
 If data modeling specs exist per entity:
 1. Verify deletion strategy matches spec (soft delete columns exist where specified)
@@ -89,7 +136,9 @@ If data modeling specs exist per entity:
 
 Report: data model compliance per entity.
 
-### Sub-Check 7i: Architecture Alignment
+**Checkpoint**: Data model matches spec for all entities.
+
+### Phase 9: Architecture Alignment (7i)
 
 Compare implemented code patterns against ARCHITECTURE.md (or equivalent):
 1. **Dependency direction**: Do imports follow the specified layer hierarchy?
@@ -106,7 +155,9 @@ pass/fail — architectural alignment is a spectrum, not a binary.
 
 Report: alignment observations, structural drift indicators.
 
-### Sub-Check 7j: DECISIONS.md Reconciliation
+**Checkpoint**: Architectural drift assessed and documented as advisory findings.
+
+### Phase 10: DECISIONS.md Reconciliation (7j)
 
 Scan DECISIONS.md for all active decisions:
 1. For each decision with a verifiable implementation claim (technology choice, pattern
@@ -116,6 +167,8 @@ Scan DECISIONS.md for all active decisions:
    (code may need fixing)
 
 Report: decisions verified / decisions active, contradictions found.
+
+**Checkpoint**: All active decisions reconciled against codebase.
 
 ### Verify Mode Usage
 
@@ -147,3 +200,8 @@ indicates the system docs have persistent gaps in those domains.
 architecture doc's module descriptions, communication patterns, and layer boundaries
 against the implemented code structure. Flag areas where the architecture doc describes
 a system that no longer matches reality.
+
+## Output
+
+- **Primary**: Grouped Dimension 7 report (for verify mode)
+- **Additional**: L1 trend analysis (for audit mode Dimension 4), structural drift detection (for audit mode Dimension 5)

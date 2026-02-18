@@ -1,12 +1,38 @@
+---
+mode: pencil-templates
+tier: guided
+depends-on:
+  - pencil-schema-quick-ref.md
+state-files: []
+---
+
 ## Pencil Templates
 
 Copy-paste-ready `batch_design` templates for common operations. All examples are tested and use correct Pencil schema properties.
 
 **Usage**: Copy the relevant template, replace placeholder values (in CAPS or brackets), adjust dimensions/colors as needed.
 
----
+## Variables
 
-## Token Section Frame
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| .pen file path | DESIGN_PROGRESS.md | Yes | Path to the Pencil file being edited |
+| Design tokens | DESIGN_SYSTEM.md or DESIGN_PROGRESS.md | Yes | Token values (colors, spacing, typography) to apply to templates |
+
+## Guidelines
+
+1. Always specify fill colors for showcase frames (`#ffffff`) and text (`#1a1a1a`).
+2. Use lowercase property values: `"vertical"` not `"VERTICAL"`, `"normal"` not `"NORMAL"`.
+3. Set `reusable: true` for components that will be instantiated in screens.
+4. Use `ref` nodes in mockups to instantiate design system components.
+5. Keep batch_design calls to ~25 operations -- break large sections into multiple calls.
+6. Call `snapshot_layout` after each `batch_design` to verify no overlaps.
+7. Replace placeholder values (CAPS or brackets) with your specific values.
+8. Test incrementally -- generate one section, verify, then proceed to next.
+
+## Process
+
+### Phase 1: Token Section Frames
 
 Creates a top-level showcase frame for token visualizations (colors, typography, spacing).
 
@@ -59,9 +85,9 @@ colorTitle=I(colorFrame, {
 })
 ```
 
----
+**Checkpoint**: Token section frame created with proper layout, fill, and title.
 
-## Color Swatch Row
+### Phase 2: Color Swatch Row
 
 Creates a horizontal row of color swatches with labels.
 
@@ -207,9 +233,7 @@ primary900Label=I(primary900, {
 })
 ```
 
----
-
-## Typography Sample Row
+### Phase 3: Typography Sample Row
 
 Shows a text sample at a specific font size.
 
@@ -258,9 +282,7 @@ xl2Sample=I(typographyFrame, {
 })
 ```
 
----
-
-## Spacing Token Grid
+### Phase 4: Spacing Token Grid
 
 Shows spacing value blocks with labels.
 
@@ -358,9 +380,7 @@ spacing4Label=I(spacing4, {
 })
 ```
 
----
-
-## Component Category Frame
+### Phase 5: Component Category Frame
 
 Creates a top-level showcase frame for component categories (buttons, inputs, etc.).
 
@@ -413,9 +433,7 @@ formControlsTitle=I(formControlsFrame, {
 })
 ```
 
----
-
-## Button Component (Reusable)
+### Phase 6: Button Component (Reusable)
 
 Creates a reusable button component with variants.
 
@@ -492,9 +510,7 @@ btnDisabledLabel=I(btnDisabled, {
 })
 ```
 
----
-
-## Input Component (Reusable)
+### Phase 7: Input Component (Reusable)
 
 Creates a reusable input field component with label.
 
@@ -589,9 +605,7 @@ inputErrorMessage=I(inputError, {
 })
 ```
 
----
-
-## Card Component (Reusable)
+### Phase 8: Card Component (Reusable)
 
 Creates a reusable card container.
 
@@ -631,9 +645,7 @@ cardBody=I(card, {
 })
 ```
 
----
-
-## Screen Mockup Frame
+### Phase 9: Screen Mockup Frame
 
 Creates a screen frame for mockups mode.
 
@@ -682,11 +694,9 @@ dashboardTitle=I(dashboardScreen, {
 })
 ```
 
----
+### Phase 10: Multi-Pane Screen Layouts
 
-## Multi-Pane Screen Layouts
-
-### Three-Pane Layout (Sidebar + List + Detail)
+#### Three-Pane Layout (Sidebar + List + Detail)
 
 **CRITICAL:** Screen frame uses `layout: "horizontal"` to place panes side-by-side.
 Each pane is a child frame with explicit width and `height: "fill_container"`.
@@ -817,9 +827,7 @@ noteDetail=I(notesScreen, {
 })
 ```
 
----
-
-### Two-Pane Layout (Sidebar + Content)
+#### Two-Pane Layout (Sidebar + Content)
 
 ```javascript
 // Screen frame with horizontal layout
@@ -889,24 +897,22 @@ dashboardContent=I(dashboardScreen, {
 })
 ```
 
----
-
-## Why Multi-Pane Layouts Need Special Care
+#### Why Multi-Pane Layouts Need Special Care
 
 **Common mistake:**
 ```javascript
 // WRONG - Creates overlapping panes
-screen=I(group, {type: "frame", layout: "vertical", ...})  // ← Vertical stacks panes on top of each other!
-sidebar=I(screen, {type: "frame", width: 240, height: 900, x: 0, y: 0})  // ← Absolute positioning
-listPane=I(screen, {type: "frame", width: 400, height: 900, x: 240, y: 0})  // ← Manual coordinates = OVERLAP
+screen=I(group, {type: "frame", layout: "vertical", ...})  // Vertical stacks panes on top of each other!
+sidebar=I(screen, {type: "frame", width: 240, height: 900, x: 0, y: 0})  // Absolute positioning
+listPane=I(screen, {type: "frame", width: 400, height: 900, x: 240, y: 0})  // Manual coordinates = OVERLAP
 ```
 
 **Correct:**
 ```javascript
 // RIGHT - Uses horizontal auto-layout
-screen=I(group, {type: "frame", layout: "horizontal", gap: 0, padding: 0, ...})  // ← Horizontal places panes side-by-side
-sidebar=I(screen, {type: "frame", width: 240, height: "fill_container", ...})  // ← Auto-positioned by parent
-listPane=I(screen, {type: "frame", width: 400, height: "fill_container", ...})  // ← No x,y needed
+screen=I(group, {type: "frame", layout: "horizontal", gap: 0, padding: 0, ...})  // Horizontal places panes side-by-side
+sidebar=I(screen, {type: "frame", width: 240, height: "fill_container", ...})  // Auto-positioned by parent
+listPane=I(screen, {type: "frame", width: 400, height: "fill_container", ...})  // No x,y needed
 ```
 
 **Key differences:**
@@ -915,9 +921,7 @@ listPane=I(screen, {type: "frame", width: 400, height: "fill_container", ...})  
 - Panes: Explicit `width`, `height: "fill_container"` (fills parent height)
 - Panes: NO `x` or `y` properties (auto-positioned by horizontal layout)
 
----
-
-## Component Instance (ref node)
+### Phase 11: Component Instance (ref node)
 
 Instantiates a reusable component in a screen mockup.
 
@@ -967,9 +971,7 @@ U(userCard+"/cardTitle", {content: "John Doe"})
 U(userCard+"/cardBody", {content: "Premium member since 2024"})
 ```
 
----
-
-## Form Section with Multiple Inputs
+### Phase 12: Form Section with Multiple Inputs
 
 Creates a form section with grouped inputs.
 
@@ -1038,9 +1040,7 @@ cancelButton=I(submitRow, {
 U(cancelButton+"/btnSecondaryLabel", {content: "Cancel"})
 ```
 
----
-
-## Grid Layout (Cards)
+### Phase 13: Grid Layout (Cards)
 
 Creates a grid of card components.
 
@@ -1080,28 +1080,11 @@ U(card3+"/cardTitle", {content: "Feature 3"})
 U(card3+"/cardBody", {content: "Description of feature 3 goes here."})
 ```
 
----
+## Output
 
-## Usage Notes
-
-1. **Always specify fill colors** for showcase frames (`#ffffff`) and text (`#1a1a1a`)
-2. **Use lowercase property values**: `"vertical"` not `"VERTICAL"`, `"normal"` not `"NORMAL"`
-3. **Set `reusable: true`** for components that will be instantiated in screens
-4. **Use `ref` nodes** in mockups to instantiate design system components
-5. **Keep batch_design calls to ~25 operations** — break large sections into multiple calls
-6. **Call `snapshot_layout` after each `batch_design`** to verify no overlaps
-7. **Replace placeholder values** (CAPS or brackets) with your specific values
-8. **Test incrementally** — generate one section, verify, then proceed to next
-
----
-
-## Loading This File
-
-Load during tokens mode (Step 2) and mockups mode (Step 2) alongside the schema quick reference:
-
-```markdown
-1. Call `get_guidelines("design-system")`
-2. Read `references/pencil-schema-quick-ref.md`
-3. Read `references/pencil-templates.md`
-4. Begin batch_design operations using these templates
-```
+- **Primary artifact**: Correct `batch_design` calls using tested templates
+- **Loading instructions**: Load during tokens mode (Step 2) and mockups mode (Step 2) alongside the schema quick reference:
+  1. Call `get_guidelines("design-system")`
+  2. Read `references/pencil-schema-quick-ref.md`
+  3. Read `references/pencil-templates.md`
+  4. Begin batch_design operations using these templates

@@ -1,3 +1,10 @@
+---
+mode: run
+tier: guided
+depends-on: [start-mode.md, spec-mode.md]
+state-files: [TASKS.md, .spec-manifest.md, DECISIONS.md, .context-manifest.md, .clarity-loop.json]
+---
+
 ## Run Mode
 
 The core implementation loop. Processes the task queue front-to-back with reconciliation,
@@ -7,9 +14,35 @@ Run mode is designed to be invoked repeatedly — once per session or multiple t
 a session. Each invocation starts with reconciliation (detecting what changed since last
 time) and then processes tasks until the user stops or the queue is exhausted.
 
----
+## Variables
 
-### Step 1: Reconciliation on Resume
+| Variable | Source | Required | Description |
+|----------|--------|----------|-------------|
+| docsRoot | Project config / .clarity-loop.json | Yes | Root path for all documentation artifacts |
+| TASKS.md | {docsRoot}/specs/ | Yes | Task tracker with statuses, acceptance criteria, session log |
+| .spec-manifest.md | {docsRoot}/specs/ | Yes | Spec manifest for hash comparison |
+| DECISIONS.md | {docsRoot}/ | No | Decision log for L2 gaps and behavioral decisions |
+| .context-manifest.md | {docsRoot}/context/ | No | Library context for loading during implementation |
+| .clarity-loop.json | project root | No | Config for l1ScanFrequency and other settings |
+| TEST_SPEC.md | {docsRoot}/specs/ | No | Test spec for verification against test expectations |
+| SECURITY_SPEC.md | {docsRoot}/specs/ | No | Security spec for license allowlist |
+
+## Guidelines
+
+1. Run reconciliation at the start of EVERY run invocation to ground the skill in reality before processing tasks.
+2. Fix tasks (F-NNN) always take priority over new tasks.
+3. L0 spec gaps are patched inline silently. L1 gaps state an assumption and continue. L2 gaps pause the affected task but not the whole queue.
+4. Log all behavioral decisions to DECISIONS.md regardless of severity — these are implementation knowledge that should not be lost.
+5. Small issues discovered while implementing the current task (missing import, wrong variable name, obvious typo) are fixed inline — no separate fix task needed. Fix tasks are for issues that affect OTHER tasks' code or that require significant debugging.
+6. When a bug forces a decision that the spec did not anticipate, log it to DECISIONS.md regardless of severity.
+7. Before classifying a user-reported visual issue as a design-gap, first verify the code faithfully implements the design spec.
+8. Dependency verification (registry check, vulnerability audit, license check) runs on every new dependency addition.
+9. The L1 assumption scan frequency is configurable in .clarity-loop.json under `implementer.l1ScanFrequency` (default: 5 tasks). Set to 0 to disable.
+10. Record all gaps in TASKS.md with ID (G-NNN), task, description, level, status, and resolution.
+
+## Process
+
+### Phase 1: Reconciliation on Resume
 
 This runs at the start of EVERY `run` invocation. It grounds the skill in reality before
 processing any tasks.
@@ -57,11 +90,11 @@ processing any tasks.
    - **Externally-managed**: Mark affected tasks as `externally-managed`. They stay in
      TASKS.md for completeness but are excluded from further verification.
 
-**If no changes detected**: Skip reconciliation silently and proceed to Step 2.
+**If no changes detected**: Skip reconciliation silently and proceed to Phase 2.
 
----
+**Checkpoint**: Reconciliation complete, all external changes categorized and user decision processed.
 
-### Step 2: Spec Hash Check
+### Phase 2: Spec Hash Check
 
 Compare the current `.spec-manifest.md` content hash against the hash recorded in TASKS.md.
 
@@ -72,13 +105,13 @@ Compare the current `.spec-manifest.md` content hash against the hash recorded i
 The user can defer sync and continue — not every spec change affects every task. But the
 warning ensures they know.
 
----
+**Checkpoint**: Spec hash comparison complete, user informed of any mismatch.
 
-### Step 3: Queue Processing
+### Phase 3: Queue Processing
 
 Process tasks front-to-back, respecting the dependency graph and user ordering.
 
-#### 3a: Select Next Task
+**3a: Select Next Task**
 
 Pick the next task that is:
 - Status: `pending` (not done, skipped, blocked, or externally-managed)
@@ -92,7 +125,7 @@ If no unblocked tasks remain and tasks are still pending: report the blockage. "
 remaining tasks are blocked. [Details of what's blocking what]. Resolve blockers or
 adjust dependencies."
 
-#### 3b: Validity Check
+**3b: Validity Check**
 
 Before implementing, check the task's spec hash:
 - **Matches current spec**: Proceed with implementation.
@@ -101,7 +134,7 @@ Before implementing, check the task's spec hash:
   b) Continue with this task anyway (user's call — maybe the change is minor)
   c) Skip this task and move to the next
 
-#### 3c: Implement
+**3c: Implement**
 
 Implement the task. This is where Claude Code writes code:
 
@@ -114,7 +147,7 @@ Implement the task. This is where Claude Code writes code:
       in the inventory, load matching detail files
    c. Inject loaded context after spec reference, before implementation
    d. Record which context files were loaded in TASKS.md
-   (See `skills/cl-researcher/references/context-mode.md` → "Standard Loading Protocol"
+   (See `skills/cl-researcher/references/context-mode.md` -> "Standard Loading Protocol"
    for the full protocol.)
 3.5. **Dependency verification** — When the implementation requires adding a new dependency
      (detected by `npm install`, `yarn add`, or similar in the implementation code):
@@ -168,7 +201,7 @@ For parallel groups (if user approved in start mode):
   subagents), resolve conflicts or re-run sequentially
 - Update TASKS.md and TASKS.md from main context
 
-#### 3d: Verify Acceptance Criteria
+**3d: Verify Acceptance Criteria**
 
 After implementation, check EVERY acceptance criterion for the task:
 - **All met**: Mark task `done`, record completion date and files modified.
@@ -178,18 +211,18 @@ After implementation, check EVERY acceptance criterion for the task:
 
 Update BOTH TASKS.md (persistent) and Claude Code tasks via `TaskUpdate` (session).
 
-#### 3e: Post-Task Regression Spot-Check (Optional)
+**3e: Post-Task Regression Spot-Check (Optional)**
 
 After marking a task done, do a lightweight regression check:
 1. Identify completed tasks whose recorded files overlap with the files just modified
 2. Quick-check their acceptance criteria against current code
-3. If regressions found: create fix tasks (see Step 4)
+3. If regressions found: create fix tasks (see Phase 4)
 4. If all pass: continue to next task
 
 This is configurable. Users who prefer speed over safety can disable it. When disabled,
 regressions are only caught during `verify` mode.
 
-#### 3f: L1 Assumption Check (Periodic)
+**3f: L1 Assumption Check (Periodic)**
 
 After completing every 5th task (configurable), scan TASKS.md's Spec
 Gaps table for L1 assumptions:
@@ -219,12 +252,12 @@ Gaps table for L1 assumptions:
 The scan frequency is configurable in `.clarity-loop.json` under
 `implementer.l1ScanFrequency` (default: 5 tasks). Set to 0 to disable.
 
----
+**Checkpoint**: Queue processing cycle complete for the current task.
 
-### Step 4: Fix Tasks
+### Phase 4: Fix Tasks
 
 When a runtime failure, regression, or integration error is detected — whether during
-implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
+implementation (Phase 3 step 3c), verification (step 3d), or spot-check (step 3e):
 
 1. **Classify the issue**:
    - `runtime-error`: Code throws an error during execution
@@ -251,10 +284,10 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
      faithfully implements the design spec:
      1. Read the relevant DESIGN_SYSTEM.md / UI_SCREENS.md sections
      2. Compare the implemented code against the spec (tokens, spacing, colors, layout)
-     3. If the code DOESN'T match the spec → this is a `runtime-error` or `regression`,
+     3. If the code DOESN'T match the spec -> this is a `runtime-error` or `regression`,
         not a design gap. Fix the code to match the spec first.
-     4. Show the user the fix. If they're now satisfied → done.
-     5. If the code DOES match the spec and the user still doesn't like it → NOW it's a
+     4. Show the user the fix. If they're now satisfied -> done.
+     5. If the code DOES match the spec and the user still doesn't like it -> NOW it's a
         `design-gap`. The design itself needs to change.
      This prevents changing the design to accommodate buggy implementations.
 
@@ -308,7 +341,7 @@ implementation (Step 3c), verification (Step 3d), or spot-check (Step 3e):
 
 2. **Distinguish fix tasks, spec gaps, context gaps, and design gaps**:
    - **Fix task**: The spec is right, the code is wrong. Fix the code.
-   - **Spec gap** (Step 5): The spec is incomplete or wrong. A *what to build* question.
+   - **Spec gap** (Phase 5): The spec is incomplete or wrong. A *what to build* question.
    - **Context gap**: The spec is right, but the library knowledge used to implement it is
      wrong or missing. A *how to build it with this library* question.
    - **Design gap**: The spec is right, but the visual design is missing or inadequate.
@@ -344,6 +377,8 @@ the current task (missing import, wrong variable name, obvious typo) are fixed i
 separate fix task needed. Fix tasks are for issues that affect OTHER tasks' code or that
 require significant debugging.
 
+**Checkpoint**: Fix tasks processed, cascade re-verification complete.
+
 #### Behavioral bugs and emergent issues
 
 Some bugs can't be predicted during research, design, or spec generation — they emerge only
@@ -360,7 +395,7 @@ from a specific pattern, two libraries conflicting. These do NOT require a pipel
 | The approach described in system docs fundamentally doesn't work | L2 spec gap | Pause task. Offer: make a call now, or research cycle. Only this triggers the pipeline. |
 
 Most emergent bugs land in the first three rows — handled entirely within the implementer.
-The full pipeline loop (research → proposal → review → merge) is only for the rare case
+The full pipeline loop (research -> proposal -> review -> merge) is only for the rare case
 where a bug proves the *documentation itself* is wrong, not just the code. Even then, the
 user can choose to make a quick call and continue instead.
 
@@ -369,9 +404,7 @@ anticipate (debounce vs. throttle, retry strategy, error recovery approach), log
 DECISIONS.md regardless of severity. These decisions become constraints for future tasks
 and future research — they're implementation knowledge that shouldn't be lost.
 
----
-
-### Step 5: Spec Gap Triage
+### Phase 5: Spec Gap Triage
 
 When implementation reveals a spec gap (missing information, ambiguous contract, impossible
 requirement):
@@ -380,7 +413,7 @@ requirement):
 |-----------|---------|--------|
 | **L0 — Trivial** | Typo in spec, obvious default missing | Patch spec inline, log in progress file, continue |
 | **L1 — Contained** | Edge case not covered, minor ambiguity | Log gap, flag to user: "Spec doesn't cover [X]. I'll continue with assumption [Y] unless you disagree." |
-| **L2 — Significant** | Conflicting constraints, missing requirements | Pause this task. "This task requires [X] but no spec covers it. Options: a) Make a call now and I'll implement it, b) Run `/cl-researcher research '[topic]'` to resolve properly." Note: if the gap is visual/UI (how it looks, not what it does), classify as `design-gap` in Step 4 instead — route to `/cl-designer`, not research. |
+| **L2 — Significant** | Conflicting constraints, missing requirements | Pause this task. "This task requires [X] but no spec covers it. Options: a) Make a call now and I'll implement it, b) Run `/cl-researcher research '[topic]'` to resolve properly." Note: if the gap is visual/UI (how it looks, not what it does), classify as `design-gap` in Phase 4 instead — route to `/cl-designer`, not research. |
 
 L0 and L1 gaps don't block the queue — the current task continues (L0 silently, L1 with
 a stated assumption). L2 gaps pause the affected task but NOT the whole queue — other
@@ -399,20 +432,20 @@ Decision entry in `docs/DECISIONS.md`:
 - **Decision**: What was chosen (including "research cycle needed")
 - **Status**: `active`
 
----
+**Checkpoint**: All spec gaps categorized, logged, and user decisions recorded.
 
-### Step 6: Tangent Handling
+### Phase 6: Tangent Handling
 
 Real development has tangents. The run mode accommodates them:
 
 | Tangent Size | Example | Handling |
 |-------------|---------|----------|
 | **Small** | Fix import, adjust config | Absorbed into current task |
-| **Medium** | Debug error, fix regression | Fix task (F-NNN), Step 4 |
+| **Medium** | Debug error, fix regression | Fix task (F-NNN), Phase 4 |
 | **Large** | User refactors module externally | Caught by reconciliation on next resume |
 | **Off-script** | User implements several features manually | Full reconciliation: check all tasks against code reality |
 
-When the user returns after off-script work, reconciliation (Step 1) handles it:
+When the user returns after off-script work, reconciliation (Phase 1) handles it:
 - For each task: check if acceptance criteria are met by existing code
 - Tasks whose criteria are met: mark `done (external)`
 - Tasks partially met: mark `in-progress` with notes on what remains
@@ -420,7 +453,7 @@ When the user returns after off-script work, reconciliation (Step 1) handles it:
 
 The queue reflects reality after reconciliation. Continue from wherever it actually stands.
 
----
+**Checkpoint**: Tangent categorized and handled appropriately.
 
 ### Session End
 
@@ -436,3 +469,8 @@ Before ending a session (context compression, user stops, crash recovery):
 
 3. Tell the user: "Session saved. [N] tasks completed this session, [M] remaining.
    Run `/cl-implementer run` to continue or `/cl-implementer status` for an overview."
+
+## Output
+
+- **Primary**: `{docsRoot}/specs/TASKS.md` (updated with task statuses, session log, spec gaps)
+- **Additional**: DECISIONS.md entries (for L2 gaps and behavioral decisions), fix tasks (F-NNN in TASKS.md), context file updates (via cl-researcher)
