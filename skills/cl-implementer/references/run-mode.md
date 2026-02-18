@@ -199,6 +199,11 @@ For parallel groups (if user approved in start mode):
   gaps found
 - Main context: collect results, check for file conflicts (same file modified by multiple
   subagents), resolve conflicts or re-run sequentially
+- **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+  `implementation`. Load the protocol prompt template from
+  `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+  subagent's Task prompt. Parse the RESULT summary line from each response for status
+  classification and aggregation.
 - Update TASKS.md and TASKS.md from main context
 
 **3d: Verify Acceptance Criteria**

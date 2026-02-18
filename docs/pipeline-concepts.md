@@ -413,6 +413,26 @@ scanning of a mode's interface without reading the full file.
 
 See SYSTEM_DESIGN.md Section 1 (Reference File Convention) for the full specification.
 
+## Subagent Communication
+
+Modes that dispatch subagents for parallel work use the Structured Agent Result Protocol
+to standardize how results flow back to the orchestrating context. The protocol defines:
+
+- **Four statuses** (CLEAN, FINDINGS, PARTIAL, ERROR) that distinguish "analysis completed
+  with no issues" from "analysis completed and found problems" — unlike binary PASS/FAIL
+  which conflates these
+- **Five result types** (digest, consistency, verification, implementation, design-plan)
+  matching the natural shape of each dispatch pattern
+- **A universal envelope** (summary line + metadata + detail) enabling the orchestrator
+  to parse any result without knowing the type in advance
+- **Mechanical aggregation rules** for combining N parallel results into unified reports
+
+The protocol specification lives in `skills/cl-reviewer/references/agent-result-protocol.md`.
+Each dispatch site in the skill reference files specifies which result type to use.
+
+See SYSTEM_DESIGN.md Section 1 (Structured Agent Result Protocol) for the architectural
+overview.
+
 ---
 
 ## Related

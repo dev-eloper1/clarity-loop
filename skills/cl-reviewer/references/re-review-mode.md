@@ -34,6 +34,12 @@ problems.
    `docs/reviews/proposals/`, ordered by version number. Dispatch subagents to read these
    in parallel if there are multiple.
 
+   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+   `digest`. Load the protocol prompt template from
+   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+   subagent's Task prompt. Parse the RESULT summary line from each response for status
+   classification and aggregation.
+
 2. **Build a cumulative issue ledger** -- Collect every blocking issue and non-blocking
    suggestion from ALL previous reviews into a single checklist. This is critical: you're
    not just checking against the last review, you're checking against every issue ever raised.

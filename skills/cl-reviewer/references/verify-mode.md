@@ -54,6 +54,12 @@ system docs have just been modified. You must read them fresh.
    - Any sections that appear to reference or relate to the proposal's topic
    - Any sections that seem recently modified or inconsistent with surrounding content
 
+   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+   `digest`. Load the protocol prompt template from
+   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+   subagent's Task prompt. Parse the RESULT summary line from each response for status
+   classification and aggregation.
+
 **Verify**: Proposal, latest review, and all system docs loaded fresh.
 
 **On failure**: If proposal or review files missing, stop and tell the user which inputs are needed.
@@ -91,6 +97,12 @@ system docs have just been modified. You must read them fresh.
    - Broken cross-references (doc A refers to something in doc B that was moved or renamed)
    - Architectural inconsistencies (e.g., one doc describes a flow that another doc can't support)
    - Redundant or conflicting specifications of the same behavior
+
+   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+   `consistency`. Load the protocol prompt template from
+   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+   subagent's Task prompt. Parse the RESULT summary line from each response for status
+   classification and aggregation.
 
 7. **Part D: Collateral Damage** -- Check for unintended changes -- sections of system docs that were modified but shouldn't
    have been based on the proposal's scope:

@@ -654,6 +654,12 @@ When `ux.parallelGeneration` is `true` (default):
 **Implementation**: Subagent dispatch for pre-generation. Main context handles user
 interaction. Discard pre-generated work if user feedback invalidates it.
 
+**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+`design-plan`. Load the protocol prompt template from
+`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+subagent's Task prompt. Parse the RESULT summary line from each response for status
+classification and aggregation.
+
 ### Phase 7: Checklist Gate
 
 Read `references/design-checklist.md` and run the Tokens Checklist. Present results to user.

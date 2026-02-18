@@ -39,7 +39,7 @@ graph TD
     subgraph Plugin["clarity-loop/ (Plugin Root)"]
         subgraph Skills["skills/ — 4 Skills"]
             RES["cl-researcher<br/>SKILL.md + 6 references"]
-            REV["cl-reviewer<br/>SKILL.md + 9 references"]
+            REV["cl-reviewer<br/>SKILL.md + 10 references"]
             DES["cl-designer<br/>SKILL.md + 10 references"]
             IMP["cl-implementer<br/>SKILL.md + 10 references"]
         end
@@ -56,11 +56,12 @@ graph TD
             INIT_SH["init.sh<br/>Bash wrapper"]
         end
 
-        subgraph Templates["templates/ — 4 Tracking Files"]
+        subgraph Templates["templates/ — 5 Tracking Files"]
             T1["decisions.md"]
             T2["research-ledger.md"]
             T3["proposal-tracker.md"]
             T4["parking.md"]
+            T5["status.md"]
         end
 
         subgraph PluginCfg[".claude-plugin/"]
@@ -118,22 +119,55 @@ in the middle — Workflow (rigid) vs. Guidelines+Process (flexible).
 
 **Frontmatter fields**: `mode`, `tier`, `depends-on`, `state-files`.
 
-**Tier assignment**: 14 Tier 1 files, 21 Tier 2 files. See Section 17 for the complete
+**Tier assignment**: 14 Tier 1 files, 22 Tier 2 files. See Section 17 for the complete
 assignment table.
 
 **Convention enforcement**: Skills instruct the agent to read frontmatter when loading a
 reference file. A future lint script may validate compliance.
 
+### Structured Agent Result Protocol
+
+Modes that dispatch subagents (13 dispatch sites across 4 skills) use a standardized
+protocol for result reporting. The protocol ensures mechanical aggregation of parallel
+results without ad-hoc prose interpretation.
+
+**Status taxonomy**: Every subagent result has one of four statuses:
+
+| Status | Meaning | Orchestrator Action |
+|--------|---------|-------------------|
+| CLEAN | Completed, no issues found | Count toward passing total |
+| FINDINGS | Completed, issues enumerated | Aggregate findings by severity |
+| PARTIAL | Incomplete, partial results available | Include with coverage caveat |
+| ERROR | Failed entirely | Log for retry or manual review |
+
+**Result types**: Five types matching Clarity Loop's dispatch patterns:
+`digest`, `consistency`, `verification`, `implementation`, `design-plan`.
+
+**Summary line**: Every result begins with a parseable line:
+`RESULT: <STATUS> | Type: <TYPE> | <type-specific-metrics>`
+
+**Envelope**: Summary line, then metadata block (protocol version, agent, scope, coverage,
+confidence), then type-specific detail section.
+
+**Finding format**: Issues use a standardized table (ID, Severity, Type, Location,
+Counter-location, Description, Suggestion) enabling mechanical deduplication and sorting.
+
+**Aggregation**: Orchestrators collect results, separate by status bucket, merge finding
+tables, deduplicate, and produce unified reports with coverage maps.
+
+See `skills/cl-reviewer/references/agent-result-protocol.md` for the full specification
+including prompt templates and aggregation rules.
+
 ### Skill Responsibilities
 
 | Skill | Responsibility | Modes |
 |-------|---------------|-------|
-| **cl-researcher** | Research, document, propose | bootstrap, triage, research, structure, proposal, context (7 modes) |
+| **cl-researcher** | Research, document, propose | bootstrap, bootstrap-brownfield, triage, research, structure, proposal, context (7 modes) |
 | **cl-reviewer** | Review, merge, verify, audit | review, re-review, fix, merge, verify, audit, correct, sync, design-review (9 modes) |
 | **cl-designer** | Visual design and components | setup, tokens, mockups, build-plan (4 modes) |
 | **cl-implementer** | Specs, tasks, implementation | spec, spec-review, start, run, autopilot, verify, status, sync (8 modes) |
 
-**Total: 4 skills, 28 modes, 35 reference files.**
+**Total: 4 skills, 28 modes, 36 reference files.**
 
 ---
 
@@ -162,7 +196,7 @@ flowchart TD
         REREVIEW["re-review<br/>Cumulative ledger"]
         MERGE["merge<br/>Apply to system docs"]
         VERIFY_R["verify<br/>Post-merge check"]
-        AUDIT["audit<br/>8-dimension health"]
+        AUDIT["audit<br/>9-dimension health"]
         CORRECT["correct<br/>Targeted fixes"]
         SYNC_R["sync<br/>Code-doc alignment"]
         DREVIEW["design-review<br/>3-dimension validation"]
@@ -448,7 +482,7 @@ sequenceDiagram
 | **fix** | Walk through blocking issues, apply edits | Modified proposal |
 | **merge** | Apply approved proposal to system docs | Updated system docs |
 | **verify** | Post-merge fidelity + consistency check | `VERIFY_P-NNN.md` |
-| **audit** | 8-dimension system-wide health check | `AUDIT_YYYY-MM-DD.md` |
+| **audit** | 9-dimension system-wide health check | `AUDIT_YYYY-MM-DD.md` |
 | **correct** | Targeted fixes from audit/verify/sync | `CORRECTIONS_DATE.md` |
 | **sync** | Code-doc drift detection | `SYNC_YYYY-MM-DD.md` |
 | **design-review** | 3-dimension design validation | `DESIGN_REVIEW_YYYY-MM-DD.md` |
@@ -1169,7 +1203,7 @@ graph TD
     end
 
     subgraph Audit["System Audit<br/>(cl-reviewer audit)"]
-        VM3["8 dimensions:<br/>Cross-doc consistency<br/>Within-doc consistency<br/>Technical correctness<br/>Goal alignment + drift<br/>Completeness<br/>Abstraction coherence<br/>Design completeness<br/>Staleness"]
+        VM3["9 dimensions:<br/>Cross-doc consistency<br/>Within-doc consistency<br/>Technical correctness<br/>Goal alignment + drift<br/>Completeness<br/>Abstraction coherence<br/>Design completeness<br/>Staleness<br/>Parking lot health"]
     end
 
     VM1 -->|"ISSUES FOUND"| CORRECT["cl-reviewer correct"]
@@ -1302,7 +1336,7 @@ This is a guideline, not a constraint. If a user wants detailed discussion durin
 | `.claude-plugin/plugin.json` | Plugin manifest — name, version, skills path, metadata |
 | `.claude-plugin/marketplace.json` | Marketplace catalog entry |
 
-### Skills (4 SKILL.md + 35 references)
+### Skills (4 SKILL.md + 36 references)
 
 #### cl-researcher (SKILL.md + 6 references)
 
@@ -1316,7 +1350,7 @@ This is a guideline, not a constraint. If a user wants detailed discussion durin
 | `skills/cl-researcher/references/document-plan-template.md` | Guided | Structure planning template |
 | `skills/cl-researcher/references/context-mode.md` | Structured | Three-layer context system, staleness model, loading protocol |
 
-#### cl-reviewer (SKILL.md + 9 references)
+#### cl-reviewer (SKILL.md + 10 references)
 
 | File | Tier | Purpose |
 |------|------|---------|
@@ -1326,10 +1360,11 @@ This is a guideline, not a constraint. If a user wants detailed discussion durin
 | `skills/cl-reviewer/references/fix-mode.md` | Structured | Walk through blocking issues, apply edits, auto-trigger re-review |
 | `skills/cl-reviewer/references/merge-mode.md` | Structured | Authorization marker lifecycle, Change Manifest execution |
 | `skills/cl-reviewer/references/verify-mode.md` | Structured | 4-part post-merge verification, design nudge |
-| `skills/cl-reviewer/references/audit-mode.md` | Guided | 8-dimension analysis, drift analysis, technical verification via web search |
+| `skills/cl-reviewer/references/audit-mode.md` | Guided | 9-dimension analysis, drift analysis, technical verification via web search |
 | `skills/cl-reviewer/references/correction-mode.md` | Guided | Corrections manifest, spot-check, lightweight pipeline bypass |
 | `skills/cl-reviewer/references/sync-mode.md` | Structured | Claim extraction, code verification, DECISIONS.md reconciliation |
 | `skills/cl-reviewer/references/design-review-mode.md` | Structured | 3-dimension design validation, Pencil MCP integration |
+| `skills/cl-reviewer/references/agent-result-protocol.md` | Guided | Structured result protocol: status taxonomy, result types, envelope, finding format, aggregation rules, prompt templates |
 
 #### cl-designer (SKILL.md + 10 references)
 
@@ -1379,13 +1414,14 @@ This is a guideline, not a constraint. If a user wants detailed discussion durin
 | `scripts/init.js` | Directory scaffolding, collision detection, tracking file templates, gitignore setup |
 | `scripts/init.sh` | Bash wrapper for cross-platform init |
 
-### Templates (4 files)
+### Templates (5 files)
 
 | File | Purpose |
 |------|---------|
 | `templates/decisions.md` | DECISIONS.md template — Project Context + Decision Log |
 | `templates/research-ledger.md` | RESEARCH_LEDGER.md template — Active, Completed, Abandoned sections |
 | `templates/proposal-tracker.md` | PROPOSAL_TRACKER.md template — In-Flight, Merged, Rejected sections |
+| `templates/parking.md` | PARKING.md template — Emerged concepts parking lot |
 | `templates/status.md` | STATUS.md template — minimal stub (pipeline dashboard replaced by PARKING.md) |
 
 ### Documentation (7 files + 2 assets)

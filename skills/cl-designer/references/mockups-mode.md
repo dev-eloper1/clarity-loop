@@ -261,10 +261,22 @@ can parallelize screen generation — but carefully:
    - This gives you full control over MCP operations while still saving time on the
      planning-heavy part of screen generation
 
+   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+   `design-plan`. Load the protocol prompt template from
+   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+   subagent's Task prompt. Parse the RESULT summary line from each response for status
+   classification and aggregation.
+
 3. **If using per-screen .pen files**, subagents can each write to their own file safely.
    Each subagent: create file -> open_document -> batch_design -> get_screenshot. But the
    feedback loop still happens in the main context — subagents generate, main context
    presents screenshots and gathers feedback.
+
+   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+   `design-plan`. Load the protocol prompt template from
+   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+   subagent's Task prompt. Parse the RESULT summary line from each response for status
+   classification and aggregation.
 
 4. **Never have two agents write to the same .pen file.** Pencil MCP does not support
    concurrent writes. If a subagent starts a `batch_design` operation, you cannot interrupt

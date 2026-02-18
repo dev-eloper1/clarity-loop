@@ -344,6 +344,12 @@ When the dependency graph allows parallel work:
 5. If conflicts: re-run conflicting tasks sequentially
 6. Merge results into TASKS.md
 
+**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+`implementation`. Load the protocol prompt template from
+`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+subagent's Task prompt. Parse the RESULT summary line from each response for status
+classification and aggregation.
+
 **Limit**: Maximum 3 parallel groups to avoid resource contention. User can adjust.
 
 ### Hard Stops

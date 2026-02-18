@@ -139,6 +139,12 @@ in the spec manifest about the caveat.
 - All behavioral rules and constraints
 - All cross-references to other docs
 
+**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+`digest`. Load the protocol prompt template from
+`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+subagent's Task prompt. Parse the RESULT summary line from each response for status
+classification and aggregation.
+
 **Verify**: All system docs listed in manifest have been read and summarized.
 **On failure**: If a doc fails to read, log error and continue with remaining docs.
 

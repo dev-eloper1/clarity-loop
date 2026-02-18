@@ -97,6 +97,12 @@ Don't manufacture concerns to look thorough.
 For very long proposals (>500 lines), consider dispatching subagents to analyze different
 dimensions in parallel, each with the full proposal text and the system doc context.
 
+**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+`consistency`. Load the protocol prompt template from
+`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+subagent's Task prompt. Parse the RESULT summary line from each response for status
+classification and aggregation.
+
 10. **Dimension 1: Value Assessment** -- Does this proposal add something meaningful to the system?
     - Does it solve a real problem or address a real gap?
     - Is the complexity it introduces justified by the value it provides?

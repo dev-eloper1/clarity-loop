@@ -66,6 +66,12 @@ Each subagent produces:
 - Any claims about external technologies or patterns
 - Anything that reads as aspirational vs. decided
 
+**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+`digest`. Load the protocol prompt template from
+`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+subagent's Task prompt. Parse the RESULT summary line from each response for status
+classification and aggregation.
+
 Read all previous audit reports -- check `docs/reviews/audit/AUDIT_*.md` for
 prior audits. These form your baseline for drift analysis.
 
@@ -80,10 +86,23 @@ you're checking the system against itself, against reality, and against its own 
 
 Use subagents for parallel analysis where dimensions are independent.
 
+**Result protocol**: Subagents report using the Structured Agent Result Protocol. Select
+the result type per dimension: `consistency` for dimensions checking doc-vs-doc or
+internal coherence (Dims 1-2, 6), `verification` for dimensions checking against
+external criteria (Dims 3-5, 7), `digest` for dimensions extracting content status
+(Dims 8-9). Load the appropriate prompt template from
+`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6.
+
 **Checkpoint**: Each dimension assessed independently before producing the report.
 
 **Dimension 1: Internal Consistency (Cross-Document)** -- Check every pair of system docs for contradictions. This is the most mechanically
 intensive check -- dispatch subagents per doc pair if needed.
+
+**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
+`consistency`. Load the protocol prompt template from
+`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
+subagent's Task prompt. Parse the RESULT summary line from each response for status
+classification and aggregation.
 
 Look for:
 - **Contradictory statements**: Doc A says X, Doc B says not-X
