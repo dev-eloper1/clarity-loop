@@ -413,6 +413,81 @@ scanning of a mode's interface without reading the full file.
 
 See SYSTEM_DESIGN.md Section 1 (Reference File Convention) for the full specification.
 
+## Fan-Out Orchestration
+
+Seven pipeline modes dispatch specialized subagents in parallel for heavy read, analysis,
+and implementation work. The 4-phase pattern (Discover → Spawn → Collect → Aggregate)
+is consistent across all modes.
+
+### Four-Phase Pattern
+
+| Phase | What Happens |
+|-------|-------------|
+| **Discover** | Build the work list (doc list from manifest, task list from TASKS.md, etc.) |
+| **Spawn** | Issue all Task tool calls in a single message → parallel launch |
+| **Collect** | Parse each RESULT line; on FAILED/missing RESULT, mark as FAILED and continue |
+| **Aggregate** | Mode-specific synthesis of collected results |
+
+### Agent Types
+
+| Agent | Used By Modes | Work Unit |
+|-------|--------------|-----------|
+| `cl-doc-reader-agent` | audit, verify, spec, re-review | One document per agent |
+| `cl-consistency-checker-agent` | audit, verify | One document pair per agent |
+| `cl-dimension-analyzer-agent` | audit, review | One dimension per agent |
+| `cl-task-implementer-agent` | run, autopilot | One task group per agent |
+| `cl-design-planner-agent` | mockups | One screen per agent |
+
+### Context File Rules (Applied Uniformly)
+
+These rules apply to all 5 agents and all 7 orchestrating modes:
+
+1. **Inject, don't read**: The orchestrator passes relevant context (DECISIONS.md excerpts,
+   manifest content) via the Task prompt. Agents do not read shared files independently.
+2. **Never write from agents**: Agents surface emergent findings in their `## Parkable
+   Findings` and `## Decision Implications` sections.
+3. **Orchestrator writes after collection**: After all agents in a wave complete, the
+   orchestrator reviews findings, deduplicates, and writes to PARKING.md/DECISIONS.md
+   in a single sequential step.
+
+### Wave Structure
+
+Some modes use multiple sequential waves when later work depends on earlier results:
+
+| Mode | Waves | Structure |
+|------|-------|-----------|
+| audit | 2 | Wave 1: doc reads → Wave 2: consistency + dimension analysis |
+| verify | 2 | Fan-out 1: doc reads → Fan-out 2: pairwise consistency |
+| spec, re-review, run, autopilot, mockups | 1 | Single wave |
+| review | 1 | Single wave (conditional on proposal length > 500 lines) |
+
+### Execution Tiers
+
+| Setting | Behavior |
+|---------|----------|
+| `orchestration.fanOut: "auto"` (default) | Basic Task tool — parallel by default, no experimental flag needed |
+| `orchestration.fanOut: "teams"` | Wrap in TeamCreate/TeamDelete lifecycle — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` |
+| `orchestration.fanOut: "disabled"` | Sequential fallback — identical to pre-fan-out behavior |
+
+The sequential fallback path is the existing prose instruction in each reference file,
+preserved unchanged. Users who set `orchestration.fanOut: "disabled"` or don't have
+agent definitions installed experience zero behavior change.
+
+### Terminology
+
+| Term | Definition |
+|------|-----------|
+| Fan-out | Dispatching N specialized agents in parallel for a single logical operation |
+| Wave | A set of agents dispatched together whose results must all be collected before the next wave begins |
+| Orchestrator | The main context (reference file running in the primary Claude Code session) |
+| Agent | A specialized Task-tool subagent dispatched from an `agents/*.md` definition (registered via `plugin.json`) |
+| Sequential fallback | The `orchestration.fanOut: "disabled"` path; identical to current behavior |
+
+See SYSTEM_DESIGN.md Section 1 (Agent Layer) for the architectural overview and
+`agents/` for the agent definitions.
+
+---
+
 ## Subagent Communication
 
 Modes that dispatch subagents for parallel work use the Structured Agent Result Protocol

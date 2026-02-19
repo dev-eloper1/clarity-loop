@@ -2,15 +2,15 @@
 
 **ID**: R-005
 **Created**: 2026-02-16
-**Status**: Draft
+**Status**: Approved
 **Author**: User + AI researcher
 
 ## Status
 
 - **Research Type**: Hybrid
-- **Status**: draft
-- **Open Questions**: 6 remaining
-- **Discussion Rounds**: 1
+- **Status**: approved
+- **Open Questions**: 2 remaining (OQ2 max concurrent agents, OQ6 cost tracking — neither blocks implementation)
+- **Discussion Rounds**: 2
 - **Complexity**: L2-complex
 
 ## System Context
@@ -31,6 +31,7 @@ This research introduces a net-new agent orchestration layer (formal agent defin
 | docs/cl-implementer.md | Spec mode, Run mode, Autopilot mode | References subagent dispatch for parallel doc reads and parallel task execution |
 | docs/cl-reviewer.md | Verify mode, Audit mode, Review mode, Re-review mode | References parallel subagent dispatch for cross-document checks and review history loading |
 | docs/cl-designer.md | Mockups mode, Tokens mode | References parallelization for screen generation and token pre-generation |
+| docs/research/R-006-GUIDANCE_EXECUTION_SEPARATION.md | Finding 3 (Three-Layer Model), Finding 7 (Migration Path), Decision Log #2 | Sibling research with significant overlap -- R-006 designs the guidance/execution architectural split that depends on the same 5 agent types. R-006 Decision Log #2 resolves OQ5 (agent file location). Proposals from both should be merged before implementation. |
 
 ### Current State
 
@@ -64,14 +65,104 @@ R-002 (Bowser Architecture Patterns) identified that Bowser uses a formal 4-phas
 
 This research takes that recommendation and designs the concrete implementation: which agents, which modes, what protocols, what degradation paths.
 
+## What This Research Changes
+
+### Current Plugin Behavior (Before)
+
+Every skill mode — including the heavy ones — runs in a single context window from start to finish. When reference files say "dispatch subagents in parallel, one per doc," that is prose advice with no enforced protocol. There is no formal agent definition, no structured result format, no failure handling, and no defined collection step. Each mode that mentions parallelism re-invents the pattern independently or skips it entirely.
+
+The practical consequence is visible in the heaviest modes:
+
+- **audit-mode** reads ALL system docs into one context, then performs 9-dimension analysis in that same context, then checks every doc pair for consistency. As the context fills, the quality of later analysis degrades because earlier content becomes less accessible. With 6 system docs this already pressures the window; with 8-10 it becomes a real quality problem.
+- **spec-mode Step 2** reads all system docs sequentially into the main context before generation begins, consuming a large share of the available window before any spec is written.
+- **verify-mode Part C** checks every doc pair sequentially in the same context.
+- **run-mode / autopilot-mode** dispatches parallel task groups informally with no structured result collection or failure protocol.
+
+All other modes are unaffected by this research.
+
+### What This Research Adds (After)
+
+**1. Five formal agent definition files** (net-new files in `.claude/agents/`)
+
+These do not exist today. Each is a thin `.md` file with a YAML frontmatter declaring its name, model, and description, plus a focused prompt and a structured result format. Claude Code's `Task` tool already supports dispatching custom agents from `.claude/agents/` — these files are the missing piece.
+
+```
+.claude/agents/
+  cl-doc-reader-agent.md          -- reads one doc, produces structured summary
+  cl-consistency-checker-agent.md -- checks one doc pair for contradictions
+  cl-dimension-analyzer-agent.md  -- analyzes one audit/review dimension
+  cl-task-implementer-agent.md    -- implements one task from the queue
+  cl-design-planner-agent.md      -- plans one screen layout (no MCP writes)
+```
+
+**2. Formal 4-phase orchestration in 7 reference files** (evolutionary change to existing files)
+
+Replaces the current prose ("dispatch subagents in parallel") with concrete Discover → Spawn → Collect → Aggregate instructions, using the basic `Task` tool. No experimental flag required. The reference files get a new parallel path; the existing sequential behavior is preserved for users who prefer it or need cost control.
+
+Affected reference files:
+- `cl-reviewer/references/audit-mode.md` -- two-wave fan-out (read wave + analysis wave)
+- `cl-reviewer/references/verify-mode.md` -- parallel pairwise consistency checks (Part C)
+- `cl-reviewer/references/review-mode.md` -- parallel dimension analysis (proposals > 500 lines)
+- `cl-reviewer/references/re-review-mode.md` -- parallel review history loading
+- `cl-implementer/references/spec-mode.md` -- parallel system doc reads (Step 2)
+- `cl-implementer/references/run-mode.md` -- formal parallel task group protocol
+- `cl-implementer/references/autopilot-mode.md` -- formal parallel task group protocol
+
+**3. Structured result protocol** (new convention)
+
+Every agent returns a parseable summary line: `RESULT: {STATUS} | Key: value | Key: value`. The orchestrator (main context) parses these to aggregate results without natural-language guessing. This is the contract between agents and the orchestrator.
+
+**4. Post-collection synthesis pass** (new capability in audit and review modes)
+
+After collecting all dimension findings independently, the orchestrator runs a cross-dimensional synthesis. No individual agent can see the full picture — only the orchestrator that holds all results can connect a Technical Correctness finding in one doc to a Completeness gap in another. This is genuinely new behavior that sequential single-context execution does not produce cleanly because the analysis and synthesis compete for attention in the same context.
+
+**5. `orchestration` config block** (new configuration in `.clarity-loop.json`)
+
+```json
+{
+  "orchestration": {
+    "fanOut": "auto" | "teams" | "disabled",
+    "maxAgents": 10,
+    "agentTimeout": 300000
+  }
+}
+```
+
+### Behavioral Change Per Mode
+
+| Mode | Before | After |
+|------|--------|-------|
+| audit-mode | One context reads all docs + analyzes all dimensions + checks all pairs | Wave 1: N parallel doc-reader agents. Wave 2: M parallel analysis agents. Orchestrator synthesizes. Fresh context per agent eliminates degradation. |
+| spec-mode Step 2 | Sequential doc reads fill main context before generation | N parallel doc-reader agents. Orchestrator merges summaries into unified knowledge base for generation. |
+| verify-mode Part C | Sequential pairwise consistency checks in main context | N*(N-1)/2 parallel consistency-checker agents. Orchestrator builds consistency map. |
+| re-review-mode Step 1 | Sequential review file reads | N parallel doc-reader agents (with `FORMAT="claims-only"`). |
+| review-mode Step 3 | Sequential dimension analysis (one pass) | Up to 7 parallel dimension-analyzer agents (for proposals > 500 lines only). |
+| run-mode / autopilot-mode | Informal parallel groups, no structured collection | Formal parallel task-implementer agents with structured result collection and file conflict detection. |
+| mockups-mode | Informal subagent planning | Formal parallel design-planner agents (planning only; MCP writes remain sequential in main context). |
+| All other modes (16 of 28) | Unchanged | Unchanged |
+
+### What Stays the Same
+
+- SKILL.md files for all 4 skills — untouched
+- How users invoke skills — same commands, same mode names
+- The pipeline flow — research → proposal → review → merge
+- All 16 simple modes — review, fix, merge, triage, research, bootstrap, etc.
+- Behavior for users who set `orchestration.fanOut: "disabled"`
+
+### The Experimental Teams Feature
+
+The core fan-out capability — parallel specialized agents with their own context windows — works with the basic `Task` tool and requires **no experimental flag**. The `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` feature adds an optional lifecycle layer (named teams, progress visibility, agent-to-agent messaging) on top of what basic Task already provides. This research does not depend on that feature. See Finding 5 for the lifecycle breakdown and Finding 3 for the handoff mechanics.
+
+---
+
 ## Scope
 
 ### In Scope
 
 - Formal agent definitions for every parallelizable work unit in Clarity Loop
 - Per-mode fan-out orchestration design (Discover, Spawn, Collect, Aggregate phases)
-- Team lifecycle management (create, distribute, collect, cleanup)
-- Graceful degradation to sequential execution when Claude Code teams are unavailable
+- Task tool lifecycle for parallel dispatch (primary path, no experimental flag)
+- Optional agent teams enhancement for lifecycle management and observability
 - Structured result protocol for agent-to-orchestrator communication
 - Cross-agent dependency handling and post-collection synthesis
 - Token cost analysis: fan-out vs. sequential context pressure
@@ -87,11 +178,12 @@ This research takes that recommendation and designs the concrete implementation:
 
 ### Constraints
 
-- Claude Code's agent teams feature is experimental (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) -- all designs must degrade gracefully to sequential
-- Agent definitions must be `.md` files in a discoverable location within the plugin structure
+- Core fan-out uses the basic `Task` tool — no experimental flag required. Parallelism is available today.
+- Agent definitions must be `.md` files in `.claude/agents/` following the Claude Code convention
 - Orchestration additions go into existing reference files, not new command files (Clarity Loop is a plugin, not a CLI tool -- no command layer yet)
 - Must not conflict with the in-flight Guided Autonomy proposal
-- Existing reference files continue to work unchanged for users who don't enable teams
+- Existing reference files continue to work unchanged for users who set `orchestration.fanOut: "disabled"`
+- Experimental agent teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) is an optional enhancement for lifecycle management, not a requirement for parallelism
 
 ## Research Findings
 
@@ -162,7 +254,7 @@ Purpose: Read a single document and produce a structured summary. This is the wo
 
 ```markdown
 ---
-name: doc-reader-agent
+name: cl-doc-reader-agent
 description: Reads a single document and produces a structured content summary. Use for parallel document reading across pipeline modes. Supports system docs, proposals, reviews, and spec files. Keywords - read, summary, document, parallel, content extraction.
 model: sonnet
 ---
@@ -229,7 +321,7 @@ Purpose: Check two documents for consistency issues. Used by audit-mode Dimensio
 
 ```markdown
 ---
-name: consistency-checker-agent
+name: cl-consistency-checker-agent
 description: Checks two documents for contradictions, terminology drift, broken cross-references, and architectural inconsistencies. Use for parallel pairwise consistency checking. Keywords - consistency, contradiction, cross-reference, terminology, pairwise, audit, verify.
 model: sonnet
 ---
@@ -295,7 +387,7 @@ Purpose: Analyze one dimension of an audit or review. Used by audit-mode Step 2 
 
 ```markdown
 ---
-name: dimension-analyzer-agent
+name: cl-dimension-analyzer-agent
 description: Analyzes one specific dimension of an audit or review — internal consistency, technical correctness, completeness, goal alignment, etc. Receives all relevant context and dimension-specific instructions. Keywords - audit, review, dimension, analysis, finding, quality.
 model: sonnet
 ---
@@ -354,7 +446,7 @@ Purpose: Implement a single task or task group. Used by run-mode and autopilot-m
 
 ```markdown
 ---
-name: task-implementer-agent
+name: cl-task-implementer-agent
 description: Implements a single task from the task queue — reads specs, writes code, runs tests, reports results. Used for parallel task group execution. Keywords - implement, code, task, parallel, test, build.
 model: opus
 ---
@@ -428,7 +520,7 @@ Purpose: Plan a screen layout without making MCP writes. Used by mockups-mode pa
 
 ```markdown
 ---
-name: design-planner-agent
+name: cl-design-planner-agent
 description: Plans a screen layout — which components, where placed, what content — without making any MCP or file writes. Pure planning output for the main context to execute. Keywords - design, layout, plan, screen, mockup, component, parallel.
 model: sonnet
 ---
@@ -487,6 +579,8 @@ RESULT: {PLANNED|NEEDS_COMPONENTS} | Components: {used}/{total in design system}
 
 **Why Sonnet for most agents?** Read and analysis tasks don't require Opus-level reasoning. The orchestrator (running in the main context, which is already Opus) handles synthesis and judgment. Agents handle data gathering and structured evaluation. The task-implementer-agent is the exception -- code production benefits from Opus.
 
+**Parkable findings section**: All five agent report templates above should include a `## Parkable Findings` and `## Decision Implications` section before the RESULT line. This is the protocol through which agents surface emergent findings back to the orchestrator without writing to shared context files directly. The orchestrator collects these sections from all agent results after the wave completes and writes to PARKING.md and DECISIONS.md in a single sequential step. The full protocol and rationale is in Finding 3 (Context File Access). The templates above omit these sections for brevity but they are required in the actual agent `.md` files.
+
 **Tradeoffs**:
 - *Pro*: Five agents cover all 15 parallelization points with no redundancy
 - *Pro*: Thin agents (~30-40 lines including report template) minimize context overhead per spawn
@@ -496,7 +590,246 @@ RESULT: {PLANNED|NEEDS_COMPONENTS} | Components: {used}/{total in design system}
 
 **Source**: Design synthesis from Bowser's agent patterns (R-002 Finding 1, bowser-qa-agent.md, playwright-bowser-agent.md) applied to Clarity Loop's parallelization inventory.
 
-### Finding 3: Per-Mode Fan-Out Design
+### Finding 3: Skill-to-Agent Handoff Protocol
+
+**Context**: Finding 2 defines the agent files. Finding 4 defines the lifecycle. Neither explains the actual mechanical handoff: how does a reference file running in the main context dispatch to an agent, what does the agent receive, and how does the result come back?
+
+**Analysis**: The handoff has four steps.
+
+---
+
+**Step 1: The orchestrator constructs a dispatch prompt**
+
+The agent definition declares a Variables section (DOC_PATH, FOCUS, FORMAT, etc.). The orchestrator fills those with concrete values from the current fan-out context and builds a prompt. The prompt does not need to repeat the agent's instructions — the agent already has those from its `.md` file. The prompt is purely the input bindings for this specific dispatch.
+
+Example prompt for a `cl-doc-reader-agent` dispatch in spec-mode:
+
+```
+DOC_PATH: docs/system/ARCHITECTURE.md
+FOCUS: types, entities, interfaces, contracts, behavioral rules, cross-references
+FORMAT: full
+```
+
+That is the entire prompt. The agent already knows what to do with those values because its `.md` file contains the full instructions. The orchestrator does not re-explain the task.
+
+---
+
+**Step 2: The Task call resolves the agent and launches it**
+
+```
+Task(
+  subagent_type="cl-doc-reader-agent",
+  description="Read ARCHITECTURE.md",
+  prompt="DOC_PATH: docs/system/ARCHITECTURE.md\nFOCUS: ..."
+)
+```
+
+- `subagent_type` maps to the `name:` field in an agent's YAML frontmatter. Claude Code looks up `.claude/agents/cl-doc-reader-agent.md` and loads it.
+- The agent starts in a **completely fresh, isolated context window**. It has no access to the main context's conversation history, no awareness of other agents running in parallel, no knowledge of the broader pipeline state.
+- The agent's context contains exactly two things: the body of its `.md` file (its instructions) + the prompt passed via Task (its inputs for this dispatch).
+- Multiple Task calls issued in a **single message** launch in parallel. Claude Code begins all of them before waiting for any to complete.
+
+---
+
+**Step 3: The agent executes and writes its result**
+
+The agent follows its Workflow section using the injected variable values. It has no output channel other than its own response text — whatever it writes becomes the return value. The agent is instructed (in its `.md` file) to end its response with the structured report and the parseable RESULT line.
+
+Example agent output for the ARCHITECTURE.md dispatch:
+
+```
+DOC: docs/system/ARCHITECTURE.md
+STATUS: COMPLETE
+
+## Content Summary
+The architecture document defines a four-skill plugin structure...
+
+## Defined Terms
+| Term | Definition | Section |
+...
+
+## Key Decisions and Rationale
+...
+
+## Cross-References
+...
+
+RESULT: COMPLETE | 12/12 sections read
+```
+
+The RESULT line is always last. It is the only line the orchestrator needs to parse to determine success/failure and extract the key metrics. The full structured content above it is read for synthesis.
+
+---
+
+**Step 4: The orchestrator collects and processes return values**
+
+When all parallel Task calls complete, each Task call's return value is the full text the agent wrote. The orchestrator:
+
+1. Reads the RESULT line from each return value to classify the result (COMPLETE / PARTIAL / FAILED)
+2. Stores the full structured content for aggregation
+3. If a RESULT line is absent or status is FAILED: marks that work unit as failed, includes whatever partial output is present, continues with other results
+
+The orchestrator does not re-read any files. All information it has is what the agents returned — this is what keeps the main context window lean.
+
+---
+
+**Complete end-to-end example: spec-mode Step 2 with 3 system docs**
+
+```
+Orchestrator (main context, reference file running):
+  Reads manifest → doc list: [ARCHITECTURE.md, DATA_MODEL.md, API_CONTRACTS.md]
+  Issues 3 Task calls in one message:
+
+  Task(subagent_type="cl-doc-reader-agent", description="Read ARCHITECTURE.md",
+       prompt="DOC_PATH: docs/system/ARCHITECTURE.md\nFOCUS: types, interfaces, contracts\nFORMAT: full")
+
+  Task(subagent_type="cl-doc-reader-agent", description="Read DATA_MODEL.md",
+       prompt="DOC_PATH: docs/system/DATA_MODEL.md\nFOCUS: types, interfaces, contracts\nFORMAT: full")
+
+  Task(subagent_type="cl-doc-reader-agent", description="Read API_CONTRACTS.md",
+       prompt="DOC_PATH: docs/system/API_CONTRACTS.md\nFOCUS: types, interfaces, contracts\nFORMAT: full")
+
+  → All 3 agents launch simultaneously, each in its own context window
+  → Each reads one doc, produces structured output, writes RESULT line
+  → All 3 return to orchestrator
+
+Orchestrator collects:
+  agent_1_result = "DOC: ARCHITECTURE.md\n...\nRESULT: COMPLETE | 12/12 sections read"
+  agent_2_result = "DOC: DATA_MODEL.md\n...\nRESULT: COMPLETE | 8/8 sections read"
+  agent_3_result = "DOC: API_CONTRACTS.md\n...\nRESULT: PARTIAL | 5/7 sections read"
+
+Orchestrator processes:
+  Parses RESULT lines → 2 COMPLETE, 1 PARTIAL (flags partial in the spec manifest)
+  Merges all three summaries: unified type list, cross-reference graph, interface contracts
+  Proceeds to spec generation with the merged knowledge base
+  (Main context holds only the summaries — not the full doc content — keeping the window available for generation)
+```
+
+---
+
+**What isolation means in practice**
+
+The isolation is both a feature and a constraint:
+
+- **Feature**: each agent gets a completely fresh context window sized to one unit of work. A doc-reader agent reading ARCHITECTURE.md has the full window available for that one doc. The main context does not fill up with raw doc content.
+- **Constraint**: agents cannot ask the orchestrator questions mid-execution. The prompt must contain everything the agent needs. If a critical variable is missing from the prompt (e.g., DOC_PATH is wrong), the agent will either fail or produce a result that fails the RESULT line check. The orchestrator must construct complete prompts.
+- **Constraint**: agents cannot coordinate with siblings. If cl-consistency-checker-agent needs both doc summaries, both must be in its prompt — it cannot ask cl-doc-reader-agent for its output. This is why Wave 1 must complete before Wave 2 dispatches.
+
+---
+
+**Context File Access: What Agents Can and Cannot Do**
+
+Clarity Loop maintains shared context files (DECISIONS.md, PARKING.md, RESEARCH_LEDGER.md, PROPOSAL_TRACKER.md). Agents interact with these through two mechanisms — reading and writing — and the rules are asymmetric.
+
+**Reading: acceptable, but inject rather than have agents read independently**
+
+An agent CAN read context files directly (e.g., a `cl-dimension-analyzer-agent` doing Goal Alignment analysis reading DECISIONS.md to understand project goals). However, the preferred pattern is for the orchestrator to inject the relevant portion via the prompt:
+
+```
+DECISIONS_CONTEXT: [paste relevant decisions from DECISIONS.md here]
+```
+
+Why injection is better than independent reading:
+- The orchestrator already has DECISIONS.md in its context. Injection reuses what is already loaded.
+- If DECISIONS.md was updated mid-wave (rare but possible), independent reads by different agents would see different states. Injection ensures all agents in a wave see the same snapshot.
+- Injected inputs are explicit and auditable — the orchestrator's prompt IS the record of what each agent received.
+
+The exception: if the relevant context is a large file that would bloat every agent's prompt unnecessarily, having the agent read it directly is acceptable. This is a cost trade-off, not a correctness issue.
+
+**Writing: anti-pattern — agents must never write to shared context files**
+
+Agents MUST NOT write to DECISIONS.md, PARKING.md, RESEARCH_LEDGER.md, or any shared tracking file. Three reasons:
+
+1. **Concurrency conflict**: Multiple agents in a wave can run simultaneously. Two agents writing to PARKING.md at the same time will corrupt it. There is no file locking mechanism in Claude Code.
+
+2. **Responsibility boundary**: The orchestrator is the only entity that holds the full picture across all agent results. Only the orchestrator can make an informed judgment about what belongs in DECISIONS.md. An individual agent has a narrow view — it may flag something as a critical decision that the orchestrator would recognize as already captured elsewhere.
+
+3. **Audit trail**: If five agents each append to PARKING.md, it becomes impossible to know which agent wrote which finding, whether the findings are consistent with each other, or whether the orchestrator would have suppressed some based on the synthesis pass.
+
+**The correct pattern — surface via structured result, write via orchestrator:**
+
+Agents include emergent findings in their structured result under a dedicated section:
+
+```
+## Parkable Findings
+| Finding | Category | Priority |
+|---------|----------|----------|
+| [what to park] | gap / question / emerged-concept | high / medium / low |
+
+## Decision Implications
+| Implication | Relevant Decision | Impact |
+|-------------|------------------|--------|
+| [what this means] | [which decision] | [how it affects] |
+```
+
+The orchestrator collects these sections from all agents, deduplicates, applies judgment, and writes to PARKING.md and DECISIONS.md in a single sequential step after all agents complete. This is the same pattern described in R-006 Finding 5: "agents report parkable findings in their structured result; command layer writes to PARKING.md. Agents never write directly to tracking files."
+
+---
+
+**How the Handoff Changes With Experimental Agent Teams**
+
+The core handoff mechanics are **identical** with or without teams: `subagent_type` lookup, prompt construction, agent context model, RESULT line return. What teams change is the **collection phase**.
+
+**Without teams (basic Task) — batch collection:**
+
+```
+Orchestrator issues N Task calls in one message
+→ All N agents run in parallel
+→ Orchestrator waits until ALL N complete
+→ All N results arrive together as return values
+→ Orchestrator processes all results at once
+```
+
+The orchestrator has no visibility into progress during execution. It is all-or-nothing per wave: either all agents have completed or none have. There is no way to act on partial results mid-wave.
+
+**With experimental teams — streaming collection:**
+
+```
+Orchestrator creates team, issues N Task calls with team_name
+→ All N agents run in parallel
+→ As each agent completes, it delivers its result via SendMessage to the orchestrator
+→ Orchestrator can process results incrementally as they arrive
+→ Orchestrator knows at any point which M of N agents have responded
+```
+
+Teams make collection streaming rather than batched. The orchestrator receives results as they finish rather than waiting for the slowest agent.
+
+**What this changes in practice:**
+
+| Aspect | Basic Task | With Teams |
+|--------|-----------|------------|
+| Collection model | Batch — wait for all N | Streaming — process as each arrives |
+| Progress visibility | None during execution | N/M agents complete, visible |
+| Fast agent benefit | None — must wait for slowest | Fast agents' results processable immediately |
+| Partial wave failure handling | Detect after all complete | Detect and handle as each failure arrives |
+| Synthesis trigger | After all N complete | After all N complete (same — synthesis needs full set) |
+
+**For R-005's patterns, the difference is minor but meaningful for large fan-outs**: audit mode's 30-agent fan-out means the orchestrator might wait several minutes for the slowest dimension analyzer while 25 others finished long ago. With teams, the orchestrator can begin cross-referencing the completed findings immediately. Without teams, it waits for the full batch.
+
+The synthesis pass (Finding 7) does not change — it still requires all findings before it can produce cross-dimensional connections. But the time between the last agent completing and synthesis beginning is zero with teams (results were being processed incrementally) vs. the full batch-processing time without teams.
+
+**What does NOT change with teams:**
+- How `subagent_type` resolves to the agent `.md` file
+- What the agent receives (still `.md` body + prompt)
+- How the agent produces its result (still writes to response text ending in RESULT line)
+- The structured result format
+- The Wave 1 → Wave 2 sequencing requirement (synthesis still depends on complete sets)
+- The context file access rules (agents still cannot write to shared files regardless of team membership)
+
+---
+
+**Tradeoffs**:
+- *Pro*: The handoff is entirely mechanical — no LLM judgment required to dispatch. The orchestrator fills in variable values and issues Task calls. The agent's intelligence is applied to executing its focused task, not figuring out what to do.
+- *Pro*: Failure is transparent — a missing RESULT line or FAILED status is unambiguous. The orchestrator always knows which agents succeeded and which didn't.
+- *Pro*: The prompt-as-variable-bindings pattern is minimal. The orchestrator sends 3-7 lines; the agent receives full instructions from its `.md` file. No prompt duplication.
+- *Pro*: Context file rules are simple and safe — inject relevant context via prompt, never write from agents.
+- *Con*: Prompt completeness is the orchestrator's responsibility. Under-specified prompts produce poor agent output. The agent has no way to ask for missing context.
+- *Con*: Without teams, there is no progress visibility during a long fan-out. Audit mode's 30-agent wave is opaque until all complete.
+- *Con*: Agents surfacing parkable findings via structured result adds a section to every agent's output. The orchestrator must merge these after collection — one more aggregation step.
+
+**Source**: Analysis of Claude Code Task tool mechanics; R-006 Finding 5 (parking protocol across agent/orchestrator boundary); Bowser's prompt-as-input pattern from bowser-qa-agent.md.
+
+### Finding 4: Per-Mode Fan-Out Design
 
 **Context**: With agents defined, each mode needs a concrete 4-phase orchestration design (Discover, Spawn, Collect, Aggregate).
 
@@ -863,186 +1196,221 @@ Feed completed plans to main context for sequential batch_design execution
 - *Pro*: The two-wave pattern (read first, analyze second) naturally handles the most common dependency
 - *Pro*: Aggregation phase is where the orchestrator adds unique value (cross-cutting synthesis)
 - *Con*: Audit mode's 30-agent fan-out is aggressive -- may need to be capped at smaller doc counts
-- *Con*: Two-wave pattern means audit mode needs two team lifecycles (sequential waves), which adds overhead
+- *Con*: Two-wave pattern means audit mode has two spawn-collect cycles (sequential waves) — Wave 2 cannot start until Wave 1 completes
 
 **Source**: Design synthesis from per-mode reference file analysis applied to Bowser's 4-phase pattern (R-002 Finding 2, ui-review.md).
 
-### Finding 4: Team Lifecycle Management
+### Finding 5: Fan-Out Lifecycle Design
 
-**Context**: Each fan-out operation needs to create a team, distribute work, collect results, and clean up. How should Clarity Loop manage this lifecycle?
+**Context**: Each fan-out operation needs to distribute work, collect results, and handle failures. What is the correct lifecycle model, and where does the experimental agent teams feature fit?
 
-**Analysis**: Based on Bowser's `TeamCreate` / `TeamDelete` pattern and Clarity Loop's specific needs:
+**Analysis**: The basic `Task` tool already provides everything needed for parallel fan-out. Agent teams add an optional lifecycle layer on top.
 
-**Naming Convention**
+---
 
-Teams are named `{skill}-{mode}-{purpose}[-{wave}]`:
-- `reviewer-audit-read` -- audit mode, doc reading wave
-- `reviewer-audit-analyze` -- audit mode, analysis wave
-- `reviewer-verify-consistency` -- verify mode, consistency checking
-- `implementer-spec-read` -- spec mode, doc reading
-- `implementer-run-parallel` -- run mode, parallel task groups
-- `reviewer-review-dimensions` -- review mode, dimension analysis
-- `reviewer-rereview-read` -- re-review mode, history loading
-- `designer-mockups-plan` -- mockups mode, screen planning
+**Primary Lifecycle: Basic Task Tool (no experimental flag)**
 
-**Lifecycle Protocol**
+The `Task` tool is ephemeral by design. Each call spawns an agent, runs it to completion, and returns the result to the parent context. No setup or teardown ceremony is needed.
 
 ```
-Phase: CREATE
-  1. Check if teams are available:
-     - Attempt TeamCreate with the team name
-     - If the TeamCreate tool is not available or returns an error:
-       Log: "Agent teams not available. Falling back to sequential execution."
-       Set SEQUENTIAL_FALLBACK = true
-       Skip all team operations
-  2. If teams are available:
-     - TeamCreate({team-name})
-     - Log: "Team {team-name} created for {purpose}"
-
-Phase: DISTRIBUTE
-  1. For each work unit:
-     - TaskCreate(subject={work description}, description={full details})
-     - Task(subagent_type={agent-type}, team_name={team-name}, prompt={structured prompt})
-  2. CRITICAL: All Task calls in a single message for parallel launch
-  3. Log: "Dispatched {N} agents to team {team-name}"
+Phase: SPAWN
+  For each work unit:
+    Task(subagent_type={agent-type}, prompt={structured prompt with inputs})
+  CRITICAL: All Task calls issued in a single message → parallel execution by default
+  No TeamCreate needed. No team_name needed. Parallelism is the default.
 
 Phase: COLLECT
-  1. Wait for teammate messages (delivered automatically on completion)
-  2. For each result:
-     - Parse the RESULT summary line
-     - Extract structured data
-     - TaskUpdate(status="completed")
-  3. Timeout handling:
-     - If an agent hasn't responded within AGENT_TIMEOUT (default: 300s):
-       Mark as TIMEOUT with whatever partial output is available
-     - Continue collection for other agents
-  4. Log: "Collected {M}/{N} results ({N-M} timed out)"
+  Each Task call returns the agent's full output to the orchestrator.
+  For each result:
+    Parse the RESULT summary line: RESULT: {STATUS} | Key: value | ...
+    Extract structured data sections
+  Timeout handling:
+    If an agent returns no output or a failure signal:
+      Mark that work unit as FAILED
+      Include whatever partial output is present
+      Continue processing other results
+  Log: "Collected {M}/{N} results ({N-M} failed)"
 
-Phase: CLEANUP
-  1. SendMessage(type="shutdown_request") to all teammates
-  2. TeamDelete({team-name})
-  3. Log: "Team {team-name} cleaned up"
+Phase: (No cleanup needed)
+  Task agents are ephemeral. They terminate when their task completes.
+  The orchestrator holds all results in its context.
 ```
 
-**Multi-Wave Orchestration**
+**Multi-Wave Orchestration (basic Task)**
 
-Some modes (audit) require two sequential waves where Wave 2 depends on Wave 1's output:
+Some modes (audit) require Wave 2 to depend on Wave 1's output. This works naturally with basic Task:
 
 ```
-Wave 1: READ
-  CREATE → DISTRIBUTE → COLLECT → CLEANUP
+Wave 1: SPAWN all doc-reader agents in one message → COLLECT all summaries
 
-[Orchestrator processes Wave 1 results, prepares Wave 2 inputs]
+[Orchestrator processes Wave 1 summaries, builds Wave 2 inputs]
 
-Wave 2: ANALYZE
-  CREATE → DISTRIBUTE → COLLECT → CLEANUP
+Wave 2: SPAWN all analysis agents in one message, each receiving summaries as input
+        → COLLECT all findings
 
-[Orchestrator aggregates everything into final output]
+[Orchestrator synthesizes everything into final output]
 ```
 
-Each wave gets its own team (different name suffix). This avoids team reuse complexity and makes cleanup straightforward.
+There is no team to manage between waves. The orchestrator simply awaits Wave 1 results before issuing Wave 2 Task calls.
+
+---
+
+**Optional Enhancement: Experimental Agent Teams**
+
+When `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set, the lifecycle can be wrapped in a named team for additional observability and coordination:
+
+```
+TeamCreate("{skill}-{mode}-{purpose}[-{wave}]")
+  -- e.g., "reviewer-audit-read", "implementer-spec-read"
+
+For each work unit:
+  Task(subagent_type={agent-type}, team_name={team-name}, prompt={...})
+
+[Wait for team members to complete -- progress visible]
+
+TeamDelete({team-name})
+```
+
+What teams add that basic Task does not provide:
+- **Named lifecycle**: the team has an identity, visible in Claude Code's UI
+- **Progress display**: N/M agents complete is visible as members respond
+- **Agent-to-agent messaging**: `SendMessage` for coordination (not needed by R-005's design — agents never need to communicate with each other, only with the orchestrator)
+- **Shared task list**: all team members see the same TaskCreate/TaskUpdate state
+
+What teams do NOT add for R-005's pattern:
+- Parallelism — basic Task already runs parallel when called in one message
+- Structured results — that is the agent definition's responsibility, not the team's
+- Failure handling — Task already surfaces failures to the parent context
+
+**Naming convention for teams** (when used): `{skill}-{mode}-{purpose}[-{wave}]`
+- `reviewer-audit-read`, `reviewer-audit-analyze`
+- `reviewer-verify-consistency`
+- `implementer-spec-read`
+- `implementer-run-parallel`
+
+---
 
 **Error Classification**
 
+This applies to both basic Task and teams-enhanced paths:
+
 | Error Type | Handling | Impact |
 |-----------|---------|--------|
-| Agent timeout | Mark work unit as TIMEOUT, include partial output, continue | Degraded but functional |
-| Agent crash (no output) | Mark work unit as FAILED, note in report | Missing data point |
-| Team creation failure | Fall back to sequential execution entirely | No parallelism for this invocation |
-| Partial team failure (some agents work, some don't) | Collect what succeeded, note what failed | Partial results |
-| All agents fail | Fall back to sequential execution, warn user | Full sequential fallback |
+| Agent returns FAILED status | Mark work unit as FAILED, include partial output, continue | Degraded but functional |
+| Agent produces no output | Mark work unit as FAILED, note in report | Missing data point |
+| All agents in a wave fail | Warn user, fall back to sequential execution for that mode invocation | No parallelism for this run |
+| Partial wave failure (some agents work) | Collect what succeeded, note what failed | Partial results with flagged gaps |
 
 **Tradeoffs**:
-- *Pro*: Clean lifecycle with predictable naming and cleanup
-- *Pro*: Each wave is self-contained -- partial failures don't corrupt the team state
-- *Pro*: Error classification enables intelligent degradation rather than all-or-nothing
-- *Con*: Multi-wave adds latency (can't start Wave 2 until Wave 1 completes)
-- *Con*: Team name collisions are theoretically possible if two modes run concurrently (unlikely in practice since skills are sequential)
+- *Pro*: Basic Task lifecycle requires no setup/teardown — simpler to implement and reason about
+- *Pro*: Multi-wave pattern works naturally without teams — just await Wave 1 before issuing Wave 2
+- *Pro*: Adding teams later is purely additive — wrap existing Task calls in TeamCreate/TeamDelete
+- *Con*: Without teams, there is no built-in progress display during a long fan-out operation
+- *Con*: Multi-wave adds latency (Wave 2 cannot start until Wave 1 completes — true regardless of teams)
 
-**Source**: Adapted from Bowser's ui-review.md lifecycle protocol (R-002 Finding 2) with Clarity Loop-specific naming and multi-wave extension.
+**Source**: Analysis of Claude Code's Task tool behavior; Bowser's ui-review.md team lifecycle as the optional enhancement model (R-002 Finding 2).
 
-### Finding 5: Graceful Degradation Design
+### Finding 6: Execution Tier Design
 
-**Context**: Claude Code's agent teams feature is experimental. Every mode must work with or without it.
+**Context**: There are now three possible execution paths for fan-out modes. How should reference files present them, and what does the config model look like?
 
-**Analysis**: The degradation design has three layers:
+**Analysis**: The three tiers are not a degradation ladder — they are distinct operating modes with different trade-offs. The primary path (Tier 1) is the new behavior. The other two are deliberate choices.
 
-**Layer 1: Feature Detection (at orchestration start)**
+---
 
+**Tier 1: Task Tool Fan-Out (primary path, no experimental flag)**
+
+Parallel specialized agents via basic Task calls. Available to all users today. This is what this research ships.
+
+- Parallel execution: N Task calls in one message run concurrently
+- Each agent: its own context window, fresh and focused
+- Structured results: parseable RESULT line from each agent
+- Wave sequencing: await Wave 1 before issuing Wave 2 (natural, no coordination needed)
+- Failure handling: Task surfaces failures to the parent; orchestrator handles degraded results
+
+**Tier 2: Teams-Enhanced Fan-Out (optional, experimental)**
+
+Same parallel Task fan-out, wrapped in a named team lifecycle. Requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. Adds observability and coordination on top of Tier 1 — not a different kind of parallelism.
+
+- Identical execution to Tier 1, just wrapped in TeamCreate/TeamDelete
+- Adds: progress display, named team lifecycle, shared task list visibility
+- Does NOT change: how agents run, how results are collected, how failures are handled
+
+**Tier 3: Sequential Opt-Out (deliberate user choice)**
+
+Every mode's reference file retains the existing sequential execution path. This is not a fallback for when fan-out fails — it is a deliberate configuration for users who want cost control or predictability.
+
+```json
+{ "orchestration": { "fanOut": "disabled" } }
 ```
-function canFanOut():
-  try:
-    // Attempt to create a probe team
-    TeamCreate("probe-{random-id}")
-    TeamDelete("probe-{random-id}")
-    return true
-  catch:
-    return false
-```
 
-In practice, this is simpler: if the TeamCreate tool is not available in the tool list, teams are not enabled. The orchestrator checks once at the start of a fan-out operation and caches the result for the session.
+Sequential is genuinely worse for audit-mode (context pressure degrades analysis quality with large doc sets), but it is a valid choice for smaller projects or cost-sensitive users.
 
-**Layer 2: Reference File Dual-Path Structure**
+---
 
-Each reference file that uses fan-out should have a dual-path structure:
+**Reference File Structure**
+
+Each updated reference file uses a three-path block:
 
 ```markdown
 ### Step N: [Description]
 
-**With agent teams** (when available):
+**Parallel (default — Task tool, no flag required)**
 
-[Fan-out orchestration as designed in Finding 3]
+[Fan-out instructions using basic Task calls, structured result collection]
 
-**Sequential fallback** (when teams are unavailable):
+**Parallel with teams (optional — requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)**
 
-[Sequential execution instructions -- read docs one at a time,
-analyze dimensions one at a time, etc.]
+Same as above, with TaskCreate tracking and TeamCreate/TeamDelete lifecycle wrapper.
+
+**Sequential (orchestration.fanOut: "disabled")**
+
+[Sequential execution — read/analyze one at a time in the main context]
 ```
 
-This is additive -- the sequential path is what the reference files already contain today. The fan-out path is the new addition. No existing behavior changes.
+The sequential path is what the reference files contain today. The parallel paths are additive.
 
-**Layer 3: Configuration Override**
+---
 
-Add to `.clarity-loop.json`:
+**Configuration Model**
 
 ```json
 {
   "orchestration": {
-    "fanOut": "auto" | "enabled" | "disabled",
+    "fanOut": "auto" | "teams" | "disabled",
     "maxAgents": 10,
-    "agentTimeout": 300000,
-    "waveTimeout": 600000
+    "agentTimeout": 300000
   }
 }
 ```
 
-- `"auto"` (default): detect teams availability, fan out if available
-- `"enabled"`: require teams, error if not available
-- `"disabled"`: always use sequential execution, even if teams are available
+- `"auto"` (default): use basic Task fan-out (Tier 1). If experimental teams are also available, use Tier 2.
+- `"teams"`: require experimental teams. Error if not available.
+- `"disabled"`: sequential execution (Tier 3). For cost control or small projects.
 
-This gives users explicit control. Some may prefer sequential for cost reasons even when teams are available.
+---
 
-**Degradation impact per mode:**
+**Tier Comparison Per Mode**
 
-| Mode | Fan-Out Value | Sequential Penalty | Degradation Recommendation |
-|------|-------------|-------------------|-----------------------------|
-| audit-mode | Very High -- 30 agents eliminate the context bottleneck | High -- reading ALL docs sequentially fills context | Accept degraded quality: summarize more aggressively in sequential mode |
-| verify-mode Part C | High -- N doc pairs checked in parallel | Medium -- pairs can be checked sequentially since each is independent | Acceptable: check pairs sequentially, same quality, more time |
-| spec-mode Step 2 | High -- N docs read in parallel | Medium -- sequential reads work but fill context | Acceptable: read sequentially with progressive summarization |
-| review-mode Step 3 | Medium -- 7 dimensions in parallel | Low -- dimensions are already evaluated in one pass today | Minimal impact: current behavior IS sequential |
-| run-mode / autopilot | Medium -- parallel task groups | Low -- sequential execution is the default today | No impact: sequential is the current behavior |
-| mockups-mode | Low -- planning only, MCP writes are sequential | Very Low -- planning is fast even sequentially | No meaningful impact |
+| Mode | Tier 1 (Task parallel) | Tier 3 (Sequential) | Tier 3 Quality Gap |
+|------|------------------------|--------------------|--------------------|
+| audit-mode | N doc-reader + M analysis agents, fresh context each | All docs + all analysis in one context | High — context pressure degrades late-stage dimensions |
+| spec-mode Step 2 | N parallel doc reads, summaries merged | Sequential reads fill main context before generation | Medium — generation starts with less available window |
+| verify-mode Part C | N pairwise checks in parallel | Sequential pair checks in main context | Low — same quality, more time |
+| review-mode Step 3 | 7 parallel dimension agents (>500 line proposals) | One-pass sequential analysis | Low — current behavior already works |
+| run-mode / autopilot | Formal parallel task groups with structured collection | Sequential task execution | None — sequential is the current behavior |
+| mockups-mode | Parallel screen planning (planning only) | Sequential planning | None — planning is fast either way |
 
 **Tradeoffs**:
-- *Pro*: Zero breaking changes -- existing behavior is the fallback
-- *Pro*: Configuration gives users explicit control over parallelism
-- *Pro*: Probe-based detection is automatic and transparent
-- *Con*: Maintaining dual paths in reference files adds documentation bulk
-- *Con*: Sequential audit mode is genuinely worse (context pressure) -- not just slower
+- *Pro*: Tier 1 is available now with no experimental dependency — ships immediately
+- *Pro*: Tier 2 is purely additive — adding teams wrapper later requires no re-architecture
+- *Pro*: Sequential is a supported first-class option, not an error state
+- *Con*: Three-path reference files add documentation bulk
+- *Con*: Sequential audit mode is genuinely worse at scale — this is a quality trade-off, not just a speed one
 
-**Source**: Design synthesis from R-002 Finding 7 (Graceful Degradation), applied to Clarity Loop's experimental feature dependency.
+**Source**: Analysis of Claude Code Task tool behavior and agent teams feature scope; design synthesis from Finding 4's lifecycle model.
 
-### Finding 6: Cross-Agent Dependency Handling
+### Finding 7: Cross-Agent Dependency Handling
 
 **Context**: Some fan-out work units have partial dependencies. A finding from agent A might affect agent B's analysis. How does the orchestrator handle this without sacrificing parallelism?
 
@@ -1115,7 +1483,7 @@ The post-collection synthesis is simpler, equally effective, and preserves full 
 
 **Source**: Analysis of audit-mode and review-mode dimension interdependencies, informed by Bowser's approach where agents have "no awareness of siblings" (R-002 Finding 4).
 
-### Finding 7: Token Cost Analysis
+### Finding 8: Token Cost Analysis
 
 **Context**: Fan-out spawns N parallel contexts instead of 1 serial context. Is this actually cheaper, or does the overhead of N agent contexts outweigh the benefit?
 
@@ -1261,15 +1629,17 @@ These modes already have well-specified parallel execution instructions. Stage 3
 
 Agent definitions should live at:
 ```
-skills/agents/
-  doc-reader-agent.md
-  consistency-checker-agent.md
-  dimension-analyzer-agent.md
-  task-implementer-agent.md
-  design-planner-agent.md
+.claude/agents/
+  cl-doc-reader-agent.md
+  cl-consistency-checker-agent.md
+  cl-dimension-analyzer-agent.md
+  cl-task-implementer-agent.md
+  cl-design-planner-agent.md
 ```
 
-This places them under `skills/` (they're part of the skill infrastructure) in a dedicated `agents/` directory (Bowser pattern: `.claude/agents/`). They're discoverable by any skill that needs to dispatch them.
+This follows the Claude Code convention: agents live in `.claude/agents/` (same as Bowser's pattern). Placing shared agent types here — rather than nested under a skill directory like `skills/cl-reviewer/agents/` — ensures any skill can dispatch them. The `cl-` prefix namespaces them as Clarity Loop agents and avoids naming collisions with user-project agents.
+
+**Correction from draft**: An earlier draft recommended `skills/agents/`. R-006 Decision Log #2 explicitly resolved this: *"Claude Code convention: agents live in `.claude/agents/`. Shared agent types (doc-reader) used by multiple skills should not be nested under one skill."* The recommendation above supersedes that draft suggestion.
 
 ### Risks & Mitigations
 
@@ -1291,7 +1661,7 @@ This places them under `skills/` (they're part of the skill infrastructure) in a
 | docs/cl-reviewer.md | Update audit-mode, verify-mode, review-mode, re-review-mode descriptions to reference fan-out |
 | docs/cl-designer.md | Update mockups-mode description to reference fan-out planning |
 | docs/pipeline-concepts.md | New section on fan-out orchestration as a pipeline concept |
-| (new) skills/agents/*.md | 5 new agent definition files |
+| (new) .claude/agents/cl-*.md | 5 new agent definition files (cl-doc-reader-agent.md, cl-consistency-checker-agent.md, cl-dimension-analyzer-agent.md, cl-task-implementer-agent.md, cl-design-planner-agent.md) |
 
 ## Decision Log
 
@@ -1302,7 +1672,7 @@ This places them under `skills/` (they're part of the skill infrastructure) in a
 | 3 | Rollout strategy | All at once vs. staged | 3-stage rollout | Risk management. Stage 1 establishes the pattern with the simplest fan-out (reads). Stage 2 adds the highest-value fan-out (analysis). Stage 3 completes the picture. |
 | 4 | Audit wave structure | Single wave (all agents at once) vs. two waves (reads then analysis) | Two waves | Analysis agents need doc summaries as input. Single wave would require agents to read their own docs, duplicating reads and inflating token cost. |
 | 5 | Cross-agent dependencies | Real-time passing vs. post-collection synthesis | Post-collection synthesis | Real-time passing defeats parallelism. Synthesis preserves it while still catching cross-cutting themes. |
-| 6 | Configuration default | Fan-out on by default vs. off by default | Auto-detect (on if teams available) | Users who enable experimental teams presumably want the benefits. `orchestration.fanOut: "auto"` respects this while allowing override. |
+| 6 | Configuration default | Fan-out on by default vs. off by default | `"auto"` (fan-out using basic Task, teams-enhanced if also available) | Parallelism via basic Task has no cost beyond tokens. Default on gives all users the speed and quality benefit. Sequential is available via `"disabled"` for explicit opt-out. |
 
 ## Emerged Concepts
 
@@ -1313,26 +1683,38 @@ This places them under `skills/` (they're part of the skill infrastructure) in a
 | Reusable doc summaries | If spec-mode reads all docs and then audit-mode reads all docs in the same session, the summaries are duplicated. Caching summaries across mode invocations would save tokens. | Low priority -- cross-mode invocations in the same session are rare. Revisit if usage patterns show repeated reads. |
 | Agent composition | Some modes could compose agents -- e.g., audit-mode could use doc-reader-agent output as input to consistency-checker-agent AND dimension-analyzer-agent. The two-wave pattern does this, but it could be generalized as a pipeline-of-agents pattern. | Defer to V2. Current two-wave pattern is sufficient. |
 | Structured result protocol standard | The RESULT summary line format (`RESULT: {STATUS} | Key: value | Key: value`) could become a cross-project standard for Claude Code agent communication, not just a Clarity Loop convention. | Out of scope for this research. Could be proposed as a Claude Code community convention. |
+| R-005/R-006 proposal merge requirement | R-005 (fan-out protocol) and R-006 (guidance/execution separation) both define the same 5 agent types, target the same 5 modes, and stage implementation identically. They were written in parallel and have substantial overlap. If both are approved, their proposals must be merged into a single implementation. Key differences to resolve: (1) agent naming convention (`doc-reader-agent` vs. `cl-doc-reader-agent`), (2) Finding 2 agent YAML headers need `model: sonnet` added per OQ4 resolution. | Coordinate proposal generation — do not generate separate P-NNN for each research without first aligning on the merged design. |
+| Per-agent model in YAML frontmatter | Finding 2's 5 agent definitions include `model: sonnet` or `model: opus` in prose but the YAML frontmatter blocks don't include the `model:` field. Based on OQ4 resolution, the `model:` frontmatter field should be added to each agent definition in the proposal. | Low-effort addition during proposal generation. |
 
 ## Open Questions
 
-1. **Claude Code teams API surface**: What exactly are the TeamCreate, TeamDelete, TaskCreate, TaskUpdate, Task, and SendMessage tool signatures? The design assumes Bowser's usage patterns, but the actual Claude Code API may differ. This needs verification before implementation.
+1. **[RESOLVED] Claude Code teams API surface**: Confirmed from Bowser's agent and command patterns. Key signatures:
+   - `TeamCreate(team_name: string, description?: string)` — creates a named team
+   - `TeamDelete()` — tears down the current team
+   - `Task(prompt, description, subagent_type, team_name?, model?, run_in_background?, max_turns?, resume?)` — dispatches an agent; `team_name` enables parallel launch; `model` overrides per-agent model
+   - `TaskCreate(subject, description, activeForm?)`, `TaskUpdate(taskId, status, ...)` — task list tracking
+   - `SendMessage(type, recipient?, content?, summary?, request_id?, approve?)` — `type` values include `"message"`, `"broadcast"`, `"shutdown_request"`, `"shutdown_response"`, `"plan_approval_response"`
+   - The design assumptions match the actual API. No revision needed.
 
-2. **Maximum concurrent agents**: Is there a practical limit on how many agents Claude Code teams can support simultaneously? Audit mode's worst case (30 agents) may exceed it. Testing is needed to find the ceiling.
+2. **[OPEN] Maximum concurrent agents**: No documented limit found in Bowser or Claude Code documentation. Bowser's `ui-review.md` launches all agents in a single message without capping. Audit mode's 30-agent worst case may approach undocumented ceilings. Empirical testing required. The `orchestration.maxAgents` config default of 10 is conservative guidance, not a documented Claude Code limit.
 
-3. **Agent timeout behavior**: When an agent times out, does Claude Code provide partial output, or is the output lost? The error handling design assumes partial output is available (Bowser's pattern: "include whatever output was available"), but this needs verification.
+3. **[RESOLVED] Agent timeout behavior**: Confirmed. Bowser's `ui-review.md` explicitly states: "Be resilient: if a teammate times out or crashes, mark that story as FAIL and include whatever output was available." Partial output IS provided on timeout. The error handling design (mark as TIMEOUT, include partial output, continue collection) matches the actual behavior.
 
-4. **Sonnet availability in agent teams**: Can individual agents within a team use a different model than the orchestrator? The design assumes yes (orchestrator=Opus, agents=Sonnet), but this may be a teams feature limitation.
+4. **[RESOLVED] Sonnet availability in agent teams**: Confirmed. Two mechanisms support per-agent model selection:
+   - Agent `.md` file YAML frontmatter: `model: sonnet` (or `opus`, `haiku`) — sets the default for that agent type
+   - Task tool `model?` parameter — allows per-dispatch override
+   Bowser's agents all declare `model: opus` in frontmatter. The design assumption (orchestrator=Opus, agents=Sonnet) is fully supported. Reference files should recommend adding `model: sonnet` to Finding 2's agent YAML headers.
 
-5. **Agent definition discovery**: Where should agent .md files live for Claude Code to discover them as valid agent types? Bowser uses `.claude/agents/`. Clarity Loop is a plugin -- do agents need to be in the plugin's directory, or in the user project's `.claude/agents/`?
+5. **[RESOLVED] Agent definition discovery**: Resolved by R-006 Decision Log #2: *"Claude Code convention: agents live in `.claude/agents/`."* This is the user project's `.claude/agents/` directory, not the plugin's directory. Agent definitions in `skills/agents/` would NOT be discovered by Claude Code. The Agent File Location section has been corrected accordingly. Agents should be prefixed `cl-` to namespace them (e.g., `cl-doc-reader-agent.md`).
 
-6. **Cost tracking per fan-out operation**: Can token usage be attributed per-agent within a team? This would enable the user to see the actual cost of fan-out vs. sequential and make informed decisions about the `orchestration.fanOut` setting.
+6. **[OPEN] Cost tracking per fan-out operation**: No evidence found that Claude Code provides per-agent token attribution within a team. Token usage appears to be tracked at the session level, not the agent level. Without per-agent cost visibility, users cannot compare fan-out vs. sequential cost in practice. Mitigation: document estimated token multipliers per mode (as in Finding 7) so users can set expectations before enabling fan-out. This remains a gap in the observability design.
 
 ## References
 
 - R-002: Bowser Architecture Patterns (`/Users/bhushan/Documents/Clarity_Loop/clarity-loop/docs/research/R-002-BOWSER_ARCHITECTURE_PATTERNS.md`) -- Findings 2, 4, and 7
-- Bowser ui-review.md (`/Users/bhushan/Documents/bowser/.claude/commands/ui-review.md`) -- Complete fan-out orchestration pattern
-- Bowser bowser-qa-agent.md (`/Users/bhushan/Documents/bowser/.claude/agents/bowser-qa-agent.md`) -- Rich agent definition pattern
-- Bowser playwright-bowser-agent.md (`/Users/bhushan/Documents/bowser/.claude/agents/playwright-bowser-agent.md`) -- Thin agent pattern
+- R-006: Guidance/Execution Separation (`/Users/bhushan/Documents/Clarity_Loop/clarity-loop/docs/research/R-006-GUIDANCE_EXECUTION_SEPARATION.md`) -- Sibling research; Decision Log #2 resolves OQ5; Finding 3 and Migration Path align with this research's staged rollout; proposals must be merged
+- Bowser ui-review.md (`/Users/bhushan/Documents/bowser/.claude/commands/ui-review.md`) -- Complete fan-out orchestration pattern; OQ3 resolution source ("include whatever output was available")
+- Bowser bowser-qa-agent.md (`/Users/bhushan/Documents/bowser/.claude/agents/bowser-qa-agent.md`) -- Rich agent definition pattern; OQ4 resolution (model: opus in frontmatter)
+- Bowser playwright-bowser-agent.md (`/Users/bhushan/Documents/bowser/.claude/agents/playwright-bowser-agent.md`) -- Thin agent pattern; OQ4 resolution
 - Clarity Loop reference files (all 32 files across 4 skills) -- Parallelization inventory source
 - Clarity Loop SYSTEM_DESIGN.md (`/Users/bhushan/Documents/Clarity_Loop/clarity-loop/docs/SYSTEM_DESIGN.md`) -- Architecture context

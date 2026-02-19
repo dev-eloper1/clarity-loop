@@ -1,5 +1,5 @@
 {
   "version": 1,
   "docsRoot": "docs",
-  "protectedPaths": ["skills", "hooks", "scripts", "templates", ".claude"]
+  "protectedPaths": ["skills", "hooks", "scripts", "templates", "agents"]
 }

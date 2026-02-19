@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Plugin Structure
 
-The plugin is registered via `.claude-plugin/plugin.json`. Skills are loaded from `skills/` at session start. Hooks run on every Edit/Write tool call.
+The plugin is registered via `.claude-plugin/plugin.json`. Skills are loaded from `skills/` and agents from `agents/` at session start. Hooks run on every Edit/Write tool call.
 
 **Four skills** (each is a SKILL.md + references/ directory):
 
@@ -43,7 +43,7 @@ Example — self-hosted plugin repo:
 {
   "version": 1,
   "docsRoot": "docs",
-  "protectedPaths": ["skills", "hooks", "scripts", "templates", ".claude"]
+  "protectedPaths": ["skills", "hooks", "scripts", "templates", "agents"]
 }
 ```
 
@@ -167,7 +167,7 @@ CLARITY_LOOP_PROJECT_ROOT=/path/to/project node scripts/init.js
 
 ## Working on This Codebase
 
-This repo is **self-hosted**: it uses its own pipeline to manage changes to `skills/`, `hooks/`, `scripts/`, and `templates/`. The `.clarity-loop.json` at the repo root sets `protectedPaths` to those directories, so direct edits are blocked by the hook.
+This repo is **self-hosted**: it uses its own pipeline to manage changes to `skills/`, `hooks/`, `scripts/`, `templates/`, and `agents/`. The `.clarity-loop.json` at the repo root sets `protectedPaths` to those directories, so direct edits are blocked by the hook.
 
 The plugin is **not installed in this repo** (by design — installing it here would require reloading after every skill change). Instead, invoke the pipeline by reading the skill reference files directly and following their process. This works because skill files are just instructions to Claude, not compiled code.
 
@@ -213,3 +213,8 @@ When modifying hooks:
 When modifying templates:
 - Templates in `templates/` are copied once during init. Changes to templates don't affect existing projects.
 - Templates include `<!-- clarity-loop-managed -->` markers used by collision detection.
+
+When modifying agents:
+- Agents in `agents/` are registered via `plugin.json` (`"agents": "./agents/"`) and discovered by Claude Code from the plugin directory — they are NOT copied to user projects.
+- Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `model`) and a system prompt. The `name` field is the `subagent_type` used in Task tool calls.
+- Agent changes go through the pipeline like skill changes: research → proposal → review → merge.

@@ -24,7 +24,7 @@ The quality gate skill. Reviews proposals, manages the fix-review loop, merges a
 
 ## Review
 
-Co-reviews proposals against system docs across six dimensions.
+Co-reviews proposals against system docs across six dimensions. For proposals over 500 lines, dispatches `cl-dimension-analyzer-agent` instances in parallel (one per dimension, up to 7 agents) using the formal fan-out protocol. Sequential fallback via `orchestration.fanOut: "disabled"`.
 
 ### Six Review Dimensions
 
@@ -63,7 +63,7 @@ Creates `docs/reviews/proposals/REVIEW_P-NNN_v1.md` with:
 
 ## Re-Review
 
-Auto-triggered after fixes are applied to a proposal. Not just a diff check — it builds a **cumulative issue ledger** from ALL previous reviews.
+Auto-triggered after fixes are applied to a proposal. Not just a diff check — it builds a **cumulative issue ledger** from ALL previous reviews. When multiple review files exist, dispatches `cl-doc-reader-agent` instances (FORMAT="claims-only") in parallel to read review history, then aggregates into the cumulative ledger. Sequential fallback via `orchestration.fanOut: "disabled"`.
 
 ### Why Cumulative?
 
@@ -126,7 +126,12 @@ See [System Doc Protection](pipeline-concepts.md#system-doc-protection) for how 
 
 ## Verify
 
-Post-merge verification. Ensures the proposal was applied faithfully and system docs remain internally consistent.
+Post-merge verification. Ensures the proposal was applied faithfully and system docs remain internally consistent. Uses two independent fan-outs:
+
+**Fan-out 1** (Phase 1): `cl-doc-reader-agent` instances in parallel to read all system docs fresh.
+**Fan-out 2** (Part C): `cl-consistency-checker-agent` instances in parallel to check every doc pair.
+
+Sequential fallback available via `orchestration.fanOut: "disabled"`.
 
 ### Four-Part Verification
 
@@ -157,7 +162,12 @@ Creates `docs/reviews/proposals/VERIFY_P-NNN.md` with application status table, 
 
 ## Audit
 
-Comprehensive health check of the entire `docs/system/` directory. Unlike proposal-scoped reviews, audits examine all documentation as a unified body.
+Comprehensive health check of the entire `docs/system/` directory. Unlike proposal-scoped reviews, audits examine all documentation as a unified body using a formal two-wave fan-out:
+
+**Wave 1**: `cl-doc-reader-agent` instances in parallel (one per system doc) produce structured summaries.
+**Wave 2**: `cl-consistency-checker-agent` instances (pairwise) + `cl-dimension-analyzer-agent` instances (one per dimension) run in parallel using Wave 1 summaries as input.
+
+Sequential fallback available via `orchestration.fanOut: "disabled"`.
 
 ### Eight Dimensions
 

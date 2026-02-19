@@ -132,23 +132,42 @@ in the spec manifest about the caveat.
 **Verify**: Manifest file exists and lists all system docs.
 **On failure**: If manifest missing, scan {docsRoot}/system/ directory for .md files.
 
-**Step 8.** Dispatch subagents in parallel, one per system doc. Each subagent produces:
-- Full content summary with key concepts
-- All defined types, entities, and their properties
-- All interfaces, contracts, and protocols
-- All behavioral rules and constraints
-- All cross-references to other docs
+**Step 8.** Dispatch `cl-doc-reader-agent` instances in parallel via the basic Task tool
+(one per system doc) to read all system docs.
 
-**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-`digest`. Load the protocol prompt template from
-`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-subagent's Task prompt. Parse the RESULT summary line from each response for status
-classification and aggregation.
+**Parallel (default — Task tool, no flag required)**
+
+Phase 1: Discover
+  Read the manifest from Step 7 → doc list. Total work units: N doc-reader agents.
+
+Phase 2: Spawn
+  For each system doc in the manifest:
+    Task(subagent_type="cl-doc-reader-agent",
+         description="Read {doc name} for spec generation",
+         prompt="DOC_PATH: {path}\nFOCUS: types, interfaces, contracts, behavioral rules\nFORMAT: full\nDECISIONS_CONTEXT: {relevant DECISIONS.md entries}")
+  Issue ALL Task calls in a single message → parallel launch.
+
+Phase 3: Collect
+  Parse each RESULT line: COMPLETE|PARTIAL|FAILED | Type: digest | Doc: ... | Sections: N
+  On FAILED/PARTIAL: mark that doc as EXTRACTION_FAILED, log error, continue with remaining docs.
+
+Phase 4: Aggregate
+  Unified knowledge base ready for Phase 3 (spec format suggestion) and Phase 4 (spec generation):
+  - All defined types, entities, and their properties
+  - All interfaces, contracts, and protocols
+  - All behavioral rules and constraints
+  - All cross-references (for cross-spec dependency table in Step 14)
+
+**Parallel with teams (optional — CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)**
+Same as above with TeamCreate("spec-doc-reads") before Phase 2 and TeamDelete() after Phase 3.
+
+**Sequential (orchestration.fanOut: "disabled")**
+Read each doc in `docs/system/` directly. Each doc produces: full content summary with
+key concepts, all defined types/entities/properties, all interfaces/contracts/protocols,
+all behavioral rules/constraints, all cross-references to other docs.
 
 **Verify**: All system docs listed in manifest have been read and summarized.
 **On failure**: If a doc fails to read, log error and continue with remaining docs.
-
-This is a heavy read — dispatch subagents in parallel to avoid context pressure.
 
 ### Phase 3: Suggest Spec Format
 

@@ -6,7 +6,6 @@ Tracks all proposals in this project. Updated by the `cl-researcher` and `cl-rev
 
 | ID | Title | Research | Status | Review Round | Depends On | Conflicts |
 |----|-------|----------|--------|-------------|-----------|-----------|
-| | | | | | | |
 
 **Status values**: `draft` | `in-review` | `approved` | `merging` | `verified`
 
@@ -14,7 +13,7 @@ Tracks all proposals in this project. Updated by the `cl-researcher` and `cl-rev
 
 | ID | Title | Research | Review Rounds | Verified | Merged Date |
 |----|-------|----------|--------------|----------|-------------|
-| | | | | | |
+| P-001 | Fan-Out Orchestration | R-005 | 1 (APPROVE WITH CHANGES) | verified | 2026-02-19 |
 
 ## Rejected
 

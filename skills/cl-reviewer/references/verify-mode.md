@@ -47,18 +47,30 @@ system docs have just been modified. You must read them fresh.
 2. **Read the latest review** -- The most recent `REVIEW_P-NNN_v*.md` to understand what was
    approved, including any conditions in an APPROVE WITH CHANGES verdict.
 
-3. **Read ALL system docs fresh** -- Dispatch subagents to read every doc in `docs/system/`
-   in parallel. The manifest is stale because these docs were just modified. Each subagent
-   should produce:
-   - Full content summary
-   - Any sections that appear to reference or relate to the proposal's topic
-   - Any sections that seem recently modified or inconsistent with surrounding content
+3. **Read ALL system docs fresh** — The manifest is stale because these docs were just modified.
 
-   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-   `digest`. Load the protocol prompt template from
-   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-   subagent's Task prompt. Parse the RESULT summary line from each response for status
-   classification and aggregation.
+   **Parallel (default — Task tool, no flag required)**
+
+   Phase 1: Discover
+     Glob `docs/system/*.md` → doc list. Total work units: N doc-reader agents.
+
+   Phase 2: Spawn
+     For each doc:
+       Task(subagent_type="cl-doc-reader-agent",
+            description="Read {doc name} for post-merge verify",
+            prompt="DOC_PATH: {path}\nFOCUS: proposal-related sections, recently modified content\nFORMAT: full")
+     Issue ALL Task calls in a single message → parallel launch.
+
+   Phase 3: Collect
+     Parse each RESULT line: COMPLETE|PARTIAL|FAILED | Type: digest | Doc: ...
+     On FAILED: mark as EXTRACTION_FAILED, include partial output, continue.
+
+   Phase 4: Aggregate
+     Summaries ready for Parts A-E below.
+
+   **Sequential (orchestration.fanOut: "disabled")**
+   Read each doc in `docs/system/` directly. Each doc produces: full content summary,
+   sections relating to the proposal's topic, recently modified or inconsistent sections.
 
 **Verify**: Proposal, latest review, and all system docs loaded fresh.
 
@@ -91,18 +103,31 @@ system docs have just been modified. You must read them fresh.
    - Were conditional statements (e.g., "only when X") preserved, or were they generalized?
 
 6. **Part C: Cross-Document Consistency** -- This is the highest-value check. After a merge, the system docs must remain consistent
-   with each other. Dispatch subagents to check each pair of system docs for:
-   - Contradictory statements about the same concept
-   - Terminology drift (same thing called different names in different docs)
-   - Broken cross-references (doc A refers to something in doc B that was moved or renamed)
-   - Architectural inconsistencies (e.g., one doc describes a flow that another doc can't support)
-   - Redundant or conflicting specifications of the same behavior
+   with each other.
 
-   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-   `consistency`. Load the protocol prompt template from
-   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-   subagent's Task prompt. Parse the RESULT summary line from each response for status
-   classification and aggregation.
+   **Parallel (default — Task tool, no flag required)**
+
+   Phase 1: Discover
+     Build all unique doc pairs from N system docs: N*(N-1)/2 pairs.
+
+   Phase 2: Spawn
+     For each pair:
+       Task(subagent_type="cl-consistency-checker-agent",
+            description="Check {docA} vs {docB} post-merge",
+            prompt="DOC_A: {docA summary from Fan-out 1}\nDOC_B: {docB summary from Fan-out 1}\nSCOPE: post-merge\nCHANGE_MANIFEST: {proposal change manifest}")
+     Issue ALL Task calls in a single message → parallel launch.
+
+   Phase 3: Collect
+     Parse each RESULT line: CLEAN|FINDINGS | Type: consistency | Pair: ... | Findings: N
+     On FAILED: mark pair as UNCHECKED, continue.
+
+   Phase 4: Aggregate
+     Merge all findings tables, deduplicate by location, sort by severity.
+
+   **Sequential (orchestration.fanOut: "disabled")**
+   Check each pair directly in the main context for: contradictory statements about the
+   same concept, terminology drift, broken cross-references, architectural inconsistencies,
+   redundant or conflicting specifications.
 
 7. **Part D: Collateral Damage** -- Check for unintended changes -- sections of system docs that were modified but shouldn't
    have been based on the proposal's scope:

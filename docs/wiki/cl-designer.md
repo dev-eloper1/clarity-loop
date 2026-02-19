@@ -225,7 +225,9 @@ For detailed Pencil setup instructions, see the [README](../README.md#pencil-mcp
 
 **Reusable components**: Created with `reusable: true` during tokens mode. Referenced via `ref` nodes in mockups. Never recreated from raw shapes.
 
-**Parallelization safety**: Never two agents writing to the same .pen file. Subagents handle planning; main context executes MCP operations.
+**Parallelization safety**: Never two agents writing to the same .pen file. Screen planning is parallelized via `cl-design-planner-agent` instances (one per screen) using the formal fan-out protocol — agents plan only, they never make MCP calls. Main context collects plans and executes all `batch_design` operations sequentially.
+
+Sequential fallback available via `orchestration.fanOut: "disabled"`.
 
 ---
 

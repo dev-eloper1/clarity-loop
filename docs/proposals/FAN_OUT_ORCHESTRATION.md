@@ -44,11 +44,11 @@ users who don't dispatch agents.
 
 | System Doc | Current State Summary | Sections Referenced |
 |------------|----------------------|-------------------|
-| SYSTEM_DESIGN.md | S1 describes 4-skill plugin with no agent layer. S10 has `ux.parallelGeneration` config but no orchestration config. S12 references "parallel subagents" for spec reads informally. S14 references "parallel subagents" for audit informally. | S1, S10, S12, S14 |
-| docs/cl-reviewer.md | Audit, verify, review, re-review modes reference parallel dispatch in prose. No formal protocol. | Audit, Verify, Review, Re-review mode sections |
-| docs/cl-implementer.md | Spec, run, autopilot modes reference parallel dispatch in prose. | Spec, Run, Autopilot mode sections |
-| docs/cl-designer.md | Mockups mode references parallel planning. | Mockups mode section |
-| docs/pipeline-concepts.md | No section on fan-out orchestration or agent dispatch. | Full document |
+| docs/wiki/SYSTEM_DESIGN.md | S1 describes 4-skill plugin with no agent layer. S10 has `ux.parallelGeneration` config but no orchestration config. S12 references "parallel subagents" for spec reads informally. S14 references "parallel subagents" for audit informally. | S1, S10, S12, S14 |
+| docs/wiki/cl-reviewer.md | Audit, verify, review, re-review modes reference parallel dispatch in prose. No formal protocol. | Audit, Verify, Review, Re-review mode sections |
+| docs/wiki/cl-implementer.md | Spec, run, autopilot modes reference parallel dispatch in prose. | Spec, Run, Autopilot mode sections |
+| docs/wiki/cl-designer.md | Mockups mode references parallel planning. | Mockups mode section |
+| docs/wiki/pipeline-concepts.md | No section on fan-out orchestration or agent dispatch. | Full document |
 
 ### What Exists Today
 
@@ -75,10 +75,10 @@ control over parallelism.
 
 - 5 new agent definition files in `.claude/agents/`
 - 7 reference files updated with dual-path orchestration (fan-out + sequential fallback)
-- SYSTEM_DESIGN.md: new Agent Layer subsection in S1, orchestration config in S10,
+- docs/wiki/SYSTEM_DESIGN.md: new Agent Layer subsection in S1, orchestration config in S10,
   formal fan-out references in S12 and S14
-- docs/cl-reviewer.md, cl-implementer.md, cl-designer.md: mode description updates
-- docs/pipeline-concepts.md: new Fan-Out Orchestration section
+- docs/wiki/cl-reviewer.md, cl-implementer.md, cl-designer.md: mode description updates
+- docs/wiki/pipeline-concepts.md: new Fan-Out Orchestration section
 - `.clarity-loop.json` schema: `orchestration` block
 
 ## Dependency
@@ -119,14 +119,14 @@ the same files R-006 would create.
 
 | # | Change Description | Target Doc | Target Section | Type | Research Ref |
 |---|-------------------|-----------|----------------|------|-------------|
-| 6 | Add "Agent Layer" subsection: describes the 5 agents, `.claude/agents/` discovery location, `subagent_type` resolution, and the basic Task tool as the primary dispatch mechanism | SYSTEM_DESIGN.md | S1 Architecture Overview (after Structured Agent Result Protocol subsection) | Add Section | Findings 2, 3 |
-| 7 | Add `orchestration` config block to configuration reference: `fanOut` ("auto"/"teams"/"disabled"), `maxAgents` (default 10), `agentTimeout` (default 300000) | SYSTEM_DESIGN.md | S10 Configuration System | Add Config | Finding 6 |
-| 8 | Update spec generation pipeline description to reference formal fan-out: "Step 2 dispatches cl-doc-reader-agent instances in parallel via the basic Task tool" | SYSTEM_DESIGN.md | S12 Spec Generation Pipeline | Modify | Finding 4 |
-| 9 | Update verification/audit systems description to reference formal two-wave fan-out: "Wave 1 dispatches cl-doc-reader-agent, Wave 2 dispatches cl-consistency-checker-agent and cl-dimension-analyzer-agent" | SYSTEM_DESIGN.md | S14 Verification and Audit Systems | Modify | Finding 4 |
-| 10 | Update spec-mode, run-mode, autopilot-mode descriptions to reference formal fan-out protocol | docs/cl-implementer.md | Spec, Run, Autopilot mode sections | Modify | Finding 4 |
-| 11 | Update audit-mode, verify-mode, review-mode, re-review-mode descriptions to reference formal fan-out protocol | docs/cl-reviewer.md | Audit, Verify, Review, Re-review mode sections | Modify | Finding 4 |
-| 12 | Update mockups-mode description to reference formal fan-out planning | docs/cl-designer.md | Mockups mode section | Modify | Finding 4 |
-| 13 | Add "Fan-Out Orchestration" section: describes the 4-phase pattern, agent lifecycle, context file rules (inject don't read, never write), and execution tiers | docs/pipeline-concepts.md | New section (after Subagent Communication if R-004 merged, otherwise after Reference File Structure) | Add Section | Findings 3, 5, 6 |
+| 6 | Add "Agent Layer" subsection: describes the 5 agents, `.claude/agents/` discovery location, `subagent_type` resolution, and the basic Task tool as the primary dispatch mechanism | docs/wiki/SYSTEM_DESIGN.md | S1 Architecture Overview (after Structured Agent Result Protocol subsection) | Add Section | Findings 2, 3 |
+| 7 | Add `orchestration` config block to configuration reference: `fanOut` ("auto"/"teams"/"disabled"), `maxAgents` (default 10), `agentTimeout` (default 300000) | docs/wiki/SYSTEM_DESIGN.md | S10 Configuration System | Add Config | Finding 6 |
+| 8 | Update spec generation pipeline description to reference formal fan-out: "Step 8 dispatches cl-doc-reader-agent instances in parallel via the basic Task tool" | docs/wiki/SYSTEM_DESIGN.md | S12 Spec Generation Pipeline | Modify | Finding 4 |
+| 9 | Update verification/audit systems description to reference formal two-wave fan-out: "Wave 1 dispatches cl-doc-reader-agent, Wave 2 dispatches cl-consistency-checker-agent and cl-dimension-analyzer-agent" | docs/wiki/SYSTEM_DESIGN.md | S14 Verification and Audit Systems | Modify | Finding 4 |
+| 10 | Update spec-mode, run-mode, autopilot-mode descriptions to reference formal fan-out protocol | docs/wiki/cl-implementer.md | Spec, Run, Autopilot mode sections | Modify | Finding 4 |
+| 11 | Update audit-mode, verify-mode, review-mode, re-review-mode descriptions to reference formal fan-out protocol | docs/wiki/cl-reviewer.md | Audit, Verify, Review, Re-review mode sections | Modify | Finding 4 |
+| 12 | Update mockups-mode description to reference formal fan-out planning | docs/wiki/cl-designer.md | Mockups mode section | Modify | Finding 4 |
+| 13 | Add "Fan-Out Orchestration" section: describes the 4-phase pattern, agent lifecycle, context file rules (inject don't read, never write), and execution tiers | docs/wiki/pipeline-concepts.md | New section (after Subagent Communication if R-004 merged, otherwise after Reference File Structure) | Add Section | Findings 3, 5, 6 |
 
 ### Reference File Updates
 
@@ -174,7 +174,7 @@ Same as above with TeamCreate("[team-name]") before spawn and TeamDelete() after
 | 15 | `cl-reviewer/references/verify-mode.md` | Step 1 (doc reads) + Part C (pairwise consistency) | Two independent fan-outs: Step 1 runs before Part C | cl-doc-reader, cl-consistency-checker | Finding 4, Mode 2 |
 | 16 | `cl-reviewer/references/review-mode.md` | Step 3 dimension analysis (conditional: proposals > 500 lines) | Single wave, 7 agents max | cl-dimension-analyzer | Finding 4, Mode 4 |
 | 17 | `cl-reviewer/references/re-review-mode.md` | Step 1 review history reads | Single wave | cl-doc-reader (FORMAT="claims-only") | Finding 4, Mode 5 |
-| 18 | `cl-implementer/references/spec-mode.md` | Step 2 system doc reads | Single wave | cl-doc-reader (FOCUS="types, interfaces, contracts") | Finding 4, Mode 3 |
+| 18 | `cl-implementer/references/spec-mode.md` | Step 8 system doc reads | Single wave | cl-doc-reader (FOCUS="types, interfaces, contracts") | Finding 4, Mode 3 |
 | 19 | `cl-implementer/references/run-mode.md` | Step 3c parallel task groups | Single wave, capped at 3 agents | cl-task-implementer (MODE="run") | Finding 4, Mode 6 |
 | 20 | `cl-implementer/references/autopilot-mode.md` | Step 3 parallel task groups | Single wave, capped at 3 agents | cl-task-implementer (MODE="autopilot") | Finding 4, Mode 6 |
 
@@ -493,7 +493,7 @@ RESULT: {CLEAN|FINDINGS} | Type: design-plan | Screen: {SCREEN_NAME} | Component
 |---------|----------|----------|
 ```
 
-### Change 6: SYSTEM_DESIGN.md S1 — Agent Layer Subsection
+### Change 6: docs/wiki/SYSTEM_DESIGN.md S1 — Agent Layer Subsection
 
 **What**: Add subsection after "Structured Agent Result Protocol" (Change 1 from R-004 proposal).
 

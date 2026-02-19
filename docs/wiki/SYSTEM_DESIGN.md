@@ -158,6 +158,34 @@ tables, deduplicate, and produce unified reports with coverage maps.
 See `skills/cl-reviewer/references/agent-result-protocol.md` for the full specification
 including prompt templates and aggregation rules.
 
+### Agent Layer
+
+Five thin agent definitions in `agents/` (registered via `plugin.json`) provide
+specialized subagents that orchestrating modes dispatch for parallel work:
+
+| Agent | File | Model | Purpose |
+|-------|------|-------|---------|
+| cl-doc-reader-agent | `agents/cl-doc-reader-agent.md` | sonnet | Reads one document, produces structured summary |
+| cl-consistency-checker-agent | `agents/cl-consistency-checker-agent.md` | sonnet | Checks one doc pair for contradictions |
+| cl-dimension-analyzer-agent | `agents/cl-dimension-analyzer-agent.md` | sonnet | Analyzes one audit/review dimension |
+| cl-task-implementer-agent | `agents/cl-task-implementer-agent.md` | opus | Implements one task from the queue |
+| cl-design-planner-agent | `agents/cl-design-planner-agent.md` | sonnet | Plans one screen layout without MCP writes |
+
+**Dispatch mechanism**: Orchestrating modes use the basic `Task` tool with
+`subagent_type` set to the agent's `name:` field. Multiple Task calls in a single
+message launch in parallel, each in its own isolated context window. No experimental
+flag is required for parallelism.
+
+**Context rules**: Relevant context (DECISIONS.md excerpts, manifest content) is
+injected by the orchestrator via the Task prompt — agents do not read shared files
+independently. Agents never write to shared context files (DECISIONS.md, PARKING.md,
+RESEARCH_LEDGER.md). Emergent findings are returned in the agent's structured result
+and written to shared files by the orchestrator after collection.
+
+**Optional teams enhancement**: When `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set,
+the same Task calls can be wrapped in a TeamCreate/TeamDelete lifecycle for named
+lifecycle management and streaming result collection.
+
 ### Skill Responsibilities
 
 | Skill | Responsibility | Modes |
@@ -608,7 +636,7 @@ flowchart TD
     GATE -->|"unverified merges?"| WARN3["Warn: approved but<br/>not verified"]
     GATE -->|"stale context?"| WARN4["Warn: version mismatch<br/>in context-manifest"]
 
-    GATE -->|"All clear<br/>(or user overrides)"| READ["Read all system docs<br/>(parallel subagents)"]
+    GATE -->|"All clear<br/>(or user overrides)"| READ["Step 8: Dispatch cl-doc-reader-agent<br/>instances in parallel via Task tool"]
 
     READ --> FORMAT["Choose spec format<br/>per content type"]
     FORMAT --> GEN["Generate specs in parallel"]
@@ -946,6 +974,23 @@ All configuration lives in `.clarity-loop.json` at the project root.
 | `ux.parallelGeneration` | boolean | `true` | Pre-generate downstream work during review |
 | `testing.integrationGate` | boolean | `true` | Run integration tests at milestone boundaries |
 | `testing.fullSuiteGate` | boolean | `true` | Run full test suite before declaring completion |
+| `orchestration.fanOut` | string | `"auto"` | Fan-out behavior: `"auto"` (basic Task, parallel by default), `"teams"` (require experimental teams), `"disabled"` (sequential only) |
+| `orchestration.maxAgents` | number | `10` | Maximum concurrent agents dispatched in a single wave |
+| `orchestration.agentTimeout` | number | `300000` | Per-agent timeout in milliseconds (5 minutes) |
+
+**`orchestration` schema addition:**
+```json
+{
+  "orchestration": {
+    "fanOut": "auto",
+    "maxAgents": 10,
+    "agentTimeout": 300000
+  }
+}
+```
+- `fanOut: "auto"` (default): use basic Task fan-out. If experimental teams are also available, wrap in team lifecycle.
+- `fanOut: "teams"`: require experimental teams. Error if unavailable.
+- `fanOut: "disabled"`: sequential execution only (preserves pre-fan-out behavior).
 
 ### Tier Threshold Logic
 
@@ -1203,7 +1248,7 @@ graph TD
     end
 
     subgraph Audit["System Audit<br/>(cl-reviewer audit)"]
-        VM3["9 dimensions:<br/>Cross-doc consistency<br/>Within-doc consistency<br/>Technical correctness<br/>Goal alignment + drift<br/>Completeness<br/>Abstraction coherence<br/>Design completeness<br/>Staleness<br/>Parking lot health"]
+        VM3["Two-wave fan-out:<br/>Wave 1: cl-doc-reader-agent per doc<br/>Wave 2: cl-consistency-checker-agent<br/>+ cl-dimension-analyzer-agent<br/>(9 dimensions in parallel)"]
     end
 
     VM1 -->|"ISSUES FOUND"| CORRECT["cl-reviewer correct"]

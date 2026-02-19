@@ -191,20 +191,37 @@ Implement the task. This is where Claude Code writes code:
 6. Record files modified and update `_meta.md` "Tasks Implemented With This Context" for
    each library whose context was loaded
 
-For parallel groups (if user approved in start mode):
-- Fork subagents for each independent group
-- Each subagent gets: task description, spec references, acceptance criteria, context
-  about dependencies
-- Each subagent implements independently and reports: files modified, criteria status,
-  gaps found
-- Main context: collect results, check for file conflicts (same file modified by multiple
-  subagents), resolve conflicts or re-run sequentially
-- **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-  `implementation`. Load the protocol prompt template from
-  `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-  subagent's Task prompt. Parse the RESULT summary line from each response for status
-  classification and aggregation.
-- Update TASKS.md and TASKS.md from main context
+**Parallel (default — Task tool, no flag required) — when user-approved independent groups exist**
+
+Phase 1: Discover
+  Identify independent task groups from TASKS.md dependency graph (no shared files, no
+  dependency chain between groups). Cap at 3 groups per wave (maxAgents cap).
+
+Phase 2: Spawn
+  For each independent group:
+    Task(subagent_type="cl-task-implementer-agent",
+         description="Implement {group description}",
+         prompt="TASK_ID: {T-NNN}\nTASK_DESCRIPTION: {full description}\nSPEC_REFERENCE: {spec path}\nACCEPTANCE_CRITERIA: {criteria list}\nDEPENDENCY_CONTEXT: {files and exports from completed dependency tasks}\nMODE: run\nCONTEXT_FILES: {relevant context file paths}")
+  Issue ALL Task calls in a single message → parallel launch.
+
+Phase 3: Collect
+  For each result:
+    Parse RESULT line: COMPLETE|PARTIAL|FAILED | Type: implementation | Task: T-NNN | Files: N | Criteria: N/M
+    Extract: files modified, criteria status, gaps found
+  On FAILED/PARTIAL: log details, mark task for sequential retry.
+
+Phase 4: Aggregate
+  - Check for file conflicts (same file modified by multiple agents)
+  - If conflicts: re-run conflicting tasks sequentially
+  - Update TASKS.md from main context with all status changes
+  - Write any Parkable Findings from agent results to PARKING.md
+
+**Parallel with teams (optional — CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)**
+Same as above with TeamCreate("run-task-group") before spawn and TeamDelete() after collect.
+
+**Sequential (orchestration.fanOut: "disabled")**
+Process each task in the main context sequentially. Each task: read spec reference,
+load context, implement, verify acceptance criteria, update TASKS.md.
 
 **3d: Verify Acceptance Criteria**
 

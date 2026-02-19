@@ -15,7 +15,6 @@ information, dependencies, or priority changes.
 | ID | Topic | Type | Status | Open Qs | Rounds | Complexity | Research Doc | Started | Last Updated |
 |----|-------|------|--------|---------|--------|-----------|-------------|---------|-------------|
 | R-002 | Browser Architecture Patterns for Clarity Loop | hybrid | draft | — | 1 | L2-complex | R-002-BOWSER_ARCHITECTURE_PATTERNS.md | 2026-02-15 | 2026-02-15 |
-| R-005 | Fan-Out Orchestration for Pipeline Modes | hybrid | approved | — | 1 | L2-complex | R-005-FAN_OUT_ORCHESTRATION.md | 2026-02-16 | 2026-02-16 |
 | R-006 | Guidance/Execution Separation for Complex Modes | evolutionary | draft | — | 1 | L2-complex | R-006-GUIDANCE_EXECUTION_SEPARATION.md | 2026-02-16 | 2026-02-16 |
 | R-007 | Browser Automation for Design Validation | net-new | draft | — | 1 | L2-complex | R-007-BROWSER_AUTOMATION_DESIGN_VALIDATION.md | 2026-02-16 | 2026-02-16 |
 | R-008 | Operational Improvements for Clarity Loop | evolutionary | draft | — | 1 | L2-complex | R-008-OPERATIONAL_IMPROVEMENTS.md | 2026-02-16 | 2026-02-16 |
@@ -35,6 +34,7 @@ information, dependencies, or priority changes.
 | R-004 | Structured Agent Result Protocol | net-new | R-004-STRUCTURED_AGENT_RESULT_PROTOCOL.md | — | 2026-02-16 |
 | R-009 | Pencil Layout Property and Dark Mode Visibility Fix | evolutionary | R-009-PENCIL_LAYOUT_PROPERTY_FIX.md | — | 2026-02-16 |
 | R-010 | Designer Skill Systematic Review | evolutionary | R-010-DESIGNER_SKILL_SYSTEMATIC_REVIEW.md | — | 2026-02-16 |
+| R-005 | Fan-Out Orchestration for Pipeline Modes | hybrid | R-005-FAN_OUT_ORCHESTRATION.md | FAN_OUT_ORCHESTRATION.md | 2026-02-19 |
 | R-012 | Multi-Pane Layout Gap | evolutionary | R-012-MULTI_PANE_LAYOUT_GAP.md | — | 2026-02-17 |
 
 ## Abandoned

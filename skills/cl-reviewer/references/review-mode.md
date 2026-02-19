@@ -94,14 +94,34 @@ detect.
 Evaluate the proposal along these dimensions. Only report issues you actually find.
 Don't manufacture concerns to look thorough.
 
-For very long proposals (>500 lines), consider dispatching subagents to analyze different
-dimensions in parallel, each with the full proposal text and the system doc context.
+For proposals over 500 lines, use the formal fan-out to analyze all dimensions in parallel:
 
-**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-`consistency`. Load the protocol prompt template from
-`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-subagent's Task prompt. Parse the RESULT summary line from each response for status
-classification and aggregation.
+**Parallel (default — Task tool, no flag required) — conditional on proposal length > 500 lines**
+
+Phase 1: Discover
+  Dimensions to analyze: up to 7 (Value, Internal Coherence, External Consistency,
+  Technical Soundness, Completeness, Spec-Readiness, Ground Truth).
+  Total work units: up to 7 cl-dimension-analyzer-agent instances.
+
+Phase 2: Spawn
+  For each dimension:
+    Task(subagent_type="cl-dimension-analyzer-agent",
+         description="Analyze {dimension name} for proposal review",
+         prompt="DIMENSION_NAME: {name}\nDIMENSION_INSTRUCTIONS: {criteria for this dimension}\nCONTENT: {full proposal text}\nCONTEXT: {system doc manifest + relevant doc excerpts}\nMODE: review")
+  Issue ALL Task calls in a single message → parallel launch.
+
+Phase 3: Collect
+  Parse each RESULT line: CLEAN|FINDINGS | Type: consistency | Dimension: ... | Findings: N
+  On FAILED: mark dimension as UNCHECKED, note in review output.
+
+Phase 4: Aggregate
+  Merge all dimension findings; classify each as blocking or non-blocking.
+
+**Parallel with teams (optional — CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)**
+Same as above with TeamCreate("reviewer-review-dims") before spawn and TeamDelete() after collect.
+
+**Sequential (orchestration.fanOut: "disabled" or proposal ≤ 500 lines)**
+Analyze all seven dimensions sequentially in the main context (existing behavior below).
 
 10. **Dimension 1: Value Assessment** -- Does this proposal add something meaningful to the system?
     - Does it solve a real problem or address a real gap?

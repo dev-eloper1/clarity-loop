@@ -50,11 +50,12 @@ You can override warnings if you understand the implications.
 
 ### Step 1: Read All System Docs
 
-Reads every system doc in full (using parallel subagents for efficiency). Each doc is analyzed for:
-- Defined types and entities
-- Interfaces and contracts
-- Behavioral rules and constraints
-- Cross-references to other docs
+Dispatches `cl-doc-reader-agent` instances in parallel via the basic Task tool (one per
+system doc) using the formal fan-out protocol. Each agent produces a structured digest
+with types, contracts, cross-references, and behavioral rules. Results are collected and
+aggregated before spec generation begins.
+
+Sequential fallback available via `orchestration.fanOut: "disabled"` in `.clarity-loop.json`.
 
 ### Step 2: Choose Spec Format
 
@@ -286,7 +287,13 @@ Bugs that couldn't have been predicted during research or spec generation (race 
 
 ### Parallel Execution
 
-Independent task groups (no shared dependencies or files) can run in parallel via Claude Code's fork capability. User approval required. Post-merge file conflict check in main context. Sequential fallback if conflicts arise.
+Independent task groups (no shared dependencies or files) are dispatched as
+`cl-task-implementer-agent` instances (MODE="run") via the basic Task tool, capped at 3
+concurrent agents. Each agent implements and reports using the Structured Agent Result
+Protocol (type: implementation). Main context collects results, checks for file conflicts,
+and resolves sequentially if needed.
+
+Sequential fallback available via `orchestration.fanOut: "disabled"`.
 
 ---
 
@@ -328,7 +335,13 @@ For UI tasks, the implementer starts the dev server, navigates to the relevant p
 
 ### Parallel Execution
 
-When the dependency graph allows, independent task groups run in parallel via subagents (max 3). Each subagent runs the full autonomous loop independently. Main context collects results and checks for file conflicts.
+Independent task groups are dispatched as `cl-task-implementer-agent` instances
+(MODE="autopilot") via the basic Task tool, capped at 3 concurrent agents. Each agent
+runs the full autonomous loop (implement → test → commit) and reports using the
+Structured Agent Result Protocol (type: implementation). Main context collects results
+and checks for file conflicts.
+
+Sequential fallback available via `orchestration.fanOut: "disabled"`.
 
 ### Hard Stops
 

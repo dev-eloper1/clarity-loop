@@ -335,22 +335,38 @@ If there are failing tasks, the user decides: debug further, skip, or escalate.
 
 ### Parallel Execution
 
-When the dependency graph allows parallel work:
+**Parallel (default — Task tool, no flag required)**
 
-1. Identify independent task groups (no shared files, no dependency chain between them)
-2. Fork subagents for each group (Claude Code's fork capability)
-3. Each subagent runs the autonomous loop (implement -> test -> commit) independently
-4. Main context collects results and checks for file conflicts
-5. If conflicts: re-run conflicting tasks sequentially
-6. Merge results into TASKS.md
+Phase 1: Discover
+  Identify independent task groups from TASKS.md dependency graph (no shared files, no
+  dependency chain between groups). Cap at 3 groups per wave.
 
-**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-`implementation`. Load the protocol prompt template from
-`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-subagent's Task prompt. Parse the RESULT summary line from each response for status
-classification and aggregation.
+Phase 2: Spawn
+  For each independent group:
+    Task(subagent_type="cl-task-implementer-agent",
+         description="Autopilot implement {group description}",
+         prompt="TASK_ID: {T-NNN}\nTASK_DESCRIPTION: {full description}\nSPEC_REFERENCE: {spec path}\nACCEPTANCE_CRITERIA: {criteria list}\nDEPENDENCY_CONTEXT: {files and exports from completed dependency tasks}\nMODE: autopilot\nTEST_SPEC_SECTION: {relevant TEST_SPEC.md section}\nCONTEXT_FILES: {relevant context file paths}")
+  Issue ALL Task calls in a single message → parallel launch.
 
-**Limit**: Maximum 3 parallel groups to avoid resource contention. User can adjust.
+Phase 3: Collect
+  For each result:
+    Parse RESULT line: COMPLETE|PARTIAL|FAILED | Type: implementation | Task: T-NNN | Files: N | Criteria: N/M | Tests: N/M
+    Extract: files modified, test results, criteria status, gaps found
+  On FAILED/PARTIAL: log details, mark task for sequential retry.
+
+Phase 4: Aggregate
+  - Check for file conflicts (same file modified by multiple agents)
+  - If conflicts: re-run conflicting tasks sequentially
+  - Merge results into TASKS.md from main context
+  - Write any Parkable Findings from agent results to PARKING.md
+
+**Parallel with teams (optional — CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)**
+Same as above with TeamCreate("autopilot-task-group") before spawn and TeamDelete() after collect.
+
+**Sequential (orchestration.fanOut: "disabled")**
+Process tasks sequentially in the main context: implement → write tests → run tests → commit.
+
+**Limit**: Maximum 3 parallel groups to avoid resource contention. User can adjust via `orchestration.maxAgents`.
 
 ### Hard Stops
 

@@ -57,20 +57,47 @@ point is to see the docs with clean eyes.
 
 **Checkpoint**: All inputs loaded before analysis begins.
 
-Read every file in `docs/system/` -- dispatch subagents in parallel, one per doc.
-Each subagent produces:
+**Parallel (default — Task tool, no flag required)**
+
+Phase 1: Discover
+  1. Glob `docs/system/*.md` → doc list
+  2. Check `docs/reviews/audit/AUDIT_*.md` for previous audits
+  Total work units: N doc-reader agents (one per system doc)
+
+Phase 2: Spawn
+  For each system doc in the doc list:
+    Task(subagent_type="cl-doc-reader-agent",
+         description="Read {doc name} for audit",
+         prompt="DOC_PATH: {path}\nFOCUS: all content\nFORMAT: full\nDECISIONS_CONTEXT: {relevant DECISIONS.md entries}")
+  Issue ALL Task calls in a single message → parallel launch.
+
+Phase 3: Collect
+  For each result:
+    Parse RESULT line: COMPLETE|PARTIAL|FAILED | Type: digest | Doc: ... | Sections: N
+    Store full structured content (summaries, terms, decisions, cross-refs, claims)
+  On FAILED/PARTIAL: mark that doc as EXTRACTION_FAILED, include partial output, continue.
+  Log: "Collected {M}/{N} doc summaries ({N-M} failed)"
+
+Phase 4: Aggregate
+  Merge all summaries into a unified knowledge base:
+  - All defined terms (deduplicated, conflicts flagged)
+  - All architectural decisions (with source doc)
+  - Cross-reference graph (doc → doc dependency map)
+  - All technology claims (for Technical Correctness dimension)
+  - Collect Parkable Findings sections from all agents → write to PARKING.md after all waves complete
+
+**Parallel with teams (optional — CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)**
+Same as above with TeamCreate("reviewer-audit-read") before Phase 2 and
+TeamDelete() after Phase 3.
+
+**Sequential (orchestration.fanOut: "disabled")**
+Read every file in `docs/system/` directly in the main context. Each doc produces:
 - Full content summary
 - All defined terms and their definitions
 - All architectural decisions and stated rationale
 - All cross-references to other system docs
 - Any claims about external technologies or patterns
 - Anything that reads as aspirational vs. decided
-
-**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-`digest`. Load the protocol prompt template from
-`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-subagent's Task prompt. Parse the RESULT summary line from each response for status
-classification and aggregation.
 
 Read all previous audit reports -- check `docs/reviews/audit/AUDIT_*.md` for
 prior audits. These form your baseline for drift analysis.
@@ -84,25 +111,49 @@ This helps distinguish intentional evolution from accidental drift.
 Audit is more rigorous than review. You're not checking one proposal against the system --
 you're checking the system against itself, against reality, and against its own stated goals.
 
-Use subagents for parallel analysis where dimensions are independent.
-
-**Result protocol**: Subagents report using the Structured Agent Result Protocol. Select
-the result type per dimension: `consistency` for dimensions checking doc-vs-doc or
-internal coherence (Dims 1-2, 6), `verification` for dimensions checking against
-external criteria (Dims 3-5, 7), `digest` for dimensions extracting content status
-(Dims 8-9). Load the appropriate prompt template from
-`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6.
-
 **Checkpoint**: Each dimension assessed independently before producing the report.
 
-**Dimension 1: Internal Consistency (Cross-Document)** -- Check every pair of system docs for contradictions. This is the most mechanically
-intensive check -- dispatch subagents per doc pair if needed.
+**Parallel (default — Task tool, no flag required) — Wave 2**
 
-**Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-`consistency`. Load the protocol prompt template from
-`skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-subagent's Task prompt. Parse the RESULT summary line from each response for status
-classification and aggregation.
+Wave 2 runs after Wave 1 (doc reads) completes. Doc summaries from Wave 1 are passed
+as CONTENT to each Wave 2 agent.
+
+Phase 1: Discover (Wave 2)
+  - Pairwise consistency: build all unique doc pairs from the N docs loaded in Wave 1
+  - Dimension analysis: 9 dimensions = 9 cl-dimension-analyzer-agent instances
+  Total work units: (N*(N-1)/2) consistency agents + 9 dimension agents
+
+Phase 2: Spawn (Wave 2)
+  For each doc pair:
+    Task(subagent_type="cl-consistency-checker-agent",
+         description="Check {docA} vs {docB} for audit",
+         prompt="DOC_A: {docA path or summary}\nDOC_B: {docB path or summary}\nSCOPE: full")
+  For each dimension (Dims 1-9):
+    Task(subagent_type="cl-dimension-analyzer-agent",
+         description="Analyze {dimension name} for audit",
+         prompt="DIMENSION_NAME: {name}\nDIMENSION_INSTRUCTIONS: {criteria}\nCONTENT: {doc summaries}\nCONTEXT: {DECISIONS.md excerpts}\nMODE: audit")
+  Issue ALL Task calls in a single message → parallel launch.
+
+Phase 3: Collect (Wave 2)
+  For consistency agents: Parse RESULT line: CLEAN|FINDINGS | Type: consistency | Findings: N | Critical: N | Major: N | Minor: N
+  For dimension agents: Parse RESULT line per result type (consistency/verification/digest)
+  On FAILED: mark as FAILED, continue collecting from other agents.
+
+Phase 4: Aggregate (Wave 2)
+  - Merge all consistency findings by severity (deduplicate overlapping pairs)
+  - Organize dimension findings by dimension number
+  - Collect Parkable Findings from all Wave 2 agents → write to PARKING.md
+
+**Parallel with teams (optional — CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)**
+Same as above with TeamCreate("reviewer-audit-analyze") before Wave 2 spawn and
+TeamDelete() after Wave 2 collect.
+
+**Sequential (orchestration.fanOut: "disabled")**
+Analyze dimensions and check doc pairs directly in the main context (existing behavior).
+
+**Dimension 1: Internal Consistency (Cross-Document)** -- Check every pair of system docs for contradictions. This is the most mechanically
+intensive check -- dispatch subagents per doc pair if needed (covered by the fan-out
+Wave 2 above when fanOut != "disabled").
 
 Look for:
 - **Contradictory statements**: Doc A says X, Doc B says not-X

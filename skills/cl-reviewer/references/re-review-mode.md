@@ -31,14 +31,29 @@ problems.
 ### Phase 1: Load Review History
 
 1. **Find all previous reviews** -- Read every `REVIEW_P-NNN_v*.md` file in
-   `docs/reviews/proposals/`, ordered by version number. Dispatch subagents to read these
-   in parallel if there are multiple.
+   `docs/reviews/proposals/`, ordered by version number.
 
-   **Result protocol**: Subagents report using the Structured Agent Result Protocol, type:
-   `digest`. Load the protocol prompt template from
-   `skills/cl-reviewer/references/agent-result-protocol.md` Phase 6 and include it in each
-   subagent's Task prompt. Parse the RESULT summary line from each response for status
-   classification and aggregation.
+   **Parallel (default — Task tool, no flag required) — when multiple review files exist**
+
+   Phase 1: Discover
+     Glob `docs/reviews/proposals/REVIEW_P-NNN_v*.md` → review file list (N files).
+
+   Phase 2: Spawn
+     For each review file:
+       Task(subagent_type="cl-doc-reader-agent",
+            description="Read review {version} for cumulative ledger",
+            prompt="DOC_PATH: {path}\nFORMAT: claims-only\nFOCUS: blocking issues, non-blocking suggestions")
+     Issue ALL Task calls in a single message → parallel launch.
+
+   Phase 3: Collect
+     Parse each RESULT line: COMPLETE|PARTIAL|FAILED | Type: digest | Doc: ...
+     On FAILED: mark that review version as UNREAD, note in output.
+
+   Phase 4: Aggregate
+     Merge all claim extracts into a single flat list of issues across all review rounds.
+
+   **Sequential (orchestration.fanOut: "disabled" or only one review file)**
+   Read each review file directly in the main context.
 
 2. **Build a cumulative issue ledger** -- Collect every blocking issue and non-blocking
    suggestion from ALL previous reviews into a single checklist. This is critical: you're
