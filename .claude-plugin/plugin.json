@@ -16,6 +16,5 @@
     "ui-design",
     "spec-first"
   ],
-  "skills": "./skills/",
-  "agents": "./agents/"
+  "skills": "./skills/"
 }
