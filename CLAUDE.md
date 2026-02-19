@@ -169,17 +169,34 @@ CLARITY_LOOP_PROJECT_ROOT=/path/to/project node scripts/init.js
 
 This repo is **self-hosted**: it uses its own pipeline to manage changes to `skills/`, `hooks/`, `scripts/`, and `templates/`. The `.clarity-loop.json` at the repo root sets `protectedPaths` to those directories, so direct edits are blocked by the hook.
 
-**All substantive changes go through the pipeline:**
-```
-/cl-researcher research 'topic'  →  research doc in docs/research/
-/cl-researcher proposal          →  proposal with Change Manifest in docs/proposals/
-/cl-reviewer review              →  review in docs/reviews/proposals/
-/cl-reviewer merge               →  changes applied to skill/hook/script/template files
-```
+The plugin is **not installed in this repo** (by design — installing it here would require reloading after every skill change). Instead, invoke the pipeline by reading the skill reference files directly and following their process. This works because skill files are just instructions to Claude, not compiled code.
 
-The Change Manifest in a proposal references the actual target files (e.g., `skills/cl-reviewer/references/merge-mode.md`, `hooks/protect-system-docs.js`). Merge mode writes to those files directly — there is no separate `docs/system/` layer.
+### Invoking the Pipeline (No Slash Commands)
 
-**The `.pipeline-authorized` marker** lives at the project root (not inside a docs subdirectory). Skills write it before editing protected paths and delete it immediately after.
+**When the hook blocks an edit to a protected path** — that's the signal to run the pipeline instead of editing directly. Read the appropriate reference and follow its process.
+
+**Explicit invocations** — say any of the following and the mapped reference will be read and followed:
+
+| What you say | Reference to read and follow |
+|---|---|
+| "triage [idea]" / "should I research this?" | `skills/cl-researcher/SKILL.md` → triage mode |
+| "research [topic]" / "let's research..." | `skills/cl-researcher/references/research-template.md` |
+| "create a proposal" / "let's propose..." | `skills/cl-researcher/SKILL.md` → proposal mode |
+| "review the proposal" | `skills/cl-reviewer/references/review-mode.md` |
+| "merge the proposal" / "apply [P-NNN]" | `skills/cl-reviewer/references/merge-mode.md` |
+| "correct [issue]" / "small fix to..." | `skills/cl-reviewer/references/correction-mode.md` |
+| "verify the merge" | `skills/cl-reviewer/references/verify-mode.md` |
+
+**Always read `docs/DECISIONS.md` and `docs/RESEARCH_LEDGER.md` at the start of any pipeline operation** — decisions constrain what can be proposed, and the ledger shows what's already been researched.
+
+### What Changes vs. What Stays the Same
+
+The process is identical to any user project. The only difference:
+- **Change Manifest targets are skill/hook files** (e.g., `skills/cl-reviewer/references/merge-mode.md`) instead of `docs/system/` files
+- **Merge writes to those files directly** — no intermediate system doc layer
+- **The `.pipeline-authorized` marker** lives at the project root, not inside a docs subdirectory
+
+### Technical Notes
 
 When modifying skills:
 - Edit `SKILL.md` for changes to mode detection, gates, or guidelines that apply across modes
