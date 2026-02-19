@@ -4,7 +4,7 @@ tier: guided
 depends-on: []
 state-files:
   - docs/DECISIONS.md
-  - docs/system/.pipeline-authorized
+  - .pipeline-authorized
 ---
 
 ## Correction Mode
@@ -19,7 +19,7 @@ fix -- the audit report or spec review IS the justification.
 |----------|--------|----------|-------------|
 | Source finding | Audit, verify, spec review, re-review, or user-identified | Yes | The diagnosis that justifies the fix |
 | Target system docs | `docs/system/` | Yes | Files being corrected |
-| Authorization marker | `docs/system/.pipeline-authorized` | Yes | Created during correction, removed after |
+| Authorization marker | `.pipeline-authorized` (project root) | Yes | Created during correction, removed after |
 | DECISIONS.md | `docs/DECISIONS.md` | No | Log judgment calls made during correction |
 | Corrections log | `docs/reviews/proposals/CORRECTIONS_[DATE].md` | Yes | Where the corrections are documented |
 
@@ -119,7 +119,7 @@ Once approved:
 
 **Checkpoint**: Marker created, corrections applied, marker removed.
 
-Create the authorization marker -- write `docs/system/.pipeline-authorized` with:
+Create the authorization marker -- write `.pipeline-authorized` (project root) with:
 
 ```
 operation: correct
@@ -133,7 +133,7 @@ This tells the PreToolUse hook to allow edits to system docs.
 Apply each correction -- edit the system docs. Keep changes minimal and surgical.
 Don't "improve" surrounding content. Don't restructure. Just fix what the manifest says.
 
-Remove the marker -- delete `docs/system/.pipeline-authorized` after all
+Remove the marker -- delete `.pipeline-authorized` (project root) after all
 corrections are applied.
 
 ### Phase 4: Spot-Check Verification

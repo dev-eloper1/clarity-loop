@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // clarity-loop/hooks/protect-system-docs.js
-// PreToolUse hook: blocks direct Edit/Write to {docsRoot}/system/ files.
+// PreToolUse hook: blocks direct Edit/Write to protected paths.
 //
-// Exempt files (always allowed):
-//   - .manifest.md          — auto-generated doc index
-//   - .pipeline-authorized  — skills create/delete this marker
+// Protected paths come from config.protectedPaths (if set) or default to
+// {docsRoot}/system/ for backward compatibility with user projects.
 //
-// Pipeline bypass: if {docsRoot}/system/.pipeline-authorized exists with valid
+// Exempt files (always allowed within a protected path):
+//   - .manifest.md  — auto-generated doc index written by generate-manifest.js
+//
+// Pipeline bypass: if .pipeline-authorized exists at the project root with valid
 // structured content, edits are allowed. Valid operations: bootstrap, merge, correct.
 //
 // Reads the tool input from stdin (JSON with tool_name and tool_input).
@@ -14,7 +16,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { loadConfig } = require('./config');
+const { loadConfig, resolveProtectedPaths } = require('./config');
 
 function main() {
   // Read the hook input from stdin
@@ -49,30 +51,34 @@ function main() {
   const projectRoot = process.cwd();
   const config = loadConfig(projectRoot);
 
-  // Build the system docs prefix from config
-  const systemPrefix = config.docsRoot + '/system/';
+  // Resolve the list of protected paths (absolute)
+  const protectedPaths = resolveProtectedPaths(projectRoot, config);
 
-  // Check if the path targets {docsRoot}/system/ at a path boundary
-  // (must be preceded by / or start of string to avoid substring matches like my-doc/system/)
-  const prefixIndex = normalizedPath.indexOf(systemPrefix);
-  if (prefixIndex < 0 || (prefixIndex > 0 && normalizedPath[prefixIndex - 1] !== '/')) {
-    // Not a system doc path — allow
+  // Check if the file is within any protected path (requires a path boundary)
+  let matchedProtectedPath = null;
+  for (const p of protectedPaths) {
+    const np = p.replace(/\\/g, '/');
+    if (normalizedPath.startsWith(np + '/') || normalizedPath === np) {
+      matchedProtectedPath = np;
+      break;
+    }
+  }
+
+  if (!matchedProtectedPath) {
+    // Not under any protected path — allow
     process.exit(0);
   }
 
-  // --- Exempt files: manifest and pipeline-authorized marker ---
-  const afterPrefix = normalizedPath.substring(prefixIndex + systemPrefix.length);
-  if (afterPrefix === '.manifest.md' || afterPrefix.startsWith('.manifest.md')) {
-    process.exit(0);
-  }
-  if (afterPrefix === '.pipeline-authorized' || afterPrefix.startsWith('.pipeline-authorized')) {
+  // --- Exempt files within protected path ---
+  const afterPrefix = normalizedPath.substring(matchedProtectedPath.length + 1);
+  if (afterPrefix === '.manifest.md') {
+    // Auto-generated index — written by generate-manifest.js hook
     process.exit(0);
   }
 
   // --- Pipeline authorization bypass ---
-  // Derive project root from the file path by stripping everything from docsRoot onwards
-  const derivedRoot = prefixIndex > 0 ? normalizedPath.substring(0, prefixIndex) : projectRoot;
-  const markerPath = path.join(derivedRoot, config.docsRoot, 'system', '.pipeline-authorized');
+  // Marker is at project root (path-independent)
+  const markerPath = path.join(projectRoot, '.pipeline-authorized');
 
   try {
     const markerContent = fs.readFileSync(markerPath, 'utf8');
@@ -89,14 +95,19 @@ function main() {
     // Marker doesn't exist — fall through to deny
   }
 
+  // Build deny message listing the protected paths
+  const protectedList = protectedPaths
+    .map(p => path.relative(projectRoot, p))
+    .join(', ');
+
   // Block the edit
   const denyMessage = [
-    'Direct edits to ' + config.docsRoot + '/system/ are blocked by Clarity Loop.',
-    'System docs are pipeline-managed. Authorized paths:',
+    'Direct edits to ' + protectedList + ' are blocked by Clarity Loop.',
+    'These paths are pipeline-managed. Authorized paths:',
     '  - /cl-researcher bootstrap  (initial doc creation)',
     '  - /cl-reviewer merge        (apply approved proposals)',
     '  - /cl-reviewer correct       (targeted fixes from audit/review findings)',
-    'All three create a temporary .pipeline-authorized marker that allows edits.'
+    'All three create a temporary .pipeline-authorized marker at the project root that allows edits.'
   ].join('\n');
 
   const denyJson = JSON.stringify({

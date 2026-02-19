@@ -1,6 +1,6 @@
 # Clarity Loop
 
-![Clarity Loop — A human-in-the-loop process for getting from vibes to working code](docs/clarity_loop.png)
+![Clarity Loop — A human-in-the-loop process for getting from vibes to working code](docs/wiki/clarity_loop.png)
 
 **Stop generating code from vibes.** Clarity Loop is a [Claude Code](https://claude.ai/code) plugin that takes you from a vague idea to working code through structured research, reviewed documentation, visual design, and tracked implementation — with a human making every decision.
 
@@ -194,7 +194,7 @@ Clarity Loop was designed after studying [BMAD](https://docs.bmad-method.org/) (
 - System-wide decision journal that prevents re-discussion of settled questions
 - Implementation tracking with reconciliation, fix tasks, and spec gap feedback
 
-For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md)
+For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md) *(pre-pipeline research artifact)*
 
 ---
 
@@ -202,17 +202,17 @@ For the full analysis: [Design Decisions](docs/research/DOC_PIPELINE_PLUGIN.md)
 
 | Document | Covers |
 |----------|--------|
-| **[System Design](docs/SYSTEM_DESIGN.md)** | **Full architecture reference — pipeline flow, state management, protection model, spec generation, implementation tracking, verification, all feedback loops** |
-| [cl-researcher](docs/cl-researcher.md) | Bootstrap, triage, research, structure, proposal, context modes |
-| [cl-reviewer](docs/cl-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
-| [cl-designer](docs/cl-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
-| [cl-implementer](docs/cl-implementer.md) | Spec generation, waterfall gate, cross-spec consistency review, start, run, autopilot, verify, status, sync modes, task queue, fix tasks, reconciliation |
-| [Pipeline Concepts](docs/pipeline-concepts.md) | System doc protection, manifest, tracking files, context files, configuration |
-| [Hooks](docs/hooks.md) | PreToolUse protection, PostToolUse manifest generation |
+| **[System Design](docs/wiki/SYSTEM_DESIGN.md)** | **Full architecture reference — pipeline flow, state management, protection model, spec generation, implementation tracking, verification, all feedback loops** |
+| [cl-researcher](docs/wiki/cl-researcher.md) | Bootstrap, triage, research, structure, proposal, context modes |
+| [cl-reviewer](docs/wiki/cl-reviewer.md) | Review, re-review, fix, merge, verify, audit, correct, sync, design-review modes |
+| [cl-designer](docs/wiki/cl-designer.md) | Setup, tokens, mockups, build-plan modes, Pencil MCP integration |
+| [cl-implementer](docs/wiki/cl-implementer.md) | Spec generation, waterfall gate, cross-spec consistency review, start, run, autopilot, verify, status, sync modes, task queue, fix tasks, reconciliation |
+| [Pipeline Concepts](docs/wiki/pipeline-concepts.md) | System doc protection, manifest, tracking files, context files, configuration |
+| [Hooks](docs/wiki/hooks.md) | PreToolUse protection, PostToolUse manifest generation |
 
 ### Pencil MCP (Optional)
 
-The cl-designer works with or without [Pencil](https://www.pencil.dev/) — a design-as-code tool with an MCP server. With Pencil, you get live visual design on an infinite canvas. Without it, you get equivalent structured markdown specs. See [Pencil setup](docs/cl-designer.md#pencil-setup) for installation.
+The cl-designer works with or without [Pencil](https://www.pencil.dev/) — a design-as-code tool with an MCP server. With Pencil, you get live visual design on an infinite canvas. Without it, you get equivalent structured markdown specs. See [Pencil setup](docs/wiki/cl-designer.md#pencil-setup) for installation.
 
 ---
 
@@ -281,8 +281,15 @@ clarity-loop/
     proposal-tracker.md             PROPOSAL_TRACKER.md template
     status.md                       STATUS.md template (minimal stub)
     parking.md                      PARKING.md template (parked findings, gaps, ideas)
-  docs/                             Detailed documentation
+  docs/wiki/                        Plugin documentation (supports this README)
     SYSTEM_DESIGN.md                Full architecture reference
+    cl-researcher.md                Researcher skill reference
+    cl-reviewer.md                  Reviewer skill reference
+    cl-designer.md                  Designer skill reference
+    cl-implementer.md               Implementer skill reference
+    pipeline-concepts.md            Core concepts (protection, manifest, config)
+    hooks.md                        Hook reference
+    clarity_loop.png / .gif         README assets
 ```
 
 ---

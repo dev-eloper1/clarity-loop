@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULT_CONFIG = { version: 1, docsRoot: 'docs' };
+const DEFAULT_CONFIG = { version: 1, docsRoot: 'docs', protectedPaths: null };
 
 /**
  * Load .clarity-loop.json from the project root.
@@ -29,6 +29,11 @@ function loadConfig(projectRoot) {
         // Normalize: backslashes to forward slashes, strip trailing slashes
         config.docsRoot = parsed.docsRoot.replace(/\\/g, '/').replace(/\/+$/, '');
       }
+      if (Array.isArray(parsed.protectedPaths)) {
+        config.protectedPaths = parsed.protectedPaths.filter(
+          p => typeof p === 'string' && p.trim() !== ''
+        );
+      }
     }
   } catch (err) {
     if (err.code !== 'ENOENT') {
@@ -50,4 +55,16 @@ function resolveDocPath(projectRoot, config, ...segments) {
   return path.join(projectRoot, config.docsRoot, ...segments);
 }
 
-module.exports = { DEFAULT_CONFIG, loadConfig, resolveDocPath };
+/**
+ * Resolve the list of protected paths as absolute paths.
+ * If config.protectedPaths is set, each entry is resolved relative to projectRoot.
+ * If absent or null, defaults to [{docsRoot}/system] (backward-compatible).
+ */
+function resolveProtectedPaths(projectRoot, config) {
+  if (Array.isArray(config.protectedPaths) && config.protectedPaths.length > 0) {
+    return config.protectedPaths.map(p => path.join(projectRoot, p));
+  }
+  return [path.join(projectRoot, config.docsRoot, 'system')];
+}
+
+module.exports = { DEFAULT_CONFIG, loadConfig, resolveDocPath, resolveProtectedPaths };

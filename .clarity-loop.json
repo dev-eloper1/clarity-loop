@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "docsRoot": "docs",
+  "protectedPaths": ["skills", "hooks", "scripts", "templates", ".claude"]
+}

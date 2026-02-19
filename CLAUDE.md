@@ -30,7 +30,33 @@ The plugin is registered via `.claude-plugin/plugin.json`. Skills are loaded fro
 
 ### Configuration
 
-`.clarity-loop.json` in the project root configures the docs path. Default: `{ "version": 1, "docsRoot": "docs" }`. All hooks and skills resolve paths through `hooks/config.js` → `loadConfig()` / `resolveDocPath()`.
+`.clarity-loop.json` in the project root configures the plugin. All hooks and skills resolve paths through `hooks/config.js` → `loadConfig()` / `resolveDocPath()` / `resolveProtectedPaths()`.
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `version` | number | `1` | Config schema version |
+| `docsRoot` | string | `"docs"` | Root directory for pipeline docs (research, proposals, reviews, etc.) |
+| `protectedPaths` | string[] | `null` | Directories protected from direct edits. When null, defaults to `["{docsRoot}/system"]`. Each entry is relative to the project root. |
+
+Example — self-hosted plugin repo:
+```json
+{
+  "version": 1,
+  "docsRoot": "docs",
+  "protectedPaths": ["skills", "hooks", "scripts", "templates", ".claude"]
+}
+```
+
+Example — user project protecting additional source dirs:
+```json
+{
+  "version": 1,
+  "docsRoot": "docs",
+  "protectedPaths": ["docs/system", "src/core", "config"]
+}
+```
+
+User projects that omit `protectedPaths` default to protecting `docs/system/` — identical to the pre-`protectedPaths` behavior.
 
 ### Skill Architecture (Progressive Disclosure)
 
@@ -40,17 +66,18 @@ Each skill uses a two-level loading pattern:
 
 This keeps context window usage low — only the relevant reference is loaded for the active mode.
 
-### System Doc Protection Model
+### Protection Model
 
 ```
-User tries to edit docs/system/ARCHITECTURE.md
+User tries to edit a file in a protected path (e.g. skills/cl-reviewer/SKILL.md)
   → PreToolUse hook fires
-  → Checks for {docsRoot}/system/.pipeline-authorized
-  → No marker → DENY with message explaining authorized paths
+  → Resolves protected paths from config.protectedPaths (or defaults to {docsRoot}/system)
+  → File matches a protected path → checks for .pipeline-authorized at project root
+  → No marker → DENY with message explaining authorized operations
   → Marker exists with valid operation → ALLOW
 ```
 
-Three operations can create the marker: `/cl-researcher bootstrap`, `/cl-reviewer merge`, `/cl-reviewer correct`. The marker is deleted after the operation completes.
+Three operations can create the marker: `/cl-researcher bootstrap`, `/cl-reviewer merge`, `/cl-reviewer correct`. The marker is written to the project root as `.pipeline-authorized` and deleted after the operation completes.
 
 ### Per-Project Directory Structure (created by init.js)
 
@@ -133,17 +160,31 @@ CLARITY_LOOP_PROJECT_ROOT=/path/to/project node scripts/init.js
 ## Key Design Decisions
 
 - **Skills use markdown, not code.** SKILL.md files are prompts, not programs. They instruct Claude Code how to behave. References are loaded lazily to minimize context usage.
-- **System docs are NEVER edited directly.** The PreToolUse hook enforces this. All changes go through the pipeline: research → proposal → review → merge. Even typo fixes.
+- **Protected paths are NEVER edited directly.** The PreToolUse hook enforces this. All changes go through the pipeline: research → proposal → review → merge. Even typo fixes. Which paths are protected is configured in `.clarity-loop.json`.
 - **The manifest is the index.** Skills read `.manifest.md` to understand what system docs exist, their section structure, and cross-references — avoiding full reads of every doc.
 - **Decisions persist across sessions.** DECISIONS.md is read at session start by every skill. Decisions constrain future work and prevent contradictions across context compressions.
 - **Context files bridge LLM training gaps.** Per-library context in `{docsRoot}/context/` provides version-pinned, curated knowledge (correct imports, breaking changes, gotchas) that the LLM's training data gets wrong.
 
 ## Working on This Codebase
 
+This repo is **self-hosted**: it uses its own pipeline to manage changes to `skills/`, `hooks/`, `scripts/`, and `templates/`. The `.clarity-loop.json` at the repo root sets `protectedPaths` to those directories, so direct edits are blocked by the hook.
+
+**All substantive changes go through the pipeline:**
+```
+/cl-researcher research 'topic'  →  research doc in docs/research/
+/cl-researcher proposal          →  proposal with Change Manifest in docs/proposals/
+/cl-reviewer review              →  review in docs/reviews/proposals/
+/cl-reviewer merge               →  changes applied to skill/hook/script/template files
+```
+
+The Change Manifest in a proposal references the actual target files (e.g., `skills/cl-reviewer/references/merge-mode.md`, `hooks/protect-system-docs.js`). Merge mode writes to those files directly — there is no separate `docs/system/` layer.
+
+**The `.pipeline-authorized` marker** lives at the project root (not inside a docs subdirectory). Skills write it before editing protected paths and delete it immediately after.
+
 When modifying skills:
-- Edit the SKILL.md for changes to mode detection, gates, or guidelines that apply across modes
+- Edit `SKILL.md` for changes to mode detection, gates, or guidelines that apply across modes
 - Edit specific `references/*.md` files for mode-specific behavior changes
-- The frontmatter `description` field in SKILL.md controls auto-triggering — changes here affect when the skill activates
+- The frontmatter `description` field in `SKILL.md` controls auto-triggering — changes here affect when the skill activates
 - The `argument-hint` field shows available modes in autocomplete
 
 When modifying hooks:
@@ -155,7 +196,3 @@ When modifying hooks:
 When modifying templates:
 - Templates in `templates/` are copied once during init. Changes to templates don't affect existing projects.
 - Templates include `<!-- clarity-loop-managed -->` markers used by collision detection.
-
-### docs/ in This Repo vs docs/ in User Projects
-
-This repo's `docs/` contains the plugin's own documentation (SYSTEM_DESIGN.md, per-skill docs, research artifacts). This is NOT the same as the `{docsRoot}/` created in user projects. Don't confuse them — this repo's docs describe the plugin; user project docs are managed by the plugin.

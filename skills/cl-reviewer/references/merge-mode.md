@@ -6,7 +6,7 @@ depends-on:
 state-files:
   - docs/PROPOSAL_TRACKER.md
   - docs/DECISIONS.md
-  - docs/system/.pipeline-authorized
+  - .pipeline-authorized
 ---
 
 ## Merge Mode
@@ -24,7 +24,7 @@ hook temporarily authorized.
 | Latest review | `docs/reviews/proposals/REVIEW_P-NNN_v*.md` | Yes | Must have APPROVE or APPROVE WITH CHANGES verdict |
 | Proposal tracker | `docs/PROPOSAL_TRACKER.md` | Yes | Check for conflicting merges and update status |
 | Target system docs | `docs/system/` | Yes | The files being modified |
-| Authorization marker | `docs/system/.pipeline-authorized` | Yes | Created during merge, removed after |
+| Authorization marker | `.pipeline-authorized` (project root) | Yes | Created during merge, removed after |
 | DECISIONS.md | `docs/DECISIONS.md` | No | Log design decisions and conflict resolutions |
 
 ### When to Use
@@ -131,7 +131,7 @@ proposal's assumptions before applying any changes.
 
 ### Phase 3: Create Authorization Marker
 
-7. Write the marker file at `docs/system/.pipeline-authorized`:
+7. Write the marker file at `.pipeline-authorized` (project root):
 
    ```
    operation: merge
@@ -140,7 +140,7 @@ proposal's assumptions before applying any changes.
    timestamp: [ISO 8601]
    ```
 
-   This tells the PreToolUse hook to allow edits to `docs/system/` files.
+   This tells the PreToolUse hook to allow edits to protected paths.
 
 **Verify**: Marker file exists at the correct path.
 
@@ -167,7 +167,7 @@ proposal's assumptions before applying any changes.
 
 ### Phase 5: Remove Authorization Marker
 
-9. Delete `docs/system/.pipeline-authorized`. The window for system doc edits is closed.
+9. Delete `.pipeline-authorized` (project root). The window for protected path edits is closed.
 
 **Verify**: Marker file no longer exists.
 
