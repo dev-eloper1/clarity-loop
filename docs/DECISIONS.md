@@ -108,4 +108,11 @@ Use full entries by default. Use compact entries only when the source document (
 
 <!-- Decision entries below this line. Do not remove this comment. -->
 
+#### D-001 — Researcher Experimentation Capability Triage
+
+**Date**: 2026-03-10 | **Phase**: research | **Source**: User request — add experimentation/throwaway code capability to cl-researcher
+**Decision**: Classified as L2-complex. Full pipeline: research → structure → proposal → review → merge.
+**Rationale**: Cross-cutting impact (researcher skill, agent architecture, filesystem isolation, init script). New capability added to existing skill (hybrid). Sandbox/isolation mechanism needs design work. Four factors scored medium-high: 3+ doc impact, moderate clarity, novel capability, cross-cutting filesystem safety concerns.
+**Status**: `active`
+
 <!-- clarity-loop-managed -->
