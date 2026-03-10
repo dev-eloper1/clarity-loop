@@ -9,8 +9,8 @@
 
 - **Research Type**: Hybrid
 - **Status**: draft
-- **Open Questions**: 3 remaining
-- **Discussion Rounds**: 1
+- **Open Questions**: 0 remaining
+- **Discussion Rounds**: 2
 - **Complexity**: L2-complex
 
 ## System Context
@@ -147,9 +147,12 @@ During Phase 3 (Conduct Research), each finding or recommendation gets an implic
 - **Medium confidence**: Docs say X but there are version caveats, edge cases unclear, or conflicting information → experiment recommended
 - **Low confidence**: Undocumented behavior, novel integration, performance claim without benchmarks → experiment strongly recommended
 
-The researcher would "sniff" for low-confidence claims and either:
-1. **Auto-experiment** for small validations (< 1 file, quick script, no deps)
-2. **Propose experiment** for larger spikes (multi-file, needs dependencies, significant setup)
+The researcher would "sniff" for low-confidence claims and **propose experiments to the user** with:
+- The hypothesis being tested
+- What the experiment would involve (setup, execution, expected output)
+- Why this finding needs empirical validation
+
+The user then approves or declines. This keeps the human in the loop for all experiment execution while letting the AI identify *when* experimentation would be valuable.
 
 This aligns with the existing pattern: the researcher already takes a position on recommendations. Now it also takes a position on *how confident it is* and what would increase that confidence.
 
@@ -277,10 +280,11 @@ The rationale:
 5. **Result flow**: The Agent tool returns results to the parent conversation, enabling structured result capture without manual extraction
 
 The implementation would require:
-- A new **experiment-runner agent** (or extend the existing researcher to spawn worktree subagents)
+- A new **experiment-runner agent** (`agents/experiment-runner.md`) with worktree isolation
 - A new **Experimental Validation section** in the research template
 - **Confidence annotations** on research findings
-- **Naming convention** for experiment branches: `worktree-R-NNN-exp-N`
+- **Descriptive naming convention** for experiment branches: `experiment/<descriptive-slug>-YYYY-MM-DD`
+- **Always propose experiments to user** before running (no autonomous experimentation)
 - Updates to **init.js** to handle experiment-related scaffolding (if any project-level directories are needed)
 
 ### Risks & Mitigations
@@ -288,11 +292,11 @@ The implementation would require:
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
 | Branch proliferation from retained experiments | Medium | Low | Naming convention + periodic cleanup guidance in skill |
-| LLM over-experiments (triggers experiments unnecessarily) | Medium | Medium | Size threshold: auto-experiment only for small validations; propose larger ones to user |
+| LLM over-experiments (triggers experiments unnecessarily) | Low | Medium | All experiments require user approval before execution |
 | Experiment results are too verbose for research doc | Low | Medium | Structured EXP-N format with concise evidence summaries |
 | Worktree operations slow on large repos | Low | Low | Experiments are typically small scripts; worktree overhead is one-time |
 | Stale experiment branches diverge from main | Medium | Low | Document branch staleness; experiments are evidence, not production code |
-| Confidence assessment is unreliable | Medium | Medium | User can override; "prove it" trigger in Phase 4 as fallback |
+| Confidence assessment is unreliable | Medium | Low | User approval gate means unreliable confidence just produces unnecessary proposals, not wasted execution |
 
 ### Impact on System Docs
 
@@ -312,6 +316,9 @@ The implementation would require:
 | 2 | Experiment triggering | Always experiment, never experiment, confidence-based | Recommend confidence-based with size threshold | User specified organic emergence; small = auto, large = propose |
 | 3 | Archival model | Throw away everything, keep everything, two-layer | Recommend two-layer (results always, code selectively) | User wants to retain infrastructure iteratively but prune some branches |
 | 4 | Workflow integration | New top-level phase, sub-phase of Phase 3, separate skill | Recommend sub-phase of Phase 3 + Phase 4 extension | Minimal disruption, experiments are optional and triggered by context |
+| 5 | Agent vs. skill mode | New agent, mode within researcher | New dedicated agent | User chose agent -- gets own context window, worktree isolation natively, clean separation of concerns |
+| 6 | Experiment approval model | Auto for small / propose for large, always propose, always auto | Always propose to user first | User chose ask-first -- aligns with core principle "AI does the work, humans make the calls" |
+| 7 | Branch naming convention | Research-scoped (`worktree-R-NNN-exp-N`), descriptive (`experiment/slug-date`) | Descriptive naming | User chose descriptive -- more readable, self-documenting in `git branch` output |
 
 ## Emerged Concepts
 
@@ -323,11 +330,11 @@ The implementation would require:
 
 ## Open Questions
 
-1. **Should the experiment-runner be a new agent or a mode within the researcher skill?** A new agent gets its own context window (good for isolation) but adds a new file to maintain. A mode within the researcher keeps things consolidated but doesn't get worktree isolation natively (skills don't have isolation; agents do).
+All resolved in Discussion Round 2.
 
-2. **What's the size threshold for auto-experiment vs. propose-to-user?** Candidates: line count (< 50 lines = auto), file count (single file = auto), dependency requirement (no new deps = auto). Need user input on comfort level with autonomous experimentation.
-
-3. **Should experiment branches follow a project-wide naming convention or be research-doc-scoped?** E.g., `worktree-R-014-exp-1` (scoped) vs. `experiment/api-validation-2026-03-10` (descriptive). Scoped is more traceable; descriptive is more readable.
+1. ~~**New agent vs. researcher mode?**~~ → **New agent** (`agents/experiment-runner.md`). Gets worktree isolation natively, own context window, clean separation.
+2. ~~**Auto-experiment threshold?**~~ → **Always ask first.** Researcher proposes experiments with hypothesis and plan; user approves before execution. Aligns with "AI does the work, humans make the calls."
+3. ~~**Branch naming?**~~ → **Descriptive**: `experiment/<descriptive-slug>-YYYY-MM-DD`. More readable in `git branch` output, self-documenting.
 
 ## References
 
