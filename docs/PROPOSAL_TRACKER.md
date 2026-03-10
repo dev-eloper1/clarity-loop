@@ -6,6 +6,7 @@ Tracks all proposals in this project. Updated by the `cl-researcher` and `cl-rev
 
 | ID | Title | Research | Status | Review Round | Depends On | Conflicts |
 |----|-------|----------|--------|-------------|-----------|-----------|
+| P-002 | Researcher Experimentation Capability | R-014 | draft | 0 | None | None |
 
 **Status values**: `draft` | `in-review` | `approved` | `merging` | `verified`
 

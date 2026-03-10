@@ -20,7 +20,7 @@ information, dependencies, or priority changes.
 | R-008 | Operational Improvements for Clarity Loop | evolutionary | draft | — | 1 | L2-complex | R-008-OPERATIONAL_IMPROVEMENTS.md | 2026-02-16 | 2026-02-16 |
 | R-011 | Component Identification Process Weakness | evolutionary | draft | — | 1 | L1-contained | R-011-COMPONENT_IDENTIFICATION_WEAKNESS.md | 2026-02-16 | 2026-02-16 |
 | R-013 | Bootstrap-to-Pipeline Transition Gap | evolutionary | approved | — | 1 | L2-complex | R-013-BOOTSTRAP_TO_PIPELINE_TRANSITION_GAP.md | 2026-02-18 | 2026-02-18 |
-| R-014 | Researcher Experimentation Capability | hybrid | in-discussion | 0 | 2 | L2-complex | R-014-RESEARCHER_EXPERIMENTATION_CAPABILITY.md | 2026-03-10 | 2026-03-10 |
+| R-014 | Researcher Experimentation Capability | hybrid | approved | 0 | 2 | L2-complex | R-014-RESEARCHER_EXPERIMENTATION_CAPABILITY.md | 2026-03-10 | 2026-03-10 |
 
 **Status values**: `draft` | `in-discussion` | `approved` | `superseded`
 **Type values**: `evolutionary` | `net-new` | `hybrid`

@@ -2,13 +2,13 @@
 
 **ID**: R-014
 **Created**: 2026-03-10
-**Status**: Draft
+**Status**: Approved
 **Author**: User + AI researcher
 
 ## Status
 
 - **Research Type**: Hybrid
-- **Status**: draft
+- **Status**: approved
 - **Open Questions**: 0 remaining
 - **Discussion Rounds**: 2
 - **Complexity**: L2-complex
@@ -313,7 +313,7 @@ The implementation would require:
 | # | Topic | Considered | Decision | Rationale |
 |---|-------|-----------|----------|-----------|
 | 1 | Isolation mechanism | Worktree subagent, in-project sandbox dir, temp directory, conversation forking | Recommend worktree subagent | Native Claude Code support, branch-based retention matches user's keep/prune model, best isolation |
-| 2 | Experiment triggering | Always experiment, never experiment, confidence-based | Recommend confidence-based with size threshold | User specified organic emergence; small = auto, large = propose |
+| 2 | Experiment triggering | Always experiment, never experiment, confidence-based with auto/propose split | Always propose to user first (confidence-based identification, user-gated execution) | User chose ask-first; confidence levels identify *when* to propose, but all execution requires approval (see Decision #6) |
 | 3 | Archival model | Throw away everything, keep everything, two-layer | Recommend two-layer (results always, code selectively) | User wants to retain infrastructure iteratively but prune some branches |
 | 4 | Workflow integration | New top-level phase, sub-phase of Phase 3, separate skill | Recommend sub-phase of Phase 3 + Phase 4 extension | Minimal disruption, experiments are optional and triggered by context |
 | 5 | Agent vs. skill mode | New agent, mode within researcher | New dedicated agent | User chose agent -- gets own context window, worktree isolation natively, clean separation of concerns |
